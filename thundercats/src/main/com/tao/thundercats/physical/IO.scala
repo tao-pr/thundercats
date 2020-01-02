@@ -52,6 +52,28 @@ object Read {
 }
 
 object Write {
-  case class CSV[A](path: String) extends Data
-  case class Parquet[A](path: String) extends Data
+  
+  trait Partition
+  case object NoPartition extends Partition
+  case class PartitionCol(cols: List[String]) extends Partition
+
+  case class CSV[A](path: String, partition: Partition = NoPartition)
+  (implicit val spark: SparkSession) extends Data {
+    override protected def read: DataFrame = {
+      import spark.implicits._
+      spark
+        .write
+        .option("header", withHeader.toString)
+        .option("inferSchema", "true")
+        .csv(path)
+    }
+  }
+  case class Parquet[A](path: String)
+  (implicit val spark: SparkSession) extends Data extends Data {
+    override protected def read: DataFrame = {
+      import spark.implicits._
+      spark
+        .write
+        .parquet(path)
+    }
 }
