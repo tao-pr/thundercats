@@ -1,14 +1,12 @@
 package com.tao.thundercats.physical
 
-import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Column,Row}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
-
-import com.tao.thundercats.monad.Generic._
 
 // Data Monad
 trait M[A] {
@@ -49,6 +47,7 @@ object Read {
         .read
         .parquet(path)
     }
+  }
 }
 
 object Write {
@@ -57,23 +56,32 @@ object Write {
   case object NoPartition extends Partition
   case class PartitionCol(cols: List[String]) extends Partition
 
-  case class CSV[A](path: String, partition: Partition = NoPartition)
-  (implicit val spark: SparkSession) extends Data {
+  private trait Generic {
+    val df: DataFrame
+    val partition: Partition
+    private def preprocess = partition match {
+      case NoPartition => df.coalesce(1).write
+      case PartitionCol(cols) => df.write.partitionBy(cols:_*)
+    }
+  }
+
+  case class CSV[A](override val df: DataFrame, override val partition: Partition = NoPartition)
+  (implicit val spark: SparkSession) extends Generic with Data {
     override protected def read: DataFrame = {
       import spark.implicits._
-      spark
-        .write
+      preprocess
         .option("header", withHeader.toString)
         .option("inferSchema", "true")
         .csv(path)
+      df
     }
   }
-  case class Parquet[A](path: String)
-  (implicit val spark: SparkSession) extends Data extends Data {
+  case class Parquet[A](override val df: DataFrame, override val partition: Partition = NoPartition)
+  (implicit val spark: SparkSession) extends Generic with Data {
     override protected def read: DataFrame = {
       import spark.implicits._
-      spark
-        .write
-        .parquet(path)
+      preprocess.parquet(path)
+      df
     }
+  }
 }
