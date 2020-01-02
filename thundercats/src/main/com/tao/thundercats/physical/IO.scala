@@ -10,13 +10,48 @@ import org.apache.spark.sql.functions._
 
 import com.tao.thundercats.monad.Generic._
 
-object IO {
-  def readParquet(path: String): Dataset[Row]
-  def readParquetAs[A](path: String)(implicit encoder: Encoder[A]): Dataset[A]
-  def readCSV(path: String, header: Boolean=true): Dataset[Row]
-  def readCSVAs[A](path: String, header: Boolean=true)(implicit encoder: Encoder[A]): Dataset[A]
-  def readKafka(topic: String, limit: Option[Int]=None): Dataset[Row]
-  def readKafkaAs[A](topic: String, limit: Option[Int]=None)(implicit encoder: Encoder[A]): Dataset[A]
+// Data Monad
+trait M[A] {
+  def unit(a: A): M[A]
+  def flatMap(f: A => M[A]): M[A]
+}
 
-  def writeParquet(df: Dataset[A],path: String): Dataset[A]
+// IO read/write monad
+private [physical] trait Data extends M[DataFrame]{
+  protected def read: DataFrame
+  override def unit(a: DataFrame): M[DataFrame]
+  override def flatMap(f: DataFrame => M[DataFrame]): M[DataFrame] = {
+    unit(read)
+  }
+}
+
+case class DataWrap(df: DataFrame) extends Data[DataFrame] {
+  override protected def read: DataFrame = df
+  override def unit(a: DataFrame): M[DataFrame] = DataWrap(a)
+}
+
+object Read {
+  case class CSV[A](path: String, withHeader: Boolean = true)
+  (implicit val spark: SparkSession) extends Data {
+    override protected def read: DataFrame = {
+      import spark.implicits._
+      spark
+        .read
+        .option("header", withHeader.toString)
+        .option("inferSchema", "true")
+        .csv(path)
+    }
+  }
+  case class Parquet[A](path: String) extends Data {
+    override protected def read: DataFrame = {
+      import spark.implicits._
+      spark
+        .read
+        .parquet(path)
+    }
+}
+
+object Write {
+  case class CSV[A](path: String) extends Data
+  case class Parquet[A](path: String) extends Data
 }
