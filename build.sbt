@@ -47,6 +47,6 @@ val sparkDependencies = List(
   "org.apache.spark" %% "spark-avro" % sparkVersion % "provided"
 )
 
-lazy val tachyon = project
-  .settings(name := "tachyon")
+lazy val thundercats = project
+  .settings(name := "thundercats")
   .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
