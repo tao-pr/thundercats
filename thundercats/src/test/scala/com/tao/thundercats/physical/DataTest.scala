@@ -41,6 +41,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
   describe("Basic IO"){
     import spark.implicits._
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
+    lazy val tempParquet = File.createTempFile("tc-test-", ".parquet").getAbsolutePath
 
     lazy val df = List(
       A(1, None),
@@ -49,7 +50,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     ).toDS.toDF
 
     it("PRE: cleanup tempfiles"){
-      IO.deleteFiles(tempCSV :: Nil)
+      IO.deleteFiles(tempCSV :: tempParquet :: Nil)
     }
 
     it("write and read csv"){
@@ -64,8 +65,22 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
     }
 
+    it("write and read parquet"){
+      val dfReadOpt = for { 
+        b <- Write.parquet(df, tempParquet)
+        c <- Read.parquet(tempParquet)
+      } yield c
+
+      val dfRead = dfReadOpt.get
+
+      dfRead.count shouldBe (df.count)
+      dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
+    }
+
+    ignore("write and read Kafka"){}
+
     it("POST: cleanup tempfiles"){
-      IO.deleteFiles(tempCSV :: Nil)
+      IO.deleteFiles(tempCSV :: tempParquet :: Nil)
     }
   }
 
