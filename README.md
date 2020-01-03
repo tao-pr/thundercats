@@ -10,7 +10,7 @@ What if we can write Spark in the following way.
 ```scala
 val p = for {
   a <- IO.Read.parquet("foo.parquet")
-  b <- IO.Read.cSV("bar.csv", header=True)
+  b <- IO.Read.csv("bar.csv", header=True)
   c <- MQ.Read.kafka("topic", limit=1000)
   d <- Join.left(a, b, "col1")
   _ <- IO.Write.parquet(d, "new_foo.parquet")
