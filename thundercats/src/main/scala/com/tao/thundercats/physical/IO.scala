@@ -88,6 +88,7 @@ object Write {
       df
     }
   }
+  
   case class Parquet[A](
     override val df: DataFrame, 
     path: String,
