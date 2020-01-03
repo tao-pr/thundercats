@@ -9,17 +9,17 @@ What if we can write Spark in the following way.
 
 ```scala
 val p = for {
-  a <- IO.Read.Parquet("foo.parquet")
-  b <- IO.Read.CSV("bar.csv", header=True)
-  c <- MQ.Read.Kafka("topic", limit=1000)
+  a <- IO.Read.parquet("foo.parquet")
+  b <- IO.Read.cSV("bar.csv", header=True)
+  c <- MQ.Read.kafka("topic", limit=1000)
   d <- Join.left(a, b, "col1")
-  _ <- IO.Write.Parquet(d, "new_foo.parquet")
+  _ <- IO.Write.parquet(d, "new_foo.parquet")
   e <- Group.agg(d, by="col2", sum("col3").as("t"), avg("col4").as("v"))
 } yield e
 
 val q = for {
   a <- p
-  _ <- MQ.Write.Kafka("topic", a)
+  _ <- MQ.Write.kafka("topic", a)
   b <- Filter(a, $("col1") > 35)
 } yield b.cache
 ```
