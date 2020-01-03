@@ -53,12 +53,15 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
 
     it("write and read csv"){
-      val dfRead = for { 
+      val dfReadOpt = for { 
         b <- Write.csv(df, tempCSV)
         c <- Read.csv(tempCSV)
       } yield c
 
-      // TAOTODO
+      val dfRead = dfReadOpt.get
+
+      dfRead.count shouldBe (df.count)
+      dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
     }
 
     it("POST: cleanup tempfiles"){
