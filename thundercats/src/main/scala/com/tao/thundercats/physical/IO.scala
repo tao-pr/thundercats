@@ -125,8 +125,7 @@ object Write {
     serverAddr: String, 
     port: Int = 9092,
     checkpointLocation: String = "./chk",
-    timeout: Option[Int] = None,
-    partition: Partition = NoPartition): Option[DataFrame] = {
+    timeout: Option[Int] = None): Option[DataFrame] = {
     val q = df.writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
@@ -143,19 +142,49 @@ object Write {
     Some(df)
   }
 
-  def kafkaParquet() = ???
-
   def kafka(
     df: DataFrame, 
     topic: String, 
     serverAddr: String, 
-    port: Int = 9092,
-    partition: Partition = NoPartition): Option[DataFrame] = {
+    port: Int = 9092): Option[DataFrame] = {
     df.write
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
       .option("topic", topic)
       .save()
+    Some(df)
+  }
+
+  def streamToFile(
+    df: DataFrame,
+    fileType: String,
+    path: String,
+    partition: Partition = NoPartition,
+    checkpointLocation: String = "./chk",
+    timeout: Option[Int] = None): Option[DataFrame] = {
+    assert(Set("parquet", "csv", "orc", "json") contains(fileType))
+
+    val stream = df.writeStream
+      .format(fileType)
+      .outputMode("append")
+      .option("path", path)
+      .option("checkpointLocation", checkpointLocation)
+
+    val q = (partition match {
+      case NoPartition => stream
+      case PartitionCol(cols) => {
+        if (cols.size > 1) 
+          Console.println(Console.YELLOW + 
+            s"Streaming to ${fileType} will only partitioning with ${cols.head}" +
+            Console.RESET)
+        stream.partitionBy(cols.head)
+      }
+    }).start()
+
+    timeout match {
+      case None => q.awaitTermination()
+      case Some(t) => q.awaitTermination(t)
+    }
     Some(df)
   }
 }

@@ -139,6 +139,10 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dff.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
+    ignore("write stream to parquet and csv"){
+      
+    }
+
     it("POST: cleanup tempfiles"){
       IO.deleteFiles(tempCSV :: tempParquet :: Nil)
     }
