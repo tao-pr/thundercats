@@ -69,10 +69,10 @@ $ ll /Library/Java/JavaVirtualMachines
 
 ## Tests
 
-To run a full test on all suites, the following dependencies are required.
+Following dependencies are required to run the test suite.
 
 - Hadoop
-- Kafka
+- Kafka (local instance)
 
 Execute the test suite via sbt like so.
 
@@ -84,7 +84,7 @@ Or test only specific suite by entering sbt console.
 
 ```bash
 $ sbt
-sbt> testOnly *PipeTest*
+sbt> testOnly *Data*
 ```
 
 ## Licence 

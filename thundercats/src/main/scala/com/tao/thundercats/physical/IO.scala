@@ -20,7 +20,7 @@ object Screen {
   }
 
   def logStream(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
-    title.map(t => Console.println(Console.CYAN + title + Console.RESET))
+    title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
     val q = df.writeStream
       .outputMode("append")
@@ -57,14 +57,14 @@ object Read {
     } getOrElse(None)
   }
 
-  def kafkaStream(topic: String, serverAddr: String, port: Int = 9092)
+  def kafkaStream(topic: String, serverAddr: String, port: Int = 9092, offset: Option[Int] = None)
   (implicit spark: SparkSession): Option[DataFrame] = {
     Try {
       val df = spark.readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
         .option("subscribe", topic)
-        .option("startingOffsets", "earliest")
+        .option("startingOffsets", offset.map(_.toString).getOrElse("earliest"))
         .load()
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       Some(df)
@@ -124,7 +124,9 @@ object Write {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092,
-    checkpointLocation: String = "./chk"): Option[DataFrame] = {
+    checkpointLocation: String = "./chk",
+    timeout: Option[Int] = None,
+    partition: Partition = NoPartition): Option[DataFrame] = {
     val q = df.writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
@@ -132,11 +134,23 @@ object Write {
       .option("outputMode", "append")
       .option("checkpointLocation", checkpointLocation)
       .start()
-    q.awaitTermination()
+
+    timeout match {
+      case None => q.awaitTermination()
+      case Some(t) => q.awaitTermination(t)
+    }
+    
     Some(df)
   }
 
-  def kafka(df: DataFrame, topic: String, serverAddr: String, port: Int = 9092): Option[DataFrame] = {
+  def kafkaParquet() = ???
+
+  def kafka(
+    df: DataFrame, 
+    topic: String, 
+    serverAddr: String, 
+    port: Int = 9092,
+    partition: Partition = NoPartition): Option[DataFrame] = {
     df.write
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")

@@ -32,6 +32,13 @@ object IO {
         yield true
     }
   }
+
+  def cleanupCheckpointDirs() {
+    import scala.reflect.io.Directory
+    Seq("./chk", "./chk3").foreach{ d =>
+      new Directory(new File(d)).deleteRecursively()
+    }
+  }
 }
 
 case class A(i: Int, s: Option[String])
@@ -63,6 +70,10 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
 
     it("PRE: cleanup tempfiles"){
       IO.deleteFiles(tempCSV :: tempParquet :: Nil)
+    }
+
+    it("PRE: cleanup checkpoint directories"){
+      IO.cleanupCheckpointDirs()
     }
 
     it("PRE: flush Kafka"){
@@ -110,16 +121,22 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
 
     it("write and read Kafka (stream)"){
-      val dfReadOpt = for {
-        b <- Read.kafkaStream(topic, serverAddr)
+      // Fill kafka topic and read by stream
+      for {
+        _ <- Write.kafka(dfK, topic2, serverAddr)
+        b <- Read.kafkaStream(topic2, serverAddr)
         _ <- Screen.logStream(b, Some("Initial stream messages"))
-        //_ <- Write.kafkaStream(b, topic, serverAddr)
-      } yield b
+      } yield true
 
-      val dfRead = dfReadOpt.get
+      // Read from one topic and write to another
+      val dff = for {
+        b <- Read.kafkaStream(topic2, serverAddr)
+        _ <- Write.kafkaStream(b, topic3, serverAddr, timeout=Some(1000), checkpointLocation="./chk3")
+        c <- Read.kafka(topic3, serverAddr)
+      } yield c
 
-      //dfRead.count shouldBe (dfK.count)
-      //dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
+      dff.get.count shouldBe (dfK.count)
+      dff.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
     it("POST: cleanup tempfiles"){
@@ -130,6 +147,10 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       Seq(topic, topic2, topic3).foreach{ top => 
         s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete" !
       }
+    }
+
+    it("POST: cleanup checkpoint directories"){
+      IO.cleanupCheckpointDirs()
     }
   }
 
