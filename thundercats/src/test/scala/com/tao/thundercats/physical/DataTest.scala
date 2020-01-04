@@ -45,6 +45,8 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     lazy val tempParquet = File.createTempFile("tc-test-", ".parquet").getAbsolutePath
 
     val topic = "tc-test"
+    val topic2 = "tck-test"
+    val topic3 = "tckk-test"
     val serverAddr = "localhost"
 
     lazy val df = List(
@@ -64,7 +66,11 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
 
     it("PRE: flush Kafka"){
-      s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${topic} --delete" !
+      Seq(topic, topic2, topic3).foreach{ top => 
+        val cmd = s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete"
+        Console.println(Console.YELLOW + s"Executing ${cmd}" + Console.RESET)
+        cmd !
+      }
     }
 
     it("write and read csv"){
@@ -103,8 +109,17 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
-    ignore("write and read Kafka (stream)"){
+    it("write and read Kafka (stream)"){
+      val dfReadOpt = for {
+        b <- Read.kafkaStream(topic, serverAddr)
+        _ <- Screen.logStream(b, Some("Initial stream messages"))
+        //_ <- Write.kafkaStream(b, topic, serverAddr)
+      } yield b
 
+      val dfRead = dfReadOpt.get
+
+      //dfRead.count shouldBe (dfK.count)
+      //dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
     it("POST: cleanup tempfiles"){
@@ -112,7 +127,9 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
 
     it("POST: flush Kafka"){
-      s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${topic} --delete" !
+      Seq(topic, topic2, topic3).foreach{ top => 
+        s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete" !
+      }
     }
   }
 

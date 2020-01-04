@@ -10,6 +10,28 @@ import org.apache.spark.sql.functions._
 
 import scala.util.Try
 
+object Screen {
+  def log(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+    title.map(t => Console.println(Console.CYAN + title + Console.RESET))
+    Console.println(Console.CYAN)
+    df.show(5, false)
+    Console.println(Console.RESET)
+    Some(df)
+  }
+
+  def logStream(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+    title.map(t => Console.println(Console.CYAN + title + Console.RESET))
+    Console.println(Console.CYAN)
+    val q = df.writeStream
+      .outputMode("append")
+      .format("console")
+      .start()
+    q.awaitTermination(50)
+    Console.println(Console.RESET)
+    Some(df)
+  }
+}
+
 object Read {
   def csv(path: String, withHeader: Boolean = true)
   (implicit spark: SparkSession): Option[DataFrame] = {
@@ -103,13 +125,14 @@ object Write {
     serverAddr: String, 
     port: Int = 9092,
     checkpointLocation: String = "./chk"): Option[DataFrame] = {
-    df.writeStream
+    val q = df.writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
       .option("topic", topic)
       .option("outputMode", "append")
       .option("checkpointLocation", checkpointLocation)
       .start()
+    q.awaitTermination()
     Some(df)
   }
 
