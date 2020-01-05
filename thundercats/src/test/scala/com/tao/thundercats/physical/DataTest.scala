@@ -35,7 +35,7 @@ object IO {
 
   def cleanupCheckpointDirs() {
     import scala.reflect.io.Directory
-    Seq("./chk", "./chk3").foreach{ d =>
+    Seq("./chk", "./chk3", "./chk_parq", "./out_parquet").foreach{ d =>
       new Directory(new File(d)).deleteRecursively()
     }
   }
@@ -125,7 +125,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       for {
         _ <- Write.kafka(dfK, topic2, serverAddr)
         b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Screen.logStream(b, Some("Initial stream messages"))
+        _ <- Screen.showDFStream(b, Some("Initial stream messages"))
       } yield true
 
       // Read from one topic and write to another
@@ -139,8 +139,17 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dff.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
-    ignore("write stream to parquet and csv"){
-      
+    it("write stream to parquet and csv"){
+      // Read from Kafka stream and stream to parquet file
+      val dfOpt = for {
+        b <- Read.kafkaStream(topic2, serverAddr)
+        _ <- Write.streamToFile(b, "parquet", "./out_parquet", checkpointLocation="./chk_parq", timeout=Some(1000))
+        _ <- Screen.showDFStream(b, Some("Streaming this into parquet"))
+        c <- Read.parquet("./out_parquet")
+      } yield c
+
+      dfOpt.get.count shouldBe (dfK.count)
+      dfOpt.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
     it("POST: cleanup tempfiles"){
