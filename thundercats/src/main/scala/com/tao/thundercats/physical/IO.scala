@@ -11,7 +11,7 @@ import org.apache.spark.sql.functions._
 import scala.util.Try
 
 object Screen {
-  def log(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+  def showDF(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
     title.map(t => Console.println(Console.CYAN + title + Console.RESET))
     Console.println(Console.CYAN)
     df.show(5, false)
@@ -19,7 +19,7 @@ object Screen {
     Some(df)
   }
 
-  def logStream(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+  def showDFStream(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
     title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
     val q = df.writeStream
