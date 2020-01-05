@@ -13,7 +13,7 @@ import scala.reflect.io.Directory
 import com.tao.thundercats.base.{SparkTestInstance, SparkStreamTestInstance}
 import com.tao.thundercats.physical._
 
-import org.scalatest._
+import org.scalatest.{Filter => _, _}
 import Matchers._
 
 object IO {
@@ -279,8 +279,28 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
         )
     }
 
-    ignore("Filter dataframes"){
-      ???
+    it("Filter dataframes"){
+      import dfK1.sqlContext.implicits._
+      val dfOpt = for {
+        a <- Join.outer(dfK1, dfK2, Join.On("key" :: Nil))
+        b <- Group.agg(a, 'key :: Nil, Group.Map("v1" -> "min", "v2" -> "max"))
+        c <- Filter.where(b, 'key <= "c")
+      } yield c
+
+      dfOpt.get.columns shouldBe (Seq("key", "min(v1)", "max(v2)"))
+      dfOpt.get.map{ row => (
+        row.getAs[String]("key"),
+        row.getAs[String]("min(v1)"),
+        row.getAs[String]("max(v2)")
+      )}.collect.toSet shouldBe (
+          Set(
+            ("a", "111", "a2"),
+            ("b", "222", null),
+            ("c", "333", "c1"),
+            //("d", "444", "d2"),
+            //("e", null, "e1")
+          )
+        )    
     }
 
   }
