@@ -169,15 +169,60 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
 
   describe("Basic operations"){
 
-    it("Join two dataframes"){
-      ???
+    import spark.implicits._
+
+    lazy val dfK1 = List(
+      K("a", "111"),
+      K("b", "222"),
+      K("c", "333"),
+      K("d", "444")
+    ).toDS.toDF.withColumnRenamed("value", "v1")
+
+    lazy val dfK2 = List(
+      K("a", "a1"),
+      K("a", "a2"),
+      K("c", "c1"),
+      K("d", "d1"),
+      K("d", "d2"),
+      K("e", "e1")
+    ).toDS.toDF.withColumnRenamed("value", "v2")
+
+    it("Left join"){
+      import dfK1.sqlContext.implicits._
+      val dfOpt = for {
+        a <- Join.left(dfK1, dfK2, Join.On("key" :: Nil))
+      } yield a
+
+      dfOpt.get.columns shouldBe (Seq("key", "v1", "v2"))
+      dfOpt.get.map{ row => (
+        row.getAs[String]("key"),
+        row.getAs[String]("v1"),
+        row.getAs[String]("v2")
+      )}.collect.toSet shouldBe (
+          Set(
+            ("a", "111", "a1"),
+            ("a", "111", "a2"),
+            ("b", "222", null),
+            ("c", "333", "c1"),
+            ("d", "444", "d1"),
+            ("d", "444", "d2")
+          )
+        )
     }
 
-    it("Group and aggregate dataframes"){
-      ???
+    ignore("Inner join"){
+
     }
 
-    it("Filter dataframes"){
+    ignore("Outer join"){
+
+    }
+
+    ignore("Group and aggregate dataframes"){
+      
+    }
+
+    ignore("Filter dataframes"){
       ???
     }
 
