@@ -10,6 +10,12 @@ import org.apache.spark.sql.functions._
 
 import scala.util.Try
 
+object ColumnEncoder {
+  private [physical] trait Encoder 
+  case object None extends Encoder
+  case class Avro(schema: String) extends Encoder
+}
+
 object Screen {
   def showDF(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
     title.map(t => Console.println(Console.CYAN + title + Console.RESET))
@@ -33,7 +39,7 @@ object Screen {
 }
 
 object Read {
-  def csv(path: String, withHeader: Boolean = true)
+  def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
   (implicit spark: SparkSession): Option[DataFrame] = {
     import spark.implicits._
     Try {
@@ -41,6 +47,7 @@ object Read {
         .read
         .option("header", withHeader.toString)
         .option("inferSchema", "true")
+        .option("delimiter", delimiter)
         .csv(path)  
       Some(df)
     } getOrElse(None)
@@ -57,8 +64,14 @@ object Read {
     } getOrElse(None)
   }
 
-  def kafkaStream(topic: String, serverAddr: String, port: Int = 9092, offset: Option[Int] = None)
+  def kafkaStream(
+    topic: String, 
+    serverAddr: String, 
+    port: Int = 9092, 
+    offset: Option[Int] = None,
+    colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): Option[DataFrame] = {
+    import spark.implicits._
     Try {
       val df = spark.readStream
         .format("kafka")
@@ -67,12 +80,20 @@ object Read {
         .option("startingOffsets", offset.map(_.toString).getOrElse("earliest"))
         .load()
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
-      Some(df)
+
+      colEncoder match {
+        case ColumnEncoder.None => Some(df)
+        case ColumnEncoder.Avro(schema) => Some(df.select(
+          from_avro('key, schema).as("key"),
+          from_avro('value, schema).as("value")
+        ))
+      }
     } getOrElse(None)
   }
 
-  def kafka(topic: String, serverAddr: String, port: Int = 9092)
+  def kafka(topic: String, serverAddr: String, port: Int = 9092, colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): Option[DataFrame] = {
+    import spark.implicits._
     Try {
       val df = spark.read
         .format("kafka")
@@ -80,7 +101,14 @@ object Read {
         .option("subscribe", topic)
         .load()
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
-      Some(df)
+      
+      colEncoder match {
+        case ColumnEncoder.None => Some(df)
+        case ColumnEncoder.Avro(schema) => Some(df.select(
+          from_avro('key, schema).as("key"),
+          from_avro('value, schema).as("value")
+        ))
+      }
     } getOrElse(None)
   }
 }
@@ -99,12 +127,14 @@ object Write {
   def csv(
     df: DataFrame, 
     path: String,
-    partition: Partition = NoPartition)
+    partition: Partition = NoPartition,
+    delimiter: String = ",")
   (implicit spark: SparkSession): Option[DataFrame] = {
     import spark.implicits._
     preprocess(df, partition)
       .option("header", "true")
       .option("inferSchema", "true")
+      .option("delimiter", delimiter)
       .csv(path)
     Some(df)
   }
@@ -124,9 +154,20 @@ object Write {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092,
+    colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None,
     checkpointLocation: String = "./chk",
     timeout: Option[Int] = None): Option[DataFrame] = {
-    val q = df.writeStream
+
+    import df.sqlContext.implicits._
+    val dfEncoded = colEncoder match {
+      case ColumnEncoder.None => df
+      case ColumnEncoder.Avro(_) => df.select(
+        to_avro('key).as("key"),
+        to_avro('value).as("value")
+      )
+    }
+
+    val q = dfEncoded.writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
       .option("topic", topic)
@@ -146,8 +187,18 @@ object Write {
     df: DataFrame, 
     topic: String, 
     serverAddr: String, 
-    port: Int = 9092): Option[DataFrame] = {
-    df.write
+    port: Int = 9092,
+    colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None): Option[DataFrame] = {
+    import df.sqlContext.implicits._
+    val dfEncoded = colEncoder match {
+      case ColumnEncoder.None => df
+      case ColumnEncoder.Avro(_) => df.select(
+        to_avro('key).as("key"),
+        to_avro('value).as("value")
+      )
+    }
+
+    dfEncoded.write
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
       .option("topic", topic)
