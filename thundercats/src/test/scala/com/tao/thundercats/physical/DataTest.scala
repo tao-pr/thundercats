@@ -167,4 +167,20 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
   }
 
+  describe("Basic operations"){
+
+    it("Join two dataframes"){
+      ???
+    }
+
+    it("Group and aggregate dataframes"){
+      ???
+    }
+
+    it("Filter dataframes"){
+      ???
+    }
+
+  }
+
 }
