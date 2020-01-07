@@ -5,6 +5,7 @@ import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import java.io.File
 import sys.process._
@@ -301,6 +302,24 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
             //("e", null, "e1")
           )
         )    
+    }
+
+  }
+
+  describe("Util test"){
+
+    import spark.implicits._
+    import Implicits._
+
+    lazy val dfA = List(
+      A(1, Some("aa")),
+      A(2, Some("bb")),
+      A(3, None)
+    ).toDS.toDF
+
+    it("get schema map"){
+      val m = dfA.schemaMap
+      m shouldBe(Map("i" -> IntegerType, "s" -> StringType))
     }
 
   }
