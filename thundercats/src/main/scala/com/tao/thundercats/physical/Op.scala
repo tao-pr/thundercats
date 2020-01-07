@@ -35,22 +35,54 @@ object Join {
    * Broadcast the right tiny dataframe, join with left join
    */
   def broadcast(dfBig: DataFrame, dfTiny: DataFrame, on: Seq[String], rightColumns: Seq[String]) = {
+    
+    import Implicits._
+
+    val sc = dfBig.sqlContext.sparkContext
+
     val allRightCols = (on.toSet union rightColumns.toSet).toSeq
     val right = dfTiny.select(allRightCols.head, allRightCols.tail:_*)
-    val rightSchema = right.schema.toList
+    val rightSchema = sc.broadcast(right.schemaMap).value
 
     val toKey = (n: Row) => {
-
+      on.map{ c => 
+        rightSchema(c) match {
+          case IntegerType => n.getAs[Int](c)
+          case DoubleType => n.getAs[Double](c)
+          case StringType => n.getAs[String](c)
+          case BooleanType => n.getAs[Boolean](c)
+          case ArrayType(t,_) => t match {
+            case IntegerType => n.getAs[Seq[Int]](c)
+            case DoubleType => n.getAs[Seq[Double]](c)
+            case StringType => n.getAs[Seq[String]](c)
+            case BooleanType => n.getAs[Seq[Boolean]](c)
+          }
+        }
+      }
     }
 
-    val dataRight = dfBig.sqlContext.sparkContext
-      .broadcast(dfTiny.select(allRightCols.head, allRightCols.tail:_*))
-      .value
+    val rightMap = sc.broadcast(dfTiny
+      .select(allRightCols.head, allRightCols.tail:_*)
       .rdd
       .keyBy(toKey)
-      .collectAsMap
+      .collectAsMap).value
 
-    ???
+    val tempKey = "@tempkey@"
+
+    val join = (n: Row): Option[Row] = {
+      val key = toKey(n)
+      rightMap.get(key).map { rightRow => 
+        Row.fromSeq(n.toSeq ++ rightRow.toSeq)
+      }
+    }
+
+    val rdd = dataBig
+      .rdd
+      .mapPartitions(_.map(join)).collect { case Some(row) => row }
+
+    val joinedSchema = ???
+
+    sc.createDataFrame(rdd, joinedSchema)
   }
 
 }

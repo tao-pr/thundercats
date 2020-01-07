@@ -301,7 +301,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
             //("d", "444", "d2"),
             //("e", null, "e1")
           )
-        )    
+        )
     }
 
   }
