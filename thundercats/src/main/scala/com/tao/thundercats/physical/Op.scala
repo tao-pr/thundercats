@@ -7,6 +7,7 @@ import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import java.io.File
 import sys.process._
@@ -42,11 +43,11 @@ object Join {
 
     val allRightCols = (on.toSet union rightColumns.toSet).toSeq
     val right = dfTiny.select(allRightCols.head, allRightCols.tail:_*)
-    val rightSchema = sc.broadcast(right.schemaMap).value
+    val rightSchemaMap = sc.broadcast(right.schemaMap).value
 
     val toKey = (n: Row) => {
       on.map{ c => 
-        rightSchema(c) match {
+        (rightSchemaMap(c) match {
           case IntegerType => n.getAs[Int](c)
           case DoubleType => n.getAs[Double](c)
           case StringType => n.getAs[String](c)
@@ -57,32 +58,33 @@ object Join {
             case StringType => n.getAs[Seq[String]](c)
             case BooleanType => n.getAs[Seq[Boolean]](c)
           }
-        }
-      }
+        }).toString
+      }.mkString("--")
     }
 
+    // Collect the right dataframe (keyed) as a map
     val rightMap = sc.broadcast(dfTiny
       .select(allRightCols.head, allRightCols.tail:_*)
       .rdd
       .keyBy(toKey)
       .collectAsMap).value
 
-    val tempKey = "@tempkey@"
-
-    val join = (n: Row): Option[Row] = {
+    // Joining task to be executed at partition level
+    val join = (n: Row) => { // Returns Option[Row]
       val key = toKey(n)
       rightMap.get(key).map { rightRow => 
-        Row.fromSeq(n.toSeq ++ rightRow.toSeq)
+        Row.fromSeq(n.toSeq ++ rightRow.toSeq.drop(on.size))
       }
     }
 
-    val rdd = dataBig
+    val rdd = dfBig
       .rdd
-      .mapPartitions(_.map(join)).collect { case Some(row) => row }
+      .mapPartitions(_.map(join))
+      .collect { case Some(row) => row }
 
-    val joinedSchema = ???
+    val joinedSchema = StructType(dfBig.schema.toList ++ right.schema.toList)
 
-    sc.createDataFrame(rdd, joinedSchema)
+    new org.apache.spark.sql.SQLContext(sc).createDataFrame(rdd, joinedSchema)
   }
 
 }
