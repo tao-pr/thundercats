@@ -44,6 +44,7 @@ object IO {
 
 case class A(i: Int, s: Option[String])
 case class K(key: String, value: String)
+case class Kx(key: String, value: String, b: Int)
 
 class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
 
@@ -188,6 +189,15 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       K("e", "e1")
     ).toDS.toDF.withColumnRenamed("value", "v2")
 
+    lazy val dfK3 = List(
+      K("a", "111", 1),
+      K("a", "111", 2),
+      K("c", "333", 1),
+      K("d", "444", 1),
+      K("d", "444", 2),
+      K("d", "444", 3)
+    ).toDS.toDF.withColumnRenamed("value", "v3")
+
     it("Left join"){
       import dfK1.sqlContext.implicits._
       val dfOpt = for {
@@ -253,6 +263,29 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
             ("d", "444", "d1"),
             ("d", "444", "d2"),
             ("e", null, "e1")
+          )
+        )
+    }
+
+    it("Broadcast join"){ // As left join
+      import dfK1.sqlContext.implicits._
+      val dfOpt = for {
+        a <- Join.broadcast(dfK1, dfK2, "key" :: Nil, "v2" :: Nil)
+      } yield a
+
+      dfOpt.get.columns shouldBe (Seq("key", "v1", "v2"))
+      dfOpt.get.map{ row => (
+        row.getAs[String]("key"),
+        row.getAs[String]("v1"),
+        row.getAs[String]("v2")
+      )}.collect.toSet shouldBe (
+          Set(
+            ("a", "111", "a1"),
+            ("a", "111", "a2"),
+            ("b", "222", null),
+            ("c", "333", "c1"),
+            ("d", "444", "d1"),
+            ("d", "444", "d2")
           )
         )
     }
