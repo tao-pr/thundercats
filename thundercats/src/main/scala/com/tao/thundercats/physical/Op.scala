@@ -35,9 +35,15 @@ object Join {
   /**
    * Broadcast the right tiny dataframe, join with left join
    */
-  def broadcast(dfBig: DataFrame, dfTiny: DataFrame, on: Seq[String], rightColumns: Seq[String]) = {
+  def broadcast(
+    dfBig: DataFrame, 
+    dfTiny: DataFrame, 
+    on: Seq[String], 
+    rightColumns: Seq[String])
+  :Option[DataFrame] = {
     
     import Implicits._
+    import dfBig.sqlContext.implicits._
 
     val sc = dfBig.sqlContext.sparkContext
 
@@ -67,24 +73,25 @@ object Join {
       .select(allRightCols.head, allRightCols.tail:_*)
       .rdd
       .keyBy(toKey)
+      .map{ case (k,row) => (k, Seq(row.toSeq.drop(on.size))) }
+      .reduceByKey{ (a,n) => n :+ a }
       .collectAsMap).value
 
     // Joining task to be executed at partition level
-    val join = (n: Row) => { // Returns Option[Row]
-      val key = toKey(n)
-      rightMap.get(key).map { rightRow => 
-        Row.fromSeq(n.toSeq ++ rightRow.toSeq.drop(on.size))
-      }
+    // One left row can match multiple right rows
+    val join = (n: Row) => { // Returns Seq[Row]
+      rightMap.get(toKey(n)).map { rightRows => 
+        rightRows.map(s => Row.fromSeq(n.toSeq ++ s))
+      }.getOrElse(Nil)
     }
 
     val rdd = dfBig
       .rdd
-      .mapPartitions(_.map(join))
-      .collect { case Some(row) => row }
+      .mapPartitions(_.flatMap(join))
 
-    val joinedSchema = StructType(dfBig.schema.toList ++ right.schema.toList)
+    val joinedSchema = StructType(dfBig.schema.toList ++ right.schema.toList.drop(on.size))
 
-    new org.apache.spark.sql.SQLContext(sc).createDataFrame(rdd, joinedSchema)
+    Some(new org.apache.spark.sql.SQLContext(sc).createDataFrame(rdd, joinedSchema))
   }
 
 }
