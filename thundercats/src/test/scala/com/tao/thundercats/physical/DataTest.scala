@@ -196,7 +196,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       Kx("d", "444", 1),
       Kx("d", "444", 2),
       Kx("d", "444", 3)
-    ).toDS.toDF.withColumnRenamed("value", "v3")
+    ).toDS.toDF
 
     it("Left join"){
       import dfK1.sqlContext.implicits._
@@ -286,6 +286,30 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
             ("c", "333", "c1"),
             ("d", "444", "d1"),
             ("d", "444", "d2")
+          )
+        )
+    }
+
+    it("Broadcast join, multiple keys"){ // As left join
+      import dfK1.sqlContext.implicits._
+      val dfOpt = for {
+        b <- Some(dfK1.withColumnRenamed("v1", "value"))
+        a <- Join.broadcast(b, dfK3, Seq("key", "value"), "b" :: Nil)
+      } yield a
+
+      dfOpt.get.columns shouldBe (Seq("key", "value", "b"))
+      dfOpt.get.map{ row => (
+        row.getAs[String]("key"),
+        row.getAs[String]("value"),
+        row.getAs[Int]("b")
+      )}.collect.toSet shouldBe (
+          Set(
+            ("a", "111", 1),
+            ("a", "111", 2),
+            ("c", "333", 1),
+            ("d", "444", 1),
+            ("d", "444", 2),
+            ("d", "444", 3)
           )
         )
     }
