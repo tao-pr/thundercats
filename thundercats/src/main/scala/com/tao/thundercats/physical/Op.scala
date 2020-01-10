@@ -77,9 +77,6 @@ object Join {
       .reduceByKey{ (a,n) => n ++ a }
       .collectAsMap).value
 
-    // TAODEBUG
-    Console.println(Console.CYAN + rightMap + Console.RESET)
-
     // Joining task to be executed at partition level
     // One left row can match multiple right rows
     val join = (n: Row) => { // Returns Seq[Row]
@@ -89,10 +86,6 @@ object Join {
     val rdd = dfBig
       .rdd
       .mapPartitions(_.flatMap(join))
-
-    Console.println(Console.CYAN + "joined size : " + rdd.count + Console.RESET) // TAODEBUG
-
-    rdd.collect.foreach(println) // TAODEBUG
 
     val joinedSchema = StructType(dfBig.schema.toList ++ right.schema.toList.drop(on.size))
 
