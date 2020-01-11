@@ -371,7 +371,13 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     lazy val dfA = List(
       A(1, Some("aa")),
       A(2, Some("bb")),
-      A(3, None)
+      A(3, None),
+      A(4, None),
+      A(5, Some("cc")),
+      A(6, Some("")),
+      A(7, Some("")),
+      A(8, None),
+      A(9, Some("dd"))
     ).toDS.toDF
 
     it("get schema map"){
@@ -379,6 +385,25 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       m shouldBe(Map("i" -> IntegerType, "s" -> StringType))
     }
 
+    it("bind"){
+      import spark.implicits._
+      val dfOpt = for {
+        a <- Filter.where(dfA, 's.isNotNull && 's =!= "")
+        b <- a >> (_.withColumn("c", lit("0")))
+      } yield b
+
+      dfOpt.get.schemaMap shouldBe (Map("i" -> IntegerType, "s" -> StringType, "c" -> StringType))
+      dfOpt.get.map{ row => (
+        row.getAs[Int]("i"),
+        row.getAs[String]("s"),
+        row.getAs[String]("c"))
+      }.collect.toSet shouldBe ( Set(
+        (1, "aa", "0"),
+        (2, "bb", "0"),
+        (5, "cc", "0"),
+        (9, "dd", "0")
+      ))
+    }
   }
 
 }

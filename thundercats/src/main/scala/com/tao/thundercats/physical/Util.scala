@@ -9,6 +9,8 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DataType, StructField}
 
+import scala.util.Try
+
 object Implicits {
 
   implicit class DataFrameOps(val df: DataFrame) extends AnyVal {
@@ -17,6 +19,11 @@ object Implicits {
       df.schema.toList.map{ case StructField(n,m,_,_) => 
         (n,m)
       }.toMap
+    }
+
+    // Bind
+    def >>(f: DataFrame => DataFrame): Option[DataFrame] = {
+      Try { Some(f(df)) } getOrElse(None)
     }
 
   }
