@@ -110,7 +110,7 @@ val df = for {
 } yield ???
 ```
 
-## Write to files
+### Write to files
 
 ```scala
 for {
@@ -121,7 +121,7 @@ for {
 } yield ???
 ```
 
-## Read and write Kafka
+### Read and write Kafka
 
 for {
   ...
