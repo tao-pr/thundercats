@@ -2,6 +2,7 @@
 
 Write Spark in Functional way.
 
+--- 
 
 ## Motivation
 
@@ -11,7 +12,7 @@ What if we can write Spark in the following way.
 val p = for {
   a <- IO.Read.parquet("foo.parquet")
   b <- IO.Read.csv("bar.csv", header=True)
-  c <- MQ.Read.kafka("topic", limit=1000)
+  c <- IO.Read.kafka("topic", limit=1000)
   d <- Join.left(a, b, "col1")
   _ <- IO.Write.parquet(d, "new_foo.parquet")
   e <- Group.agg(d, by="col2", sum("col3").as("t"), avg("col4").as("v"))
@@ -19,7 +20,7 @@ val p = for {
 
 val q = for {
   a <- p
-  _ <- MQ.Write.kafka("topic", a)
+  _ <- IO.Write.kafka("topic", a)
   b <- Filter(a, $("col1") > 35)
 } yield b.cache
 ```
@@ -86,6 +87,58 @@ Or test only specific suite by entering sbt console.
 $ sbt
 sbt> testOnly *Data*
 ```
+
+---
+
+## Usage
+
+Add `Thundercat` to your project and import the following.
+
+```scala
+import com.tao.thundercats.physical._
+```
+
+### Read dataframes from files
+
+Currently CSV and parquet are supported
+
+```scala
+val df = for {
+  a <- Read.csv("path/to/file.csv", withHeader=false, delimiter=";")
+  b <- Read.csv("path/to/file.csv")
+  c <- Read.parquet("path/to/file.parquet")
+} yield ???
+```
+
+## Write to files
+
+```scala
+for {
+  ...
+  a <- Write.csv(df, "path/to/file.csv", withHeader=true, delimiter="\t")
+  b <- Write.csv(df, "path/to/file.csv")
+  c <- Write.parquet(df, "path/to/file.parquet")
+} yield ???
+```
+
+## Read and write Kafka
+
+for {
+  ...
+  a <- Read.kafkaStream("topic", "server-address", 9092) // Stream
+  b <- Read.kafka("topic", "server-address", 9092) // Batch
+  c <- Read.kafka("topic", "server-address", colEncoder=ColumnEncoder.Avro(schemaStr))
+  ...
+  _ <- Write.kafkaStream(dfStream, "topic", "server-address", 9092)
+  _ <- Write.kafka(dfBatch, "topic", "server-address", 9092, ColumnEncoder.Avro(schemaStr))
+  _ <- Write.kafka(dfBatch, "topic", colEncoder=ColumnEncoder.Avro(schemaStr))
+  _ <- Write.kafka(dfBatch, "topic")
+
+  ...
+} yield ???s
+
+
+---
 
 ## Licence 
 
