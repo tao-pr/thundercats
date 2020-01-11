@@ -139,6 +139,51 @@ for {
 } yield ???s
 ```
 
+### Show streaming dataframe
+
+```scala
+for {
+  ...
+  a <- Read.kafkaStream("topic", "server-address", 9092) // Stream
+  _ <- Screen.showDFStream(a, title=Some("Streaming dataframe"))
+}
+```
+
+### Show normal dataframe (bounded)
+
+```scala
+for {
+  ...
+  a <- Read.csv("path.csv")
+  _ <- Screen.showDF(a)
+}
+```
+
+### Join, filter, groupby
+
+```scala
+for {
+  ...
+  a <- Read.csv("path")
+  b <- Read.parquet("path")
+  c <- Read.kafka("topic")
+  ...
+  f <- Join.outer(a, b, Join.on("key" :: Nil))
+  g <- Join.left(a, b, Join.on("key" :: Nil))
+  k <- Join.inner(a, b, Join.on("key" :: "key2" :: Nil))
+  _ <- Join.inner(a, b, Join.with('key :: 'value * 10 :: Nil)) // Using column objects
+  ...
+  n <- Group.agg(f, Seq('key, min('value)), Group.map(
+    "value" -> "min", 
+    "value" -> "avg",
+    "n" -> "collect_set"))
+  m <- Group.agg(f, Seq('key), Group.agg(min('value), max('value), collect_set('value))
+  ...
+  q <- Filter.where(n, 'value > 250)
+}
+yield ???
+```
+
 ---
 
 ## Licence 
