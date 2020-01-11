@@ -184,6 +184,24 @@ for {
 yield ???
 ```
 
+### Apply mapping function: DataFrame => DataFrame
+
+If you have a function of signature `DataFrame => DataFrame`, 
+you can also apply it with binding operator as follows.
+
+```scala
+for {
+  ...
+  a <- Read.csv("path")
+  b <- Read.parquet("path")
+  ...
+  h <- b >> (_.withColumn("c", lit(true)))
+  _ <- b >> (_.withColumn("d", explode("array")))
+}
+yield ???
+
+```
+
 ---
 
 ## Licence 
