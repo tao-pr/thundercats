@@ -188,4 +188,4 @@ yield ???
 
 ## Licence 
 
-TBD soon later
+Apache licence. Redistribution, modification, private use, sublicencing are permitted.
