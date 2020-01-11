@@ -123,6 +123,7 @@ for {
 
 ### Read and write Kafka
 
+```scala
 for {
   ...
   a <- Read.kafkaStream("topic", "server-address", 9092) // Stream
@@ -136,7 +137,7 @@ for {
 
   ...
 } yield ???s
-
+```
 
 ---
 
