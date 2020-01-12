@@ -202,6 +202,22 @@ yield ???
 
 ```
 
+### WithColumn equivalence
+
+To add new column into for comprehension, do following
+
+```scala
+for {
+  ...
+  a <- Read.csv("path")
+  b <- Read.parquet("path")
+  ...
+  z <- F.addColumn(a, "new_col", explode('old_col))
+  w <- F.addColumn(z, "new_col2", add_months('old_col_m, 4))
+}
+yield ???
+```
+
 ---
 
 ## Licence 
