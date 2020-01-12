@@ -361,6 +361,26 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
         )
     }
 
+    it("Add column"){
+      val dfOpt = for {
+        a <- F.addColumn(dfK1, "b", when('v1==="222", lit(null)).otherwise(sequence(lit(0), lit(5), lit(1))))
+      } yield a
+
+      dfOpt.get.columns shouldBe (Seq("key", "v1", "b"))
+      dfOpt.get.map{ row => (
+        row.getAs[String]("key"),
+        row.getAs[String]("v1"),
+        row.getAs[Seq[Int]]("b")
+      )}.collect.toSet shouldBe (
+          Set(
+            ("a", "111", Seq(0,1,2,3,4,5)),
+            ("b", "222", null),
+            ("c", "333", Seq(0,1,2,3,4,5)),
+            ("d", "444", Seq(0,1,2,3,4,5))
+          )
+        )
+    }
+
   }
 
   describe("Util test"){

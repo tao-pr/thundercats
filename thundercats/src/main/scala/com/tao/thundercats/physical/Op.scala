@@ -12,6 +12,7 @@ import org.apache.spark.sql.types._
 import java.io.File
 import sys.process._
 import scala.reflect.io.Directory
+import scala.util.Try
 
 import com.tao.thundercats.physical._
 
@@ -119,6 +120,14 @@ object Group {
 object Filter {
 
   def where(df: DataFrame, cond: Column): Option[DataFrame] = Some(df.where(cond))
+
+}
+
+object F {
+
+  def addColumn(df: DataFrame, colName: String, c: Column): Option[DataFrame] = {
+      Some(df.withColumn(colName, c))
+  }
 
 }
 
