@@ -20,15 +20,19 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 
+trait FeatureMonad[A] extends Monad[Seq[A]] {
+  def + (then: FeatureMonad[A]): FeatureMonad[A]
+}
+
 /**
  * Feature engineering pipeline creator (Monad as builder pattern)
  */
 object Feature {
 
-  def tfidf(col: String, output: String): Monad[Seq[Transformer]]
+  def padArray(cols: Seq[String], maxLength: Option[Int]=None, padValue: Double=0): FeatureMonad[Transformer] = ???
 
-  def padArray(cols: Seq[String], maxLength: Option[Int]=None): Monad[Seq[Transformer]]
-
-  def assembly(cols: Seq[String], output: String): Monad[Seq[Transformer]]
+  def assemblyVector(cols: Seq[String], output: String): FeatureMonad[Transformer] = ???
 
 }
+
+object TextFeature {}
