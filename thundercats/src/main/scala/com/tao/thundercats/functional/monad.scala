@@ -10,6 +10,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 trait Monad[A] {
-  def map(f: A => A): A = f(this)
+  def map(f: A => A): Monad[A]
   def flatMap(g: A => Monad[A]): Monad[A]
 }

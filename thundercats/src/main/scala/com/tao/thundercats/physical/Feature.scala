@@ -39,8 +39,10 @@ object Feature {
         case Recipe(ns) => Recipe(ns)
       }
 
-    override def map(f: A => A): A = Nil
-    override def flatMap(g: A => Monad[A]): Monad[A] = Nil
+    override def map(f: Seq[Transformer] => Seq[Transformer]): Monad[Seq[Transformer]] 
+      = Nil
+    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): Monad[Seq[Transformer]] 
+      = Nil
   }
 
   case class Recipe(ns: Seq[Transformer]) extends FeatureMonad[Transformer] {
@@ -50,10 +52,11 @@ object Feature {
         case Recipe(ns_) => Recipe(ns ++ ns_)
       }
 
-    override def map(f: A => A): A = Recipe(ns.map(f))
+    override def map(f: Seq[Transformer] => Seq[Transformer]): Monad[Seq[Transformer]] = 
+      Recipe(f(ns))
 
-    override def flatMap(g: A => Monad[A]): Monad[A] = {
-      ns.map(g).reduce(_ + _)
+    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): Monad[Seq[Transformer]] = {
+      g(ns)
     }
   }
 
