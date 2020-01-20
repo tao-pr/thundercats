@@ -118,16 +118,12 @@ object Group {
 }
 
 object Filter {
-
   def where(df: DataFrame, cond: Column): Option[DataFrame] = Some(df.where(cond))
-
 }
 
 object F {
-
   def addColumn(df: DataFrame, colName: String, c: Column): Option[DataFrame] = {
-      Some(df.withColumn(colName, c))
+    Some(df.withColumn(colName, c))
   }
-
 }
 
