@@ -39,10 +39,11 @@ object Feature {
         case Recipe(ns) => Recipe(ns)
       }
 
-    override def map(f: Seq[Transformer] => Seq[Transformer]): Monad[Seq[Transformer]] 
-      = Nil
-    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): Monad[Seq[Transformer]] 
-      = Nil
+    override def map(f: Seq[Transformer] => Seq[Transformer]): 
+      Monad[Seq[Transformer]] = Nil
+
+    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): 
+      Monad[Seq[Transformer]] = Nil                                                                      
   }
 
   case class Recipe(ns: Seq[Transformer]) extends FeatureMonad[Transformer] {
@@ -60,10 +61,33 @@ object Feature {
     }
   }
 
-  def padArray(cols: Seq[String], maxLength: Option[Int]=None, padValue: Double=0): FeatureMonad[Transformer] = ???
+  /**
+   * Make array column consistent on length
+   */
+  def padArray(
+    cols: Seq[String], 
+    maxLength: Option[Int]=None, 
+    padValue: Double=0): FeatureMonad[Transformer] = {
+    ???
+  }
 
-  def assemblyVector(cols: Seq[String], output: String): FeatureMonad[Transformer] = ???
+  /**
+   * Assembly multiple double or array of double columns into one array
+   */
+  def assemblyVector(
+    cols: Seq[String], 
+    output: String): FeatureMonad[Transformer] = {
+    ???
+  }
 
 }
 
-object TextFeature {}
+object TextFeature {
+
+  def encodeString(
+    cols: Seq[String],
+    nullFill: String=""): FeatureMonad[Transformer] = {
+    ???
+  }
+
+}
