@@ -9,6 +9,8 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
+import scala.util.{Try, Success, Failure}
+
 trait Monad[A] {
   def map(f: A => A): Monad[A]
   def flatMap(g: A => Monad[A]): Monad[A]
@@ -19,6 +21,13 @@ trait Monad[A] {
  */
 trait MayFail[A] extends Monad[A]
 
+object MayFail {
+  def apply[R](a: => R): MayFail[R] = Try { a } match {
+    case Success(b) => Ok(b)
+    case Failure(e) => Fail(e.getMessage.toString)
+  }
+}
+
 case class Fail[A](errorMessage: String) extends MayFail[A] {
   override def map(f: A => A): Monad[A] = this
   override def flatMap(g: A => Monad[A]): Monad[A] = this
@@ -27,7 +36,7 @@ case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
   override def map(f: A => A): Monad[A] = IgnorableFail(errorMessage, f(data))
   override def flatMap(g: A => Monad[A]): Monad[A] = this
 }
-case class Success[A](data: A) extends MayFail[A] {
-  override def map(f: A => A): Monad[A] = Success(f(data))
+case class Ok[A](data: A) extends MayFail[A] {
+  override def map(f: A => A): Monad[A] = Ok(f(data))
   override def flatMap(g: A => Monad[A]): Monad[A] = g(data)
 }
