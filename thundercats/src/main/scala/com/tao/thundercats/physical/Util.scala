@@ -11,6 +11,8 @@ import org.apache.spark.sql.types.{DataType, StructField}
 
 import scala.util.Try
 
+import com.tao.thundercats.functional._
+
 object Implicits {
 
   implicit class DataFrameOps(val df: DataFrame) extends AnyVal {
@@ -22,8 +24,8 @@ object Implicits {
     }
 
     // Bind
-    def >>(f: DataFrame => DataFrame): Option[DataFrame] = {
-      Try { Some(f(df)) } getOrElse(None)
+    def >>(f: DataFrame => DataFrame): MayFail[DataFrame] = MayFail {
+      f(df)
     }
 
   }
