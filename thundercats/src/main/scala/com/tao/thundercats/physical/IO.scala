@@ -10,6 +10,8 @@ import org.apache.spark.sql.functions._
 
 import scala.util.Try
 
+import com.tao.thundercats.functional._
+
 object ColumnEncoder {
   private [physical] trait Encoder 
   case object None extends Encoder
@@ -17,15 +19,15 @@ object ColumnEncoder {
 }
 
 object Screen {
-  def showDF(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+  def showDF(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
     title.map(t => Console.println(Console.CYAN + title + Console.RESET))
     Console.println(Console.CYAN)
     df.show(5, false)
     Console.println(Console.RESET)
-    Some(df)
+    df
   }
 
-  def showDFStream(df: DataFrame, title: Option[String]=None): Option[DataFrame] = {
+  def showDFStream(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
     title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
     val q = df.writeStream
@@ -34,34 +36,34 @@ object Screen {
       .start()
     q.awaitTermination(50)
     Console.println(Console.RESET)
-    Some(df)
+    df
   }
 }
 
 object Read {
   def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
-    Try {
+    MayFail {
       val df = spark
         .read
         .option("header", withHeader.toString)
         .option("inferSchema", "true")
         .option("delimiter", delimiter)
         .csv(path)  
-      Some(df)
-    } getOrElse(None)
+      df
+    }
   }
   
   def parquet(path: String) 
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
-    Try {
+    MayFail {
       val df = spark
         .read
         .parquet(path)
-      Some(df)
-    } getOrElse(None)
+      df
+    }
   }
 
   def kafkaStream(
@@ -70,9 +72,9 @@ object Read {
     port: Int = 9092, 
     offset: Option[Int] = None,
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
-    Try {
+    MayFail {
       val df = spark.readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
@@ -82,19 +84,19 @@ object Read {
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
       colEncoder match {
-        case ColumnEncoder.None => Some(df)
-        case ColumnEncoder.Avro(schema) => Some(df.select(
+        case ColumnEncoder.None => df
+        case ColumnEncoder.Avro(schema) => df.select(
           from_avro('key, schema).as("key"),
           from_avro('value, schema).as("value")
-        ))
+        )
       }
-    } getOrElse(None)
+    }
   }
 
   def kafka(topic: String, serverAddr: String, port: Int = 9092, colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
-    Try {
+    MayFail {
       val df = spark.read
         .format("kafka")
         .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
@@ -103,13 +105,13 @@ object Read {
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       
       colEncoder match {
-        case ColumnEncoder.None => Some(df)
-        case ColumnEncoder.Avro(schema) => Some(df.select(
+        case ColumnEncoder.None => df
+        case ColumnEncoder.Avro(schema) => df.select(
           from_avro('key, schema).as("key"),
           from_avro('value, schema).as("value")
-        ))
+        )
       }
-    } getOrElse(None)
+    }
   }
 }
 
@@ -129,24 +131,24 @@ object Write {
     path: String,
     partition: Partition = NoPartition,
     delimiter: String = ",")
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     import spark.implicits._
     preprocess(df, partition)
       .option("header", "true")
       .option("inferSchema", "true")
       .option("delimiter", delimiter)
       .csv(path)
-    Some(df)
+    df
   }
 
   def parquet(
     df: DataFrame, 
     path: String,
     partition: Partition = NoPartition)
-  (implicit spark: SparkSession): Option[DataFrame] = {
+  (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     import spark.implicits._
     preprocess(df, partition).parquet(path)
-    Some(df)
+    df
   }
 
   def kafkaStream(
@@ -156,7 +158,7 @@ object Write {
     port: Int = 9092,
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None,
     checkpointLocation: String = "./chk",
-    timeout: Option[Int] = None): Option[DataFrame] = {
+    timeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
 
     import df.sqlContext.implicits._
     val dfEncoded = colEncoder match {
@@ -180,7 +182,7 @@ object Write {
       case Some(t) => q.awaitTermination(t)
     }
     
-    Some(df)
+    df
   }
 
   def kafka(
@@ -188,7 +190,7 @@ object Write {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092,
-    colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None): Option[DataFrame] = {
+    colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None): MayFail[DataFrame] = MayFail {
     import df.sqlContext.implicits._
     val dfEncoded = colEncoder match {
       case ColumnEncoder.None => df
@@ -203,7 +205,7 @@ object Write {
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
       .option("topic", topic)
       .save()
-    Some(df)
+    df
   }
 
   def streamToFile(
@@ -212,7 +214,7 @@ object Write {
     path: String,
     partition: Partition = NoPartition,
     checkpointLocation: String = "./chk",
-    timeout: Option[Int] = None): Option[DataFrame] = {
+    timeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
     assert(Set("parquet", "csv", "orc", "json") contains(fileType))
 
     val stream = df.writeStream
@@ -236,6 +238,6 @@ object Write {
       case None => q.awaitTermination()
       case Some(t) => q.awaitTermination(t)
     }
-    Some(df)
+    df
   }
 }
