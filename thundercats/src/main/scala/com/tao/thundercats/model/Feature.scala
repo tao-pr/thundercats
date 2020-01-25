@@ -20,4 +20,14 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 
-object Feature {}
+object Feature {
+  def evaluate(featureSet: Set[String], pipe: Pipeline, df: DataFrame): MayFail[DataFrame] = ???
+}
+
+object Pipe {
+  def preset(presetName: String): MayFail[Pipeline] = ???
+  def build: MayFail[Pipeline] = ???
+  def join(pipes: *Pipeline): MayFail[Pipeline] = ???
+  def load(filePath: String): MayFail[Pipeline] = ???
+  def save(filePath: String, pipe: Pipeline): MayFail[Pipeline] = ???
+}
