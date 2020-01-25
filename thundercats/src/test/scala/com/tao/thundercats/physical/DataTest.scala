@@ -13,6 +13,7 @@ import scala.reflect.io.Directory
 
 import com.tao.thundercats.base.{SparkTestInstance, SparkStreamTestInstance}
 import com.tao.thundercats.physical._
+import com.tao.thundercats.functional._
 
 import org.scalatest.{Filter => _, _}
 import Matchers._
@@ -98,6 +99,15 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
     }
 
+    it("fails to read csv which does not exist"){
+      val dfReadOpt = for { 
+        c <- Read.csv("./not-found.csv")
+      } yield c
+
+      dfReadOpt.getError.map(_.contains("Path does not exist: file:/Users/pataoengineer/code/thundercats/not-found.csv;")).getOrElse("") shouldBe true
+      dfReadOpt.isFailing shouldBe true
+    }
+
     it("write and read parquet"){
       val dfReadOpt = for { 
         b <- Write.parquet(df, tempParquet)
@@ -108,15 +118,6 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
 
       dfRead.count shouldBe (df.count)
       dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
-    }
-
-    it("fails to read kafka"){
-      val dfReadOpt = for {
-        b <- Read.kafka("not-found-topic", s"https://1.1.10.1")
-      } yield b
-
-      dfReadOpt.isFailing shouldBe true
-      dfReadOpt.getError.map(println) // TAODEBUG
     }
 
     it("write and read Kafka (batch)"){
@@ -137,7 +138,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
         _ <- Write.kafka(dfK, topic2, serverAddr)
         b <- Read.kafkaStream(topic2, serverAddr)
         _ <- Screen.showDFStream(b, Some("Initial stream messages"))
-      } yield true
+      } yield b
 
       // Read from one topic and write to another
       val dff = for {
@@ -302,7 +303,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     it("Broadcast join, multiple keys"){ // As left join
       import dfK1.sqlContext.implicits._
       val dfOpt = for {
-        b <- Some(dfK1.withColumnRenamed("v1", "value"))
+        b <- Ok(dfK1.withColumnRenamed("v1", "value"))
         a <- Join.broadcast(b, dfK3, Seq("key", "value"), "b" :: Nil)
       } yield a
 
