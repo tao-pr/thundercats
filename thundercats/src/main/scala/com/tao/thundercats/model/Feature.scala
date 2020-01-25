@@ -1,4 +1,4 @@
-package com.tao.thundercats.physical
+package com.tao.thundercats.model
 
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
@@ -60,34 +60,4 @@ object Feature {
       g(ns)
     }
   }
-
-  /**
-   * Make array column consistent on length
-   */
-  def padArray(
-    cols: Seq[String], 
-    maxLength: Option[Int]=None, 
-    padValue: Double=0): FeatureMonad[Transformer] = {
-    ???
-  }
-
-  /**
-   * Assembly multiple double or array of double columns into one array
-   */
-  def assemblyVector(
-    cols: Seq[String], 
-    output: String): FeatureMonad[Transformer] = {
-    ???
-  }
-
-}
-
-object TextFeature {
-
-  def encodeString(
-    cols: Seq[String],
-    nullFill: String=""): FeatureMonad[Transformer] = {
-    ???
-  }
-
 }

@@ -15,6 +15,7 @@ import scala.reflect.io.Directory
 import scala.util.Try
 
 import com.tao.thundercats.physical._
+import com.tao.thundercats.functional._
 
 object Join {
 
@@ -22,16 +23,16 @@ object Join {
   case class On(cols: Seq[String]) extends Joiner
   case class With(w: Column) extends Joiner
 
-  private def join(strategy: String)(df1: DataFrame, df2: DataFrame, on: Joiner): Option[DataFrame] = on match {
-    case On(on) => Some(df1.join(df2, on, strategy))
-    case With(w) => Some(df1.join(df2, w, strategy))
+  private def join(strategy: String)(df1: DataFrame, df2: DataFrame, on: Joiner): MayFail[DataFrame] = on match {
+    case On(on) => MayFail(df1.join(df2, on, strategy))
+    case With(w) => MayFail(df1.join(df2, w, strategy))
   }
 
-  def left(df1: DataFrame, df2: DataFrame, on: Joiner): Option[DataFrame] = join("left")(df1, df2, on)
+  def left(df1: DataFrame, df2: DataFrame, on: Joiner): MayFail[DataFrame] = join("left")(df1, df2, on)
 
-  def inner(df1: DataFrame, df2: DataFrame, on: Joiner): Option[DataFrame] = join("inner")(df1, df2, on)
+  def inner(df1: DataFrame, df2: DataFrame, on: Joiner): MayFail[DataFrame] = join("inner")(df1, df2, on)
 
-  def outer(df1: DataFrame, df2: DataFrame, on: Joiner): Option[DataFrame] = join("outer")(df1, df2, on)
+  def outer(df1: DataFrame, df2: DataFrame, on: Joiner): MayFail[DataFrame] = join("outer")(df1, df2, on)
 
   /**
    * Broadcast the right tiny dataframe, join with left join
@@ -41,7 +42,7 @@ object Join {
     dfTiny: DataFrame, 
     on: Seq[String], 
     rightColumns: Seq[String])
-  :Option[DataFrame] = {
+  :MayFail[DataFrame] = MayFail {
     
     import Implicits._
     import dfBig.sqlContext.implicits._
@@ -90,7 +91,7 @@ object Join {
 
     val joinedSchema = StructType(dfBig.schema.toList ++ right.schema.toList.drop(on.size))
 
-    Some(new org.apache.spark.sql.SQLContext(sc).createDataFrame(rdd, joinedSchema))
+    new org.apache.spark.sql.SQLContext(sc).createDataFrame(rdd, joinedSchema)
   }
 
 }
@@ -107,23 +108,23 @@ object Group {
     }
   }
 
-  def agg(df: DataFrame, by: Seq[Column], agg: Strategy): Option[DataFrame] = {
+  def agg(df: DataFrame, by: Seq[Column], agg: Strategy): MayFail[DataFrame] = MayFail {
     val g = df.groupBy(by:_*)
-    Some(agg match {
+    agg match {
       case Map(m) => g.agg(m)
       case Agg(f) => g.agg(f.head, f.tail:_*)
-    })
+    }
   }
 
 }
 
 object Filter {
-  def where(df: DataFrame, cond: Column): Option[DataFrame] = Some(df.where(cond))
+  def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.where(cond))
 }
 
 object F {
-  def addColumn(df: DataFrame, colName: String, c: Column): Option[DataFrame] = {
-    Some(df.withColumn(colName, c))
+  def addColumn(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
+    df.withColumn(colName, c)
   }
 }
 
