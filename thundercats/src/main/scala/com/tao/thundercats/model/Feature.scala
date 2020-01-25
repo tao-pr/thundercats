@@ -20,44 +20,4 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 
-/**
- * State monad holding sequence of feature transformers [[A]]
- */
-trait FeatureMonad[A] extends Monad[Seq[A]] {
-  def + (then: FeatureMonad[A]): FeatureMonad[A]
-}
-
-/**
- * Feature engineering pipeline creator (Monad as builder pattern)
- */
-object Feature {
-
-  case object Nil extends FeatureMonad[Transformer] {
-    override def + (then: FeatureMonad[Transformer]): FeatureMonad[Transformer] =
-      then match {
-        case Nil => Nil
-        case Recipe(ns) => Recipe(ns)
-      }
-
-    override def map(f: Seq[Transformer] => Seq[Transformer]): 
-      Monad[Seq[Transformer]] = Nil
-
-    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): 
-      Monad[Seq[Transformer]] = Nil                                                                      
-  }
-
-  case class Recipe(ns: Seq[Transformer]) extends FeatureMonad[Transformer] {
-    override def + (then: FeatureMonad[Transformer]): FeatureMonad[Transformer] =
-      then match {
-        case Nil => this
-        case Recipe(ns_) => Recipe(ns ++ ns_)
-      }
-
-    override def map(f: Seq[Transformer] => Seq[Transformer]): Monad[Seq[Transformer]] = 
-      Recipe(f(ns))
-
-    override def flatMap(g: Seq[Transformer] => Monad[Seq[Transformer]]): Monad[Seq[Transformer]] = {
-      g(ns)
-    }
-  }
-}
+object Feature {}

@@ -11,16 +11,13 @@ import org.apache.spark.sql.types._
 
 import scala.util.{Try, Success, Failure}
 
-trait Monad[A] {
-  def map(f: A => A): Monad[A]
-  def flatMap(g: A => Monad[A]): Monad[A]
-}
-
 /**
  * Alternative to [[Option]]
  * but carrying error message in case of failure
  */
-trait MayFail[A] extends Monad[A] {
+trait MayFail[A] {
+  def map(f: A => A): MayFail[A]
+  def flatMap(g: A => MayFail[A]): MayFail[A]
   def get: A
   def getError: Option[String]
   def isFailing: Boolean
@@ -34,22 +31,22 @@ object MayFail {
 }
 
 case class Fail[A](errorMessage: String) extends MayFail[A] {
-  override def map(f: A => A): Monad[A] = this
-  override def flatMap(g: A => Monad[A]): Monad[A] = this
+  override def map(f: A => A): MayFail[A] = this
+  override def flatMap(g: A => MayFail[A]): MayFail[A] = this
   override def get: A = throw new java.util.NoSuchElementException("No value resolved")
   override def isFailing = true
   override def getError: Option[String] = Some(errorMessage)
 }
 case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
-  override def map(f: A => A): Monad[A] = IgnorableFail(errorMessage, f(data))
-  override def flatMap(g: A => Monad[A]): Monad[A] = this
+  override def map(f: A => A): MayFail[A] = IgnorableFail(errorMessage, f(data))
+  override def flatMap(g: A => MayFail[A]): MayFail[A] = this
   override def get: A = data
   override def isFailing = true
   override def getError: Option[String] = Some(errorMessage)
 }
 case class Ok[A](data: A) extends MayFail[A] {
-  override def map(f: A => A): Monad[A] = Ok(f(data))
-  override def flatMap(g: A => Monad[A]): Monad[A] = g(data)
+  override def map(f: A => A): MayFail[A] = Ok(f(data))
+  override def flatMap(g: A => MayFail[A]): MayFail[A] = g(data)
   override def get: A = data
   override def isFailing = false
   override def getError: Option[String] = None
