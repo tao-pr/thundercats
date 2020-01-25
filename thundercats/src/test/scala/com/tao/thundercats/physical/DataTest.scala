@@ -110,6 +110,15 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       dfRead.map(_.getAs[Int]("i")).collect shouldBe (Seq(1,2,3))
     }
 
+    it("fails to read kafka"){
+      val dfReadOpt = for {
+        b <- Read.kafka("not-found-topic", s"https://1.1.10.1")
+      } yield b
+
+      dfReadOpt.isFailing shouldBe true
+      dfReadOpt.getError.map(println) // TAODEBUG
+    }
+
     it("write and read Kafka (batch)"){
       val dfReadOpt = for { 
         b <- Write.kafka(dfK, topic, serverAddr)
