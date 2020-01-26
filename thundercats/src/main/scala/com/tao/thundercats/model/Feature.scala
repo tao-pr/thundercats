@@ -20,19 +20,39 @@ import scala.util.Try
 
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
+import com.tao.thundercats.physical.Implicits._
 
 object Feature {
 
+  /** 
+   * DataFrame with tagged columns
+   */
   case class TaggedDataFrame(
     df: DataFrame,
     featureCols: Set[Column], 
     targetCol: Column, 
     labelCol: Column)
 
-  def fromDF(df: DataFrame, targetCol: Column, labelCol: Column): MayFail[TaggedDataFrame] = {
+  /**
+   * All non-labeled numerical columns, or array of numerical columns 
+   * will become features
+   */
+  def fromDF(df: DataFrame, targetCol: String, labelCol: String): MayFail[TaggedDataFrame] = MayFail {
     val featureCols = df.columns.toSet -- Set(targetCol, labelCol)
-
-    ???
+    val schemaMap = df.schemaMap
+    val numFeatureCols = featureCols
+      .map{ c => schemaMap(c) match {
+        case IntegerType => Some(col(c))
+        case DoubleType => Some(col(c))
+        case FloatType => Some(col(c))
+        case ArrayType(IntegerType,_) => Some(col(c))
+        case ArrayType(DoubleType,_) => Some(col(c))
+        case ArrayType(FloatType,_) => Some(col(c))
+        case _ => None
+      }}
+      .collect{ case Some(a) => a }
+    
+    TaggedDataFrame(df, numFeatureCols, col(targetCol), col(labelCol))
   }
 
   def evaluate(pipe: Pipeline, taggedDf: TaggedDataFrame): MayFail[TaggedDataFrame] = ???
