@@ -11,7 +11,7 @@ import org.apache.spark.sql.types._
 
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.{Pipeline, Estimator}
 
 import java.io.File
 import sys.process._
@@ -54,12 +54,12 @@ object Feature {
     TaggedDataFrame(df, numFeatureCols, col(targetCol), col(labelCol))
   }
 
-  def evaluate(pipe: Pipeline, taggedDf: TaggedDataFrame): MayFail[TaggedDataFrame] = ???
-  def selection(pipe: Pipeline, taggedDf: TaggedDataFrame, top: Int=10): MayFail[TaggedDataFrame] = ???
+  def evaluate(pipe: Pipeline, taggedDf: TaggedDataFrame, output: AnyVal): MayFail[TaggedDataFrame] = ???
+  def selection(pipe: Pipeline, taggedDf: TaggedDataFrame, top: Int=10, metric: AnyVal): MayFail[TaggedDataFrame] = ???
 }
 
 object Pipe {
-  def join(pipes: Pipeline*): MayFail[Pipeline] = {
+  def join(pipes: Pipeline*): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(pipes.toArray)
   }
 
@@ -70,5 +70,13 @@ object Pipe {
   def save(filePath: String, pipe: Pipeline): MayFail[Pipeline] = MayFail {
     pipe.save(filePath)
     pipe
+  }
+
+  def getEstimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
+    pipe.getStages.collect{ case p: Estimator[_] => new Pipeline().setStages(Array(p)) }.last
+  }
+
+  def withoutEstimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
+    new Pipeline().setStages(pipe.getStages.collect{ case t: Transformer => t })
   }
 }
