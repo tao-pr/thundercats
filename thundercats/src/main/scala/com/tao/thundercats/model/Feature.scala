@@ -49,8 +49,7 @@ object Feature {
         case ArrayType(DoubleType,_) => Some(col(c))
         case ArrayType(FloatType,_) => Some(col(c))
         case _ => None
-      }}
-      .collect{ case Some(a) => a }
+      }}.flatten
     
     TaggedDataFrame(df, numFeatureCols, col(targetCol), col(labelCol))
   }
@@ -60,7 +59,16 @@ object Feature {
 }
 
 object Pipe {
-  def join(pipes: Pipeline*): MayFail[Pipeline] = ???
-  def load(filePath: String): MayFail[Pipeline] = ???
-  def save(filePath: String, pipe: Pipeline): MayFail[Pipeline] = ???
+  def join(pipes: Pipeline*): MayFail[Pipeline] = {
+    new Pipeline().setStages(pipes.toArray)
+  }
+
+  def load(filePath: String): MayFail[Pipeline] = MayFail {
+    Pipeline.load(filePath)
+  }
+
+  def save(filePath: String, pipe: Pipeline): MayFail[Pipeline] = MayFail {
+    pipe.save(filePath)
+    pipe
+  }
 }
