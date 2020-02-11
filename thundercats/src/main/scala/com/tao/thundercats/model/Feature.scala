@@ -79,4 +79,6 @@ object Pipe {
   def withoutEstimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(pipe.getStages.collect{ case t: Transformer => t })
   }
+
+  def add(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail { ??? }
 }
