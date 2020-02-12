@@ -126,5 +126,21 @@ object F {
   def addColumn(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
     df.withColumn(colName, c)
   }
+
+  def lift(df: DataFrame): MayFail[DataFrame] = MayFail { df }
+}
+
+object Optimise {
+  def snapshot(df: DataFrame, tempDir: String): MayFail[DataFrame] = {
+    val tempFile = s"$tempDir/${java.util.UUID.randomUUID}.parquet"
+    for {
+      _   <- Write.Parquet(df, tempFile)
+      df_ <- Read.Parquet(tempFile)
+    } return df_
+  }
+
+  def clearTempDir(tempDir: String): MayFail[]
+
+  def materialise(df: DataFrame): MayFail[DataFrame] = ???
 }
 
