@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
-import org.apache.spark.ml.Transformer
+import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator}
 
 import java.io.File
@@ -59,15 +59,18 @@ object Feature {
 }
 
 object Pipe {
+
+  // TAOTODO: define composite type : Pipeline v PipelineModel
+
   def join(pipes: Pipeline*): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(pipes.toArray)
   }
 
-  def load(filePath: String): MayFail[Pipeline] = MayFail {
-    Pipeline.load(filePath)
+  def load(filePath: String): MayFail[PipelineModel] = MayFail {
+    PipelineModel.load(filePath)
   }
 
-  def save(filePath: String, pipe: Pipeline): MayFail[Pipeline] = MayFail {
+  def save(filePath: String, pipe: PipelineModel): MayFail[PipelineModel] = MayFail {
     pipe.save(filePath)
     pipe
   }
@@ -80,5 +83,15 @@ object Pipe {
     new Pipeline().setStages(pipe.getStages.collect{ case t: Transformer => t })
   }
 
-  def add(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail { ??? }
+  def fitWith(df: DataFrame, pipe: Pipeline): MayFail[PipelineModel] = MayFail {
+    pipe.fit(df)
+  }
+
+  def add(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail {
+    new Pipeline().setStages(pipe.getStages :+ t)
+  }
+
+  def prepend(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail {
+    new Pipeline().setStages(t +: pipe.getStages)
+  }
 }

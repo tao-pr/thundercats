@@ -50,7 +50,7 @@ object Read {
         .option("header", withHeader.toString)
         .option("inferSchema", "true")
         .option("delimiter", delimiter)
-        .csv(path)  
+        .csv(path)
       df
     }
   }
