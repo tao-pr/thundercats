@@ -12,6 +12,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator}
+import org.apache.spark.ml.tuning.CrossValidatorModel
 
 import java.io.File
 import sys.process._
@@ -83,8 +84,11 @@ object Pipe {
     new Pipeline().setStages(pipe.getStages.collect{ case t: Transformer => t })
   }
 
-  def fitWith(df: DataFrame, pipe: Pipeline): MayFail[PipelineModel] = MayFail {
-    pipe.fit(df)
+  def fitWith(df: DataFrame, pipe: Pipeline, crossValidator: Option[CV]=None): MayFail[PipelineModel] = MayFail {
+    crossValidator match {
+      case None => pipe.fit(df)
+      case Some(cv) => cv.run(df, pipe)
+    }
   }
 
   def add(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail {

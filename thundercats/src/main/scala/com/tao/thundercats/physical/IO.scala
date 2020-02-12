@@ -113,6 +113,9 @@ object Read {
       }
     }
   }
+
+  def rabbit: MayFail[DataFrame] = ???
+  def mongo: MayFail[DataFrame] = ???
 }
 
 object Write {
