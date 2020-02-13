@@ -131,16 +131,20 @@ object F {
 }
 
 object Optimise {
-  def snapshot(df: DataFrame, tempDir: String): MayFail[DataFrame] = {
+  def snapshot(df: DataFrame, tempDir: String)
+  (implicit spark: SparkSession): MayFail[DataFrame] = {
     val tempFile = s"$tempDir/${java.util.UUID.randomUUID}.parquet"
     for {
-      _   <- Write.Parquet(df, tempFile)
-      df_ <- Read.Parquet(tempFile)
-    } return df_
+      df$ <- F.lift(df)
+      _   <- Write.parquet(df$, tempFile)
+      df_ <- Read.parquet(tempFile)
+    } yield df_
   }
 
-  def clearTempDir(tempDir: String): MayFail[]
-
-  def materialise(df: DataFrame): MayFail[DataFrame] = ???
+  def materialise(df: DataFrame): MayFail[DataFrame] = MayFail {
+    df.cache
+    df.count
+    df
+  }
 }
 

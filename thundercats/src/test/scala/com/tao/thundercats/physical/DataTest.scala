@@ -436,6 +436,17 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     }
   }
 
+  describe("Optimisation test"){
+
+    import spark.implicits._
+    import Implicits._
+
+    it("snapshot a dataframe"){
+      
+    }
+
+  }
+
   describe("Feature engineering test"){
 
     import spark.implicits._
