@@ -61,8 +61,6 @@ object Feature {
 
 object Pipe {
 
-  // TAOTODO: define composite type : Pipeline v PipelineModel
-
   def join(pipes: Pipeline*): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(pipes.toArray)
   }
