@@ -441,8 +441,21 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     import spark.implicits._
     import Implicits._
 
+    lazy val df = List(
+      A(1, Some("aa")),
+      A(2, Some("bb")),
+      A(3, None),
+      A(4, None),
+      A(5, Some("cc")),
+      A(6, Some("")),
+      A(7, Some("")),
+      A(8, None),
+      A(9, Some("dd"))
+    ).toDS
+
     it("snapshot a dataframe"){
-      
+      val snap = Optimise.snapshot(df, "./out_parquet").get
+      snap.where('s.isNotNull).select("s").collect shouldBe List("aa","bb","cc","dd")
     }
 
   }
