@@ -451,7 +451,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       A(7, Some("")),
       A(8, None),
       A(9, Some("dd"))
-    ).toDS
+    ).toDS.toDF
 
     it("snapshot a dataframe"){
       val snap = Optimise.snapshot(df, "./out_parquet").get

@@ -135,8 +135,7 @@ object Optimise {
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     val tempFile = s"$tempDir/${java.util.UUID.randomUUID}.parquet"
     for {
-      df$ <- F.lift(df)
-      _   <- Write.parquet(df$, tempFile)
+      _   <- Write.parquet(df, tempFile)
       df_ <- Read.parquet(tempFile)
     } yield df_
   }
