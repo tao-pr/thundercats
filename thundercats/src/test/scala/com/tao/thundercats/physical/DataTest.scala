@@ -434,6 +434,24 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
         (9, "dd", "0")
       ))
     }
+
+    it("Filter by na"){
+      import spark.implicits._
+      val dfOpt = for {
+        a <- Filter.na(dfA, Seq("i", "s"))
+      } yield a
+
+      dfOpt.get.map{_.getAs[String]("s")}.collect shouldBe List("aa","bb","cc","","","dd")
+    }
+
+    it("Filter by range"){
+      import spark.implicits._
+      val dfOpt = for {
+        a <- Filter.byRange(dfA, "i", (3,5))
+      } yield a
+      
+      dfOpt.get.map{_.getAs[Int]("i")}.collect shouldBe List(3,4,5)
+    }
   }
 
   describe("Optimisation test"){
