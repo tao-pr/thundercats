@@ -449,7 +449,7 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       val dfOpt = for {
         a <- Filter.byRange(dfA, "i", (3,5))
       } yield a
-      
+
       dfOpt.get.map{_.getAs[Int]("i")}.collect shouldBe List(3,4,5)
     }
   }
@@ -481,6 +481,11 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       snap shouldBe List("aa","bb","cc","dd")
     }
 
+    it("materialise a dataframe"){
+      val dfFinal = Optimise.materialise(df.toDF).get
+      dfFinal.schema.toList shouldBe (df.schema.toList)
+    }
+
     it("PRE: cleanup checkpoint directories"){
       IO.cleanupCheckpointDirs()
     }
@@ -493,6 +498,13 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
     import Implicits._
 
     
+  }
+
+  describe("Modeling test"){
+
+    import spark.implicits._
+    import Implicits._
+
   }
 
 }
