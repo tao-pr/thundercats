@@ -451,11 +451,20 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       A(7, Some("")),
       A(8, None),
       A(9, Some("dd"))
-    ).toDS.toDF
+    ).toDS
 
     it("snapshot a dataframe"){
-      val snap = Optimise.snapshot(df, "./out_parquet").get
-      snap.where('s.isNotNull).select("s").collect shouldBe List("aa","bb","cc","dd")
+      val snap = Optimise.snapshot(df.toDF, "./out_parquet")
+        .get
+        .where('s.isNotNull && 's.notEqual(""))
+        .map(_.getAs[String]("s"))
+        .collect
+
+      snap shouldBe List("aa","bb","cc","dd")
+    }
+
+    it("PRE: cleanup checkpoint directories"){
+      IO.cleanupCheckpointDirs()
     }
 
   }
