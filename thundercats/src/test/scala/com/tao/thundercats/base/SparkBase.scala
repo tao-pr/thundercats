@@ -24,6 +24,7 @@ trait SparkTestInstance extends FunSpec with BeforeAndAfterAll {
 
   override def afterAll() {
     try {
+      println(Console.MAGENTA + "Tearing down the suite" + Console.RESET)
       SparkSession.clearActiveSession()
       if (spark != null) {
         Console.println("Stopping Spark instance")
