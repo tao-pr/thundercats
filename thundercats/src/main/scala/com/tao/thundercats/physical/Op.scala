@@ -120,6 +120,22 @@ object Group {
 
 object Filter {
   def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.where(cond))
+  
+  /**
+   * Remove nulls
+   */
+  def na(df: DataFrame, cols: Seq[String]): MayFail[DataFrame] = MayFail{
+    val cond = cols.map(c => col(c).isNull).reduce(_ || _)
+    df.where(not(cond))
+  }
+
+  /**
+   * Remove out-of-bound values
+   */
+  def byRange[T](df: DataFrame, column: String, bound: (T,T)): MayFail[DataFrame] = MayFail {
+    val lb, ub = bound
+    df.where(col(column) >= lb && col(column) <= ub)
+  }
 }
 
 object F {
@@ -144,6 +160,11 @@ object Optimise {
     df.cache
     df.count
     df
+  }
+
+  def repartition(df: DataFrame, num: Int) = MayFail {
+    if (num<=1) df.coalesce(1)
+    else df.repartition(num)
   }
 }
 
