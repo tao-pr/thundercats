@@ -132,8 +132,8 @@ object Filter {
   /**
    * Remove out-of-bound values
    */
-  def byRange[T](df: DataFrame, column: String, bound: (T,T)): MayFail[DataFrame] = MayFail {
-    val lb, ub = bound
+  def byRange[T](df: DataFrame, column: String, bound: Tuple2[T,T]): MayFail[DataFrame] = MayFail {
+    val (lb, ub) = bound
     df.where(col(column) >= lb && col(column) <= ub)
   }
 }
