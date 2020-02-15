@@ -6,6 +6,11 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.ml.regression._
+import org.apache.spark.ml.feature._
+import org.apache.spark.ml.{Transformer, PipelineModel}
+import org.apache.spark.ml.{Pipeline, Estimator}
+import org.apache.spark.ml.clustering.KMeans
 
 import java.io.File
 import sys.process._
@@ -14,6 +19,7 @@ import scala.reflect.io.Directory
 import com.tao.thundercats.base.{SparkTestInstance, SparkStreamTestInstance}
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
+import com.tao.thundercats.model._
 
 import org.scalatest.{Filter => _, _}
 import Matchers._
@@ -47,10 +53,12 @@ case class A(i: Int, s: Option[String])
 case class K(key: String, value: String)
 case class Kx(key: String, value: String, b: Int)
 
-class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
+class DataSuite extends SparkStreamTestInstance with Matchers {
+
+  import spark.implicits._
 
   describe("Basic IO"){
-    import spark.implicits._
+
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
     lazy val tempParquet = File.createTempFile("tc-test-", ".parquet").getAbsolutePath
 
@@ -490,6 +498,40 @@ class DataSuite extends FunSpec with Matchers with SparkStreamTestInstance {
       IO.cleanupCheckpointDirs()
     }
 
+  }
+
+  describe("Pipe test"){
+
+    import spark.implicits._
+    import Implicits._
+
+    lazy val pipeComplete = new Pipeline().setStages(Array(
+      new HashingTF().setInputCol("aa"),
+      new VectorAssembler().setInputCols(Array("aa","bb","cc")).setOutputCol("vv"),
+      new KMeans().setFeaturesCol("vv")
+    ))
+
+    it("add a stage, finds estimator"){
+      val pipe = for {
+        p <- Pipe.add(pipeComplete, new PCA())
+        p_ <- Pipe.estimator(p)
+      } yield p_
+
+      val pipeStages = pipe.get.getStages.map(_.getClass.getName)
+      pipeStages.length shouldBe 1 // Only the last is taken, regardless of multitude
+      pipeStages shouldBe List("org.apache.spark.ml.feature.PCA")
+    }
+
+    it("take only transformers"){
+      val pipe = for {
+        p <- Pipe.withoutEstimator(pipeComplete)
+      } yield p
+
+      val pipeStages = pipe.get.getStages.map(_.getClass.getName)
+      pipeStages shouldBe List(
+        "org.apache.spark.ml.feature.HashingTF", 
+        "org.apache.spark.ml.feature.VectorAssembler")
+    }
   }
 
   describe("Feature engineering test"){

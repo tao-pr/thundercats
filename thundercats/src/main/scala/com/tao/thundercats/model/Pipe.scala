@@ -11,7 +11,7 @@ import org.apache.spark.sql.types._
 
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
-import org.apache.spark.ml.{Pipeline, Estimator}
+import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 
 import java.io.File
@@ -38,7 +38,7 @@ object Pipe {
     pipe
   }
 
-  def getEstimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
+  def estimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
     pipe.getStages.collect{ case p: Estimator[_] => new Pipeline().setStages(Array(p)) }.last
   }
 
@@ -53,11 +53,11 @@ object Pipe {
     }
   }
 
-  def add(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail {
-    new Pipeline().setStages(pipe.getStages :+ t)
+  def add(pipe: Pipeline, s: PipelineStage): MayFail[Pipeline] = MayFail {
+    new Pipeline().setStages(pipe.getStages :+ s)
   }
 
-  def prepend(pipe: Pipeline, t: Transformer): MayFail[Pipeline] = MayFail {
-    new Pipeline().setStages(t +: pipe.getStages)
+  def prepend(pipe: Pipeline, s: PipelineStage): MayFail[Pipeline] = MayFail {
+    new Pipeline().setStages(s +: pipe.getStages)
   }
 }
