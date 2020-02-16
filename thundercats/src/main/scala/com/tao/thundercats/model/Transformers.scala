@@ -40,13 +40,13 @@ extends Normalizer {
   override def copy(extra: ParamMap): this.type = defaultCopy(extra)
 
   override def transformSchema(schema: StructType) = 
-    schema.add($(outputCol), ArrayType(DoubleType, true), true)
+    schema.add($(outputCol), DoubleType, true)
 
-  // def setInputCol(value: String): this.type = set(inputCol, value)
-  // def setOutputCol(value: String): this.type = set(outputCol, value)
+  override def setInputCol(value: String): this.type = set(inputCol, value)
+  override def setOutputCol(value: String): this.type = set(outputCol, value)
 
   override def transform(dfRaw: Dataset[_]): Dataset[Row] = {
-    transformSchema(df.schema, logging=true)
+    transformSchema(dfRaw.schema, logging=true)
     // Disable normalisation by set [[p]] to zero or negative
     val df = if ($(p)<=0) dfRaw.withColumn($(outputCol), col($(inputCol))) else super.transform(dfRaw)
     if ($(logScale)) 
