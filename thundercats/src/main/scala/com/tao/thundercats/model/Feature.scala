@@ -9,10 +9,11 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
-import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
+import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
+import org.apache.spark.ml.param._
 
 import java.io.File
 import sys.process._
@@ -39,7 +40,19 @@ object Feature {
     new Pipeline().setStages(blocks.toArray)
   }
 
-  def scaleNumbers(df: DataFrame, scale: Column=lit(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = ???
+  def scaleNumbers(df: DataFrame, byNorms: Option[Double]=Some(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+    val blocks = df
+      .schema
+      .toList.collect{
+        case StructField(colName,DoubleType,_,_) if !ignoreColumns.contains(colName) =>
+          new Scaler().setInputCol(colName)
+                      .setOutputCol(colName)
+                      .setLogScale(logScale)
+                      .setP(byNorms.getOrElse(0.0))
+      }
+
+    new Pipeline().setStages(blocks.toArray)
+  }
 }
 
 
