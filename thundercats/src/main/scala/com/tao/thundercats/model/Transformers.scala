@@ -1,19 +1,19 @@
 package com.tao.thundercats.model
 
-import org.apache.spark.sql.{Dataset, DataFrame}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.{Column,Row}
-import org.apache.spark.sql.catalyst.encoders._
-import org.apache.spark.sql.{Encoders, Encoder}
-import org.apache.spark.sql.avro._
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-
-import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
-import org.apache.spark.ml.{Transformer, PipelineModel}
-import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
-import org.apache.spark.ml.tuning.CrossValidatorModel
+import org.apache.spark.ml.feature._
+import org.apache.spark.ml.{Estimator, Model, Transformer}
+import org.apache.spark.ml.attribute.{Attribute, NominalAttribute}
 import org.apache.spark.ml.param._
+import org.apache.spark.ml.param.shared.{HasHandleInvalid, HasInputCol, HasOutputCol}
+import org.apache.spark.ml.util._
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.functions.{log => loge, _}
+import org.apache.spark.sql.types._
+import org.apache.spark.ml.util.MLWriter
+import org.apache.spark.SparkException
+import scala.reflect.runtime.universe._
+import scala.reflect.ClassTag
+import org.apache.hadoop.fs.Path
 
 import java.io.File
 import sys.process._
@@ -28,19 +28,30 @@ import com.tao.thundercats.physical.Implicits._
  * Scale numerical columns 
  */
 class Scaler(override val uid: String = Identifiable.randomUID("Scaler"))
-extends Transformer
-with HasInputColExposed
-with HasOutputColExposed {
+extends Normalizer {
+
+  final def logScale: Param[Boolean] = new Param[Boolean](this, "logScale", "Boolean indicating whether log scale is used.")
+
+  setDefault(logScale -> false)
+
+  final def getLogScale: Boolean = $(logScale)
+  final def setLogScale(value: Boolean) = set(logScale, value)
+
   override def copy(extra: ParamMap): this.type = defaultCopy(extra)
 
   override def transformSchema(schema: StructType) = 
     schema.add($(outputCol), ArrayType(DoubleType, true), true)
 
-  def setInputCol(value: String): this.type = set(inputCol, value)
-  def setOutputCol(value: String): this.type = set(outputCol, value)
+  // def setInputCol(value: String): this.type = set(inputCol, value)
+  // def setOutputCol(value: String): this.type = set(outputCol, value)
 
-  override def transform(df: Dataset[_]): Dataset[Row] = {
+  override def transform(dfRaw: Dataset[_]): Dataset[Row] = {
     transformSchema(df.schema, logging=true)
-    df.withColumn($(outputCol), )
+    // Disable normalisation by set [[p]] to zero or negative
+    val df = if ($(p)<=0) dfRaw.withColumn($(outputCol), col($(inputCol))) else super.transform(dfRaw)
+    if ($(logScale)) 
+      df.withColumn($(outputCol), loge(col($(outputCol))))
+    else 
+      df
   }
 }
