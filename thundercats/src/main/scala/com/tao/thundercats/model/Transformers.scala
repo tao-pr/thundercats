@@ -13,6 +13,7 @@ import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
+import org.apache.spark.ml.param._
 
 import java.io.File
 import sys.process._
@@ -24,22 +25,22 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 
 /**
- * Collection of basic transformer generators
+ * Scale numerical columns 
  */
-object Feature {
+class Scaler(override val uid: String = Identifiable.randomUID("Scaler"))
+extends Transformer
+with HasInputColExposed
+with HasOutputColExposed {
+  override def copy(extra: ParamMap): this.type = defaultCopy(extra)
 
-  def encodeStrings(df: DataFrame, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
-    val blocks = df
-      .schema
-      .toList.collect{ 
-        case StructField(colName,StringType,_,_) if !ignoreColumns.contains(colName) => 
-          new HashingTF().setInputCol(colName).setOutputCol(colName)
-      }
+  override def transformSchema(schema: StructType) = 
+    schema.add($(outputCol), ArrayType(DoubleType, true), true)
 
-    new Pipeline().setStages(blocks.toArray)
+  def setInputCol(value: String): this.type = set(inputCol, value)
+  def setOutputCol(value: String): this.type = set(outputCol, value)
+
+  override def transform(df: Dataset[_]): Dataset[Row] = {
+    transformSchema(df.schema, logging=true)
+    df.withColumn($(outputCol), )
   }
-
-  def scaleNumbers(df: DataFrame, scale: Column=lit(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = ???
 }
-
-
