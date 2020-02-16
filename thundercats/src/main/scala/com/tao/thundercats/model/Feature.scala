@@ -27,9 +27,12 @@ import com.tao.thundercats.physical.Implicits._
 /**
  * Collection of basic transformer generators
  */
-object Feature {
+object Features {
 
-  def encodeStrings(df: DataFrame, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+  private [model] trait TokeniserMethod
+  case object TFIDF extends TokeniserMethod
+
+  def encodeStrings(df: DataFrame, tokeniser: Option[TokeniserMethod]=None, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
       .toList.collect{ 
@@ -40,7 +43,7 @@ object Feature {
     new Pipeline().setStages(blocks.toArray)
   }
 
-  def scaleNumbers(df: DataFrame, byNorms: Option[Double]=Some(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+  def scaleNumbers(df: DataFrame, byNorm: Option[Double]=Some(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
       .toList.collect{
@@ -48,10 +51,28 @@ object Feature {
           new Scaler().setInputCol(colName)
                       .setOutputCol(colName)
                       .setLogScale(logScale)
-                      .setP(byNorms.getOrElse(0.0))
+                      .setNorm(1.0)
       }
 
     new Pipeline().setStages(blocks.toArray)
+  }
+
+  def vectorise(df: DataFrame, ignoreColumns: Set[String]): PipelineStage = {
+    val columns = df
+      .schema
+      .toList
+      .sortBy(_.name)
+      .filterNot { case StructField(name,_,_,_) => ignoreColumns contains name }
+      .collect {
+        case StructField(p,DoubleType,_,_) => p
+        case StructField(p,IntegerType,_,_) => p
+        case StructField(p,FloatType,_,_) => p
+        case StructField(p,ArrayType(DoubleType,_),_,_) => p
+        case StructField(p,ArrayType(FloatType,_),_,_) => p
+        case StructField(p,ArrayType(IntegerType,_),_,_) => p
+      }.toArray
+
+    new VectorAssembler().setInputCols(columns).setOutputCol("features")
   }
 }
 

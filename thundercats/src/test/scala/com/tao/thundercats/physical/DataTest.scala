@@ -11,6 +11,7 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator}
 import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.linalg.VectorUDT
 
 import java.io.File
 import sys.process._
@@ -49,9 +50,12 @@ object IO {
   }
 }
 
+
 case class A(i: Int, s: Option[String])
 case class K(key: String, value: String)
 case class Kx(key: String, value: String, b: Int)
+
+case class Train(i: Int, d: Double, v: Double, w: Double, s: String, s2: String)
 
 class DataSuite extends SparkStreamTestInstance with Matchers {
 
@@ -539,7 +543,29 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     import spark.implicits._
     import Implicits._
 
-    
+    lazy val dfTrain = List(
+      Train(i=1, d=0.0, v=1.0, w=1.5, s="foo bar", s2=""),
+      Train(i=2, d=0.1, v=2.0, w=1.0, s="foo baz", s2="more"),
+      Train(i=3, d=1.3, v=4.0, w=1.5, s="zoo bar", s2="longer"),
+      Train(i=4, d=0.1, v=1.5, w=1.5, s="bar baz bar", s2=""),
+      Train(i=5, d=0.5, v=2.5, w=1.0, s="foo bar bar", s2="more")
+    ).toDF
+
+    it("normalise numbers"){
+      val pipe = new Pipeline().setStages(
+        Array(Features.scaleNumbers(dfTrain, byNorm=Some(1.0), logScale=false))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      // out.schemaMap shouldBe Map(
+      //   "i" -> DoubleType,
+      //   "d" -> DoubleType,
+      //   "w" -> DoubleType,
+      //   "s" -> StringType
+      // )
+      out.show(30)
+    }
   }
 
   describe("Modeling test"){
