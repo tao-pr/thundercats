@@ -48,15 +48,20 @@ with DefaultParamsWritable {
   final def getNorm: Boolean = $(norm)
   final def setNorm(value: Boolean) = set(norm, value)
 
-  setDefault(logScale -> false)
-  setDefault(norm -> true)
-
   override def fit(dataset: Dataset[_]): ScalerModel = {
     transformSchema(dataset.schema, logging=true)
     if ($(norm)) {
       val values = dataset.toDF.rdd.map(row => row.getAs[Double]($(inputCol))).collect
-      new ScalerModel(values.sum, values.min, $(logScale))
-    } else new ScalerModel(0, 0, $(logScale))
+      new ScalerModel(values.sum, values.min)
+        .setLogScale($(logScale))
+        .setNorm($(norm))
+        .setInputCol($(inputCol))
+        .setOutputCol($(outputCol))
+    } else new ScalerModel(0, 0)
+        .setLogScale($(logScale))
+        .setNorm($(norm))
+        .setInputCol($(inputCol))
+        .setOutputCol($(outputCol))
   }
 }
 
@@ -65,24 +70,35 @@ with HasInputColExposed
 with HasOutputColExposed {
   final def logScale: Param[Boolean] = new Param[Boolean](this, "logScale", "Boolean indicating whether log scale is used.")
   final def norm: Param[Boolean] = new Param[Boolean](this, "norm", "Turning on or off normalisation scaler")  
+
+  setDefault(inputCol -> "input")
+  setDefault(outputCol -> "output")
+  setDefault(logScale -> false)
+  setDefault(norm -> true)
 }
 
 class ScalerModel(
   sum: Double,
   min: Double,
-  logScale: Boolean,
   override val uid: String = Identifiable.randomUID("ScalerModel"))
 extends Model[ScalerModel] 
 with ScalerParams {
 
-  // final def getLogScale: Boolean = $(logScale)
-  // final def setLogScale(value: Boolean) = set(logScale, value)
+  final def getLogScale: Boolean = $(logScale)
+  final def setLogScale(value: Boolean) = set(logScale, value)
 
-  // final def getNorm: Boolean = $(norm)
-  // final def setNorm(value: Boolean) = set(norm, value)
+  final def getNorm: Boolean = $(norm)
+  final def setNorm(value: Boolean) = set(norm, value)
+
+  final def setInputCol(value: String): this.type = set(inputCol, value)
+  final def setOutputCol(value: String): this.type = set(outputCol, value)
 
   override def copy(extra: ParamMap): ScalerModel = {
-    val copied = new ScalerModel(sum, min, logScale)
+    val copied = new ScalerModel(sum, min)
+        .setLogScale($(logScale))
+        .setNorm($(norm))
+        .setInputCol($(inputCol))
+        .setOutputCol($(outputCol))
     copyValues(copied, extra).setParent(parent)
   }
 
@@ -97,13 +113,13 @@ with ScalerParams {
   def transformSchema(schema: StructType): StructType = transformAndValidate(schema)
 
   private def scale(dataset: Dataset[_]): DataFrame = {
-    dataset.withColumn($(outputCol), (col($(inputCol)) - min) / sum)
+    dataset.withColumn($(outputCol), col($(inputCol)) / sum)
   }
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
     val scaledDf = if (sum>0) scale(dataset) else dataset.withColumn($(outputCol), col($(inputCol)))
-    if (logScale) 
+    if ($(logScale))
       scaledDf.withColumn($(outputCol), logNatural($(outputCol)))
     else 
       scaledDf

@@ -544,27 +544,33 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     import Implicits._
 
     lazy val dfTrain = List(
-      Train(i=1, d=0.0, v=1.0, w=1.5, s="foo bar", s2=""),
-      Train(i=2, d=0.1, v=2.0, w=1.0, s="foo baz", s2="more"),
-      Train(i=3, d=1.3, v=4.0, w=1.5, s="zoo bar", s2="longer"),
-      Train(i=4, d=0.1, v=1.5, w=1.5, s="bar baz bar", s2=""),
-      Train(i=5, d=0.5, v=2.5, w=1.0, s="foo bar bar", s2="more")
+      Train(i=1, d=0.0, v=1.0, w=-1.0, s="foo bar", s2=""),
+      Train(i=2, d=0.1, v=2.0, w=-2.0, s="foo baz", s2="more"),
+      Train(i=3, d=1.3, v=4.0, w=2.0, s="zoo bar", s2="longer"),
+      Train(i=4, d=0.1, v=2.5, w=5.0, s="bar baz bar", s2=""),
+      Train(i=5, d=0.5, v=0.5, w=1.0, s="foo bar bar", s2="more")
     ).toDF
 
     it("normalise numbers with Scaler"){
       val pipe = new Pipeline().setStages(
-        Array(Features.scaleNumbers(dfTrain, byNorm=Some(1.0), logScale=false))
+        Array(Features.scaleNumbers(dfTrain, normalised=true, logScale=false))
       ).fit(dfTrain)
 
       val out = pipe.transform(dfTrain)
 
-      // out.schemaMap shouldBe Map(
-      //   "i" -> DoubleType,
-      //   "d" -> DoubleType,
-      //   "w" -> DoubleType,
-      //   "s" -> StringType
-      // )
       out.show(30)
+      out.schemaMap shouldBe Map(
+        "i" -> DoubleType,
+        "d" -> DoubleType,
+        "v" -> DoubleType,
+        "w" -> DoubleType,
+        "s" -> StringType,
+        "s2" -> StringType
+      )
+
+      out.rdd.map(_.getAs[Double]("i")).collect shouldBe List(1,2,3,4,5)
+      out.rdd.map(_.getAs[Double]("d")).collect shouldBe List(0.0, 0.05, 0.65, 0.05, 0.25)
+      out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(0.1, 0.2, 0.4, 0.25, 0.05)
     }
   }
 
