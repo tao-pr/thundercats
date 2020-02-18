@@ -43,7 +43,7 @@ object Features {
     new Pipeline().setStages(blocks.toArray)
   }
 
-  def scaleNumbers(df: DataFrame, byNorm: Option[Double]=Some(1.0), logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+  def scaleNumbers(df: DataFrame, normalised: Boolean = true, logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
       .toList.collect{
@@ -51,7 +51,7 @@ object Features {
           new Scaler().setInputCol(colName)
                       .setOutputCol(colName)
                       .setLogScale(logScale)
-                      .setNorm(1.0)
+                      .setNorm(normalised)
       }
 
     new Pipeline().setStages(blocks.toArray)

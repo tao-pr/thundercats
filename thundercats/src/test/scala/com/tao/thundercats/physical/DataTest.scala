@@ -551,7 +551,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       Train(i=5, d=0.5, v=2.5, w=1.0, s="foo bar bar", s2="more")
     ).toDF
 
-    it("normalise numbers"){
+    it("normalise numbers with Scaler"){
       val pipe = new Pipeline().setStages(
         Array(Features.scaleNumbers(dfTrain, byNorm=Some(1.0), logScale=false))
       ).fit(dfTrain)

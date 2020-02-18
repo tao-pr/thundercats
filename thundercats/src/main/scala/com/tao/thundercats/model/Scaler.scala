@@ -15,6 +15,8 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import org.apache.hadoop.fs.Path
 
+import org.apache.spark.ml.param.shared._
+
 import java.io.File
 import sys.process._
 import scala.reflect.io.Directory
@@ -40,31 +42,29 @@ with DefaultParamsWritable {
   override def setInputCol(value: String): this.type = set(inputCol, value)
   override def setOutputCol(value: String): this.type = set(outputCol, value)
 
+  final def getLogScale: Boolean = $(logScale)
+  final def setLogScale(value: Boolean) = set(logScale, value)
+
+  final def getNorm: Boolean = $(norm)
+  final def setNorm(value: Boolean) = set(norm, value)
+
   setDefault(logScale -> false)
   setDefault(norm -> true)
 
   override def fit(dataset: Dataset[_]): ScalerModel = {
     transformSchema(dataset.schema, logging=true)
     if ($(norm)) {
-      val values = dataset.rdd.map(row => row.getAs[Double]($(inputCol))).collect
+      val values = dataset.toDF.rdd.map(row => row.getAs[Double]($(inputCol))).collect
       new ScalerModel(values.sum, values.min, $(logScale))
     } else new ScalerModel(0, 0, $(logScale))
   }
 }
 
 trait ScalerParams extends Params
-with InputColExposed
-with OutputColExposed {
-  final val norm = new Param[String](this, "inputCol", "The input column")
-  final val outputCol = new Param[String](this, "outputCol", "The output column")
+with HasInputColExposed
+with HasOutputColExposed {
   final def logScale: Param[Boolean] = new Param[Boolean](this, "logScale", "Boolean indicating whether log scale is used.")
-  final def norm: Param[Boolean] = new Param[Boolean](this, "norm", "Turning on or off normalisation scaler")
-
-  final def getLogScale: Boolean = $(logScale)
-  final def setLogScale(value: Boolean) = set(logScale, value)
-
-  final def getNorm: Boolean = $(norm)
-  final def setNorm(value: Boolean) = set(norm, value)
+  final def norm: Param[Boolean] = new Param[Boolean](this, "norm", "Turning on or off normalisation scaler")  
 }
 
 class ScalerModel(
@@ -75,8 +75,14 @@ class ScalerModel(
 extends Model[ScalerModel] 
 with ScalerParams {
 
-  override def copy(extra: ParamMap): ArrayEncoderModel[T] = {
-    val copied = new ArrayEncoderModel[T](uid, labels)
+  // final def getLogScale: Boolean = $(logScale)
+  // final def setLogScale(value: Boolean) = set(logScale, value)
+
+  // final def getNorm: Boolean = $(norm)
+  // final def setNorm(value: Boolean) = set(norm, value)
+
+  override def copy(extra: ParamMap): ScalerModel = {
+    val copied = new ScalerModel(sum, min, logScale)
     copyValues(copied, extra).setParent(parent)
   }
 
