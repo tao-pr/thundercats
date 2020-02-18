@@ -544,11 +544,11 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     import Implicits._
 
     lazy val dfTrain = List(
-      Train(i=1, d=0.0, v=1.0, w=-1.0, s="foo bar", s2=""),
-      Train(i=2, d=0.1, v=2.0, w=-2.0, s="foo baz", s2="more"),
-      Train(i=3, d=1.3, v=4.0, w=2.0, s="zoo bar", s2="longer"),
-      Train(i=4, d=0.1, v=2.5, w=5.0, s="bar baz bar", s2=""),
-      Train(i=5, d=0.5, v=0.5, w=1.0, s="foo bar bar", s2="more")
+      Train(1, 0.0, 1.0, -1.0, "foo bar", ""),
+      Train(2, 0.1, 2.0, -2.0, "foo baz", "more"),
+      Train(3, 1.3, 4.0, 2.0, "zoo bar", "longer"),
+      Train(4, 0.1, 2.5, 5.0, "bar baz bar", ""),
+      Train(5, 0.5, 0.5, 1.0, "foo bar bar", "more")
     ).toDF
 
     it("normalise numbers with Scaler"){
@@ -560,7 +560,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       out.show(30)
       out.schemaMap shouldBe Map(
-        "i" -> DoubleType,
+        "i" -> IntegerType,
         "d" -> DoubleType,
         "v" -> DoubleType,
         "w" -> DoubleType,
@@ -568,9 +568,10 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         "s2" -> StringType
       )
 
-      out.rdd.map(_.getAs[Double]("i")).collect shouldBe List(1,2,3,4,5)
+      out.rdd.map(_.getAs[Int]("i")).collect shouldBe List(1,2,3,4,5)
       out.rdd.map(_.getAs[Double]("d")).collect shouldBe List(0.0, 0.05, 0.65, 0.05, 0.25)
       out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(0.1, 0.2, 0.4, 0.25, 0.05)
+      out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(-0.2, -0.4, 0.4, 1.0, 0.2)
     }
   }
 
