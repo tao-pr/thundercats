@@ -39,8 +39,8 @@ with DefaultParamsWritable {
   override def transformSchema(schema: StructType) = 
     schema.add($(outputCol), DoubleType, true)
 
-  override def setInputCol(value: String): this.type = set(inputCol, value)
-  override def setOutputCol(value: String): this.type = set(outputCol, value)
+  def setInputCol(value: String): this.type = set(inputCol, value)
+  def setOutputCol(value: String): this.type = set(outputCol, value)
 
   final def getLogScale: Boolean = $(logScale)
   final def setLogScale(value: Boolean) = set(logScale, value)
@@ -84,6 +84,14 @@ with ScalerParams {
   override def copy(extra: ParamMap): ScalerModel = {
     val copied = new ScalerModel(sum, min, logScale)
     copyValues(copied, extra).setParent(parent)
+  }
+
+  def transformAndValidate(schema: StructType): StructType = {
+    val inputColumn = $(inputCol)
+    val outputColumn = $(outputCol)
+    require(schema.map(_.name) contains inputColumn, s"Dataset has to contain the input column : $inputColumn")
+    require(!(schema.map(_.name) contains outputCol), s"Dataset already has an output column : $outputColumn")
+    schema.add(StructField(outputColumn, DoubleType, false))
   }
 
   def transformSchema(schema: StructType): StructType = transformAndValidate(schema)
