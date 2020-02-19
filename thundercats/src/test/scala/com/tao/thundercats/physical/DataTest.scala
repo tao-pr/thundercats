@@ -574,6 +574,31 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(0.1, 0.2, 0.4, 0.25, 0.05)
       out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(-0.2, -0.4, 0.4, 1.0, 0.2)
     }
+
+    it("convert to log scale with Scaler"){
+      val pipe = new Pipeline().setStages(
+        Array(Features.scaleNumbers(dfTrain, normalised=false, logScale=true))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      out.show(30)
+      out.schemaMap shouldBe Map(
+        "i" -> IntegerType,
+        "d" -> DoubleType,
+        "v" -> DoubleType,
+        "w" -> DoubleType,
+        "s" -> StringType,
+        "s2" -> StringType
+      )
+
+      // NOTE: Scala's log(-x) results in 0 instead of NaN
+      //       Also with log(0) results in 0 instead of [[Double.Infinity]]
+      out.rdd.map(_.getAs[Int]("i")).collect shouldBe List(1,2,3,4,5)
+      out.rdd.map(_.getAs[Double]("d")).collect shouldBe List(0, -2.3025850929940455, 0.26236426446749106, -2.3025850929940455, -0.6931471805599453)
+      out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(0, 0.6931471805599453, 1.3862943611198906, 0.9162907318741551, -0.6931471805599453)
+      out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, 0.6931471805599453, 1.6094379124341003, 0.0)
+    }
   }
 
   describe("Modeling test"){
