@@ -559,7 +559,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       val out = pipe.transform(dfTrain)
 
-      out.show(30)
       out.schemaMap shouldBe Map(
         "i" -> IntegerType,
         "d" -> DoubleType,
@@ -582,7 +581,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       val out = pipe.transform(dfTrain)
 
-      out.show(30)
       out.schemaMap shouldBe Map(
         "i" -> IntegerType,
         "d" -> DoubleType,
@@ -598,6 +596,28 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       out.rdd.map(_.getAs[Double]("d")).collect shouldBe List(0, -2.3025850929940455, 0.26236426446749106, -2.3025850929940455, -0.6931471805599453)
       out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(0, 0.6931471805599453, 1.3862943611198906, 0.9162907318741551, -0.6931471805599453)
       out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, 0.6931471805599453, 1.6094379124341003, 0.0)
+    }
+
+    it("normalise and convert numbers to logscale with Scaler"){
+      val pipe = new Pipeline().setStages(
+        Array(Features.scaleNumbers(dfTrain, normalised=true, logScale=true))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      out.schemaMap shouldBe Map(
+        "i" -> IntegerType,
+        "d" -> DoubleType,
+        "v" -> DoubleType,
+        "w" -> DoubleType,
+        "s" -> StringType,
+        "s2" -> StringType
+      )
+
+      out.rdd.map(_.getAs[Int]("i")).collect shouldBe List(1,2,3,4,5)
+      out.rdd.map(_.getAs[Double]("d")).collect shouldBe List(0.0, -2.995732273553991, -0.4307829160924542, -2.995732273553991, -1.3862943611198906)
+      out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(-2.3025850929940455, -1.6094379124341003, -0.916290731874155, -1.3862943611198906, -2.995732273553991)
+      out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, -0.916290731874155, 0, -1.6094379124341003)
     }
   }
 
