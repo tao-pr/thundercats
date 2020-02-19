@@ -23,6 +23,7 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.estimator._
 
 /**
  * Collection of basic transformer generators

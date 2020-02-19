@@ -21,6 +21,7 @@ import com.tao.thundercats.base.{SparkTestInstance, SparkStreamTestInstance}
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.model._
+import com.tao.thundercats.estimator._
 
 import org.scalatest.{Filter => _, _}
 import Matchers._
