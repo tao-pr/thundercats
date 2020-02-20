@@ -619,6 +619,10 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       out.rdd.map(_.getAs[Double]("v")).collect shouldBe List(-2.3025850929940455, -1.6094379124341003, -0.916290731874155, -1.3862943611198906, -2.995732273553991)
       out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, -0.916290731874155, 0, -1.6094379124341003)
     }
+
+    it("encode strings with StringEncoder"){
+      
+    }
   }
 
   describe("Modeling test"){
