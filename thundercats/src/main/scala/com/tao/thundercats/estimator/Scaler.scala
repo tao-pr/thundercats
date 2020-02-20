@@ -107,7 +107,6 @@ with ScalerParams {
     val inputColumn = $(inputCol)
     val outputColumn = $(outputCol)
     require(schema.map(_.name) contains inputColumn, s"Dataset has to contain the input column : $inputColumn")
-    require(!(schema.map(_.name) contains outputCol), s"Dataset already has an output column : $outputColumn")
     schema.add(StructField(outputColumn, DoubleType, false))
   }
 
