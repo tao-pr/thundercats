@@ -30,6 +30,10 @@ import com.tao.thundercats.estimator._
  */
 object Features {
 
+  /**
+   * Create a pipeline which tokenises and encode text
+   * as an array of double
+   */
   def encodeStrings(
     df: DataFrame, 
     encoder: EncoderMethod = Murmur, 
@@ -47,6 +51,9 @@ object Features {
     new Pipeline().setStages(blocks.toArray)
   }
 
+  /**
+   * Create a pipeline which scales or normalises the numbers 
+   */
   def scaleNumbers(df: DataFrame, normalised: Boolean = true, logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
