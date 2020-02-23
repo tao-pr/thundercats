@@ -30,15 +30,18 @@ import com.tao.thundercats.estimator._
  */
 object Features {
 
-  private [model] trait TokeniserMethod
-  case object TFIDF extends TokeniserMethod
-
-  def encodeStrings(df: DataFrame, tokeniser: Option[TokeniserMethod]=None, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+  def encodeStrings(
+    df: DataFrame, 
+    encoder: EncoderMethod = Murmur, 
+    tokeniser: TokenMethod = WhiteSpaceToken,
+    ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
       .toList.collect{ 
         case StructField(colName,StringType,_,_) if !ignoreColumns.contains(colName) => 
-          new HashingTF().setInputCol(colName).setOutputCol(colName)
+          new StringEncoder()
+            .setInputCol(colName)
+            .setOutputCol(colName)
       }
 
     new Pipeline().setStages(blocks.toArray)
