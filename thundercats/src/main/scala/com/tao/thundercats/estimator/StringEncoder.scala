@@ -35,7 +35,7 @@ object Implicits {
 
 trait EncoderMethod 
 case object Murmur extends EncoderMethod
-case class TFIDF(minFreq: Double = 0.0) extends EncoderMethod
+case class TFIDF(minFreq: Int = 1) extends EncoderMethod
 case object WordVector extends EncoderMethod // REVIEW: Not yet supported
 
 trait TokenMethod {
@@ -65,12 +65,12 @@ with HasOutputColExposed {
 /**
  * A complete string tokeniser and encoder
  */
-class StringEncoder[T <: FittedEncoderModel](
+class StringEncoder(
   method: EncoderMethod=Murmur, 
   tokeniser: TokenMethod=WhiteSpaceToken,
   // REVIEW: with typo correction techniques
   override val uid: String = Identifiable.randomUID("StringEncoder"))
-extends Estimator[StringEncoderModel[T]]
+extends Estimator[StringEncoderModel]
 with StringEncoderParams
 with DefaultParamsWritable {
 
@@ -82,7 +82,7 @@ with DefaultParamsWritable {
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
-  override def fit(dataset: Dataset[_]): StringEncoderModel[T] = {
+  override def fit(dataset: Dataset[_]): StringEncoderModel = {
     transformSchema(dataset.schema, logging=true)
 
     method match {
@@ -92,11 +92,11 @@ with DefaultParamsWritable {
         val tf = new HashingTF()
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
-        val idf = new IDF(minDocFreq=minFreq)
-          .setInputCol($(inputCol))
+        val idf = new IDF()
+          .setInputCol($(outputCol))
           .setOutputCol($(outputCol))
           .fit(tf.transform(dataset))
-        new StringEncoderModel(TFIDF(tf, idf))
+        new StringEncoderModel(TFIDFModel(tf, idf), tokeniser)
       case _ => throw new java.util.InvalidPropertiesFormatException(s"Unsupported encoder method : ${method}")
     }
   }
@@ -120,14 +120,14 @@ case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
 }
 
 
-class StringEncoderModel[T <: FittedEncoderModel](
-  model: T,
+class StringEncoderModel(
+  model: FittedEncoderModel,
   tokenMethod: TokenMethod,
   override val uid: String = Identifiable.randomUID("ScalerModel"))
-extends Model[StringEncoderModel[T]] 
+extends Model[StringEncoderModel] 
 with ScalerParams {
 
-  override def copy(extra: ParamMap): StringEncoderModel[T] = {
+  override def copy(extra: ParamMap): StringEncoderModel = {
     val copied = new StringEncoderModel(model, tokenMethod)
         .setInputCol($(inputCol))
         .setOutputCol($(outputCol))
