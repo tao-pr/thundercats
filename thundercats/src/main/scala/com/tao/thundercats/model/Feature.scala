@@ -43,7 +43,7 @@ object Features {
       .schema
       .toList.collect{ 
         case StructField(colName,StringType,_,_) if !ignoreColumns.contains(colName) => 
-          new StringEncoder()
+          new StringEncoder(encoder, tokeniser)
             .setInputCol(colName)
             .setOutputCol(colName)
       }

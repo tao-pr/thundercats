@@ -108,7 +108,8 @@ private [estimator] trait FittedEncoderModel {
 case class MurmurModel(fixLength: Int=300) extends FittedEncoderModel {
 
   lazy val hashUDF = udf((s: Seq[String]) => 
-    s.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED)).padTo(fixLength, 0)
+    s.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED).toDouble).padTo(fixLength, 0.0),
+    ArrayType(DoubleType,false)
   )
   def transform(dataset: Dataset[_], column: String): DataFrame = {
     // Encode string array into hash values (numerical array)

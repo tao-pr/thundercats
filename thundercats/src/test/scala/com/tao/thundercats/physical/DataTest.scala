@@ -621,25 +621,24 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
 
     it("encode strings with StringEncoder (Murmur Hashing)"){
-      val fixLength = 15
+      val fixLength = 5
       val pipe = new Pipeline().setStages(
         Array(Features.encodeStrings(dfTrain, encoder=Murmur(fixLength)))
       ).fit(dfTrain)
 
       val out = pipe.transform(dfTrain)
 
-      out.show(5, false)// TAODEBUG
-
       out.schemaMap shouldBe Map(
         "i" -> IntegerType,
         "d" -> DoubleType,
         "v" -> DoubleType,
         "w" -> DoubleType,
-        "s" -> ArrayType(IntegerType,false),
-        "s2" -> ArrayType(IntegerType,false)
+        "s" -> ArrayType(DoubleType,false),
+        "s2" -> ArrayType(DoubleType,false)
       )
 
-      // TAOTODO
+      // All arrays should have the desired fixed length
+      out.rdd.map(_.getAs[Seq[Integer]]("s")).collect.exists(_.length != fixLength) shouldBe false
     }
   }
 
