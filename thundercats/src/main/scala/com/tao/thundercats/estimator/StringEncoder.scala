@@ -29,12 +29,12 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.model._
 
-object Implicits {
+object PREDEF {
   val HASH_SEED = 0x8623  
 }
 
 trait EncoderMethod 
-case object Murmur extends EncoderMethod
+case class Murmur(featureLength: Int = 300) extends EncoderMethod
 case class TFIDF(minFreq: Int = 1) extends EncoderMethod
 case object WordVector extends EncoderMethod // REVIEW: Not yet supported
 
@@ -55,9 +55,6 @@ case class AsianLanguageToken(lang: String) extends TokenMethod {
 trait StringEncoderParams extends Params
 with HasInputColExposed
 with HasOutputColExposed {
-  // final def logScale: Param[Boolean] = new Param[Boolean](this, "logScale", "Boolean indicating whether log scale is used.")
-  // final def norm: Param[Boolean] = new Param[Boolean](this, "norm", "Turning on or off normalisation scaler")
-
   setDefault(inputCol -> "input")
   setDefault(outputCol -> "output")
 }
@@ -66,7 +63,7 @@ with HasOutputColExposed {
  * A complete string tokeniser and encoder
  */
 class StringEncoder(
-  method: EncoderMethod=Murmur, 
+  method: EncoderMethod=Murmur(featureLength=300), 
   tokeniser: TokenMethod=WhiteSpaceToken,
   // REVIEW: with typo correction techniques
   override val uid: String = Identifiable.randomUID("StringEncoder"))
@@ -86,8 +83,10 @@ with DefaultParamsWritable {
     transformSchema(dataset.schema, logging=true)
 
     method match {
-      case Murmur => 
-        new StringEncoderModel(MurmurModel, tokeniser)
+      case Murmur(spaceSize) => 
+        new StringEncoderModel(MurmurModel(spaceSize), tokeniser)
+          .setInputCol($(inputCol))
+          .setOutputCol($(outputCol))
       case TFIDF(minFreq) =>
         val tf = new HashingTF()
           .setInputCol($(inputCol))
@@ -106,11 +105,15 @@ private [estimator] trait FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame 
 }
 
-case object MurmurModel extends FittedEncoderModel {
+case class MurmurModel(fixLength: Int=300) extends FittedEncoderModel {
 
-  lazy val hashUDF = udf((s: String) => MurmurHash3.stringHash(s, Implicits.HASH_SEED))
-  def transform(dataset: Dataset[_], column: String): DataFrame = 
+  lazy val hashUDF = udf((s: Seq[String]) => 
+    s.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED)).padTo(fixLength, 0)
+  )
+  def transform(dataset: Dataset[_], column: String): DataFrame = {
+    // Encode string array into hash values (numerical array)
     dataset.withColumn(column, hashUDF(col(column)))
+  }
 }
 
 case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
@@ -123,9 +126,9 @@ case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
 class StringEncoderModel(
   model: FittedEncoderModel,
   tokenMethod: TokenMethod,
-  override val uid: String = Identifiable.randomUID("ScalerModel"))
+  override val uid: String = Identifiable.randomUID("StringEncoderModel"))
 extends Model[StringEncoderModel] 
-with ScalerParams {
+with StringEncoderParams {
 
   override def copy(extra: ParamMap): StringEncoderModel = {
     val copied = new StringEncoderModel(model, tokenMethod)

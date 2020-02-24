@@ -620,8 +620,26 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, -0.916290731874155, 0, -1.6094379124341003)
     }
 
-    it("encode strings with StringEncoder"){
-      
+    it("encode strings with StringEncoder (Murmur Hashing)"){
+      val fixLength = 15
+      val pipe = new Pipeline().setStages(
+        Array(Features.encodeStrings(dfTrain, encoder=Murmur(fixLength)))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      out.show(5, false)// TAODEBUG
+
+      out.schemaMap shouldBe Map(
+        "i" -> IntegerType,
+        "d" -> DoubleType,
+        "v" -> DoubleType,
+        "w" -> DoubleType,
+        "s" -> ArrayType(IntegerType,false),
+        "s2" -> ArrayType(IntegerType,false)
+      )
+
+      // TAOTODO
     }
   }
 
