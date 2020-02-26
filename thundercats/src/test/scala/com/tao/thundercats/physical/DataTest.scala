@@ -621,9 +621,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
 
     it("encode strings with StringEncoder (Murmur Hashing)"){
-      val fixLength = 5
+      val NUM_DISTINCT_VALUES = 4
       val pipe = new Pipeline().setStages(
-        Array(Features.encodeStrings(dfTrain, encoder=Murmur(fixLength)))
+        Array(Features.encodeStrings(dfTrain, encoder=Murmur))
       ).fit(dfTrain)
 
       val out = pipe.transform(dfTrain)
@@ -638,7 +638,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       )
 
       // All arrays should have the desired fixed length
-      out.rdd.map(_.getAs[Seq[Integer]]("s")).collect.exists(_.length != fixLength) shouldBe false
+      out.rdd.map(_.getAs[Seq[Integer]]("s")).collect.exists(_.length != NUM_DISTINCT_VALUES) shouldBe false
     }
   }
 
