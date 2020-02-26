@@ -36,7 +36,7 @@ object PREDEF {
 }
 
 trait EncoderMethod 
-case class Murmur(featureLength: Int = 300) extends EncoderMethod
+case object Murmur extends EncoderMethod
 case class TFIDF(minFreq: Int = 1) extends EncoderMethod
 case object WordVector extends EncoderMethod // REVIEW: Not yet supported
 
@@ -65,7 +65,7 @@ with HasOutputColExposed {
  * A complete string tokeniser and encoder
  */
 class StringEncoder(
-  method: EncoderMethod=Murmur(featureLength=300), 
+  method: EncoderMethod=Murmur, 
   tokeniser: TokenMethod=WhiteSpaceToken,
   // REVIEW: with typo correction techniques
   override val uid: String = Identifiable.randomUID("StringEncoder"))
@@ -85,8 +85,9 @@ with DefaultParamsWritable {
     transformSchema(dataset.schema, logging=true)
 
     method match {
-      case Murmur(spaceSize) => 
-        val hashSpace = MurmurModel.toSortedSet(dataset.toDF, $(inputCol))
+      case Murmur => 
+        val dfTokenised = tokeniser.splitDF(dataset.toDF, $(inputCol), $(inputCol))
+        val hashSpace = MurmurModel.toSortedSet(dfTokenised, $(inputCol))
         new StringEncoderModel(MurmurModel(hashSpace), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
@@ -114,10 +115,12 @@ case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
   // REVIEW: output as sparse vector
   lazy val hashSpace = hashSet.toList.zipWithIndex.toMap
 
-  lazy val hashUDF = udf((seq: Seq[String]) => seq.map(s => {
-      val hash = MurmurHash3.stringHash(s, PREDEF.HASH_SEED)
-      hashSpace.getOrElse(hash, 0).toDouble
-    }),
+  lazy val hashUDF = udf((seq: Seq[String]) => {
+      // Encode string array into hash array
+      val hashArray = seq.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED))
+      // Convert to space vector
+      hashSpace.map{ case (v,index) => hashArray.count(_ == v).toDouble }
+    },
     ArrayType(DoubleType,false)
   )
 

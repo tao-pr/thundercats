@@ -36,7 +36,7 @@ object Features {
    */
   def encodeStrings(
     df: DataFrame, 
-    encoder: EncoderMethod = Murmur(featureLength=300), 
+    encoder: EncoderMethod = Murmur, 
     tokeniser: TokenMethod = WhiteSpaceToken,
     ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
