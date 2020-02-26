@@ -7,6 +7,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasHandleInvalid, HasInputCol, HasOutputCol}
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{log => logNatural, _}
 import org.apache.spark.sql.types._
 import org.apache.spark.ml.util.MLWriter
@@ -23,6 +24,7 @@ import scala.reflect.io.Directory
 import scala.util.control.Exception._
 import scala.util.Try
 import scala.util.hashing.MurmurHash3
+import collection.immutable.SortedSet
 
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
@@ -84,7 +86,8 @@ with DefaultParamsWritable {
 
     method match {
       case Murmur(spaceSize) => 
-        new StringEncoderModel(MurmurModel(spaceSize), tokeniser)
+        val hashSpace = MurmurModel.toSortedSet(dataset.toDF, $(inputCol))
+        new StringEncoderModel(MurmurModel(hashSpace), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
       case TFIDF(minFreq) =>
@@ -105,15 +108,38 @@ private [estimator] trait FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame 
 }
 
-case class MurmurModel(fixLength: Int=300) extends FittedEncoderModel {
+case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
 
-  lazy val hashUDF = udf((s: Seq[String]) => 
-    s.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED).toDouble).padTo(fixLength, 0.0),
+  // REVIEW: Space reduction by truncating lower frequency of words
+  // REVIEW: output as sparse vector
+  lazy val hashSpace = hashSet.toList.zipWithIndex.toMap
+
+  lazy val hashUDF = udf((seq: Seq[String]) => seq.map(s => {
+      val hash = MurmurHash3.stringHash(s, PREDEF.HASH_SEED)
+      hashSpace.getOrElse(hash, 0).toDouble
+    }),
     ArrayType(DoubleType,false)
   )
+
   def transform(dataset: Dataset[_], column: String): DataFrame = {
-    // Encode string array into hash values (numerical array)
+    // Encode string array into hash space vector
     dataset.withColumn(column, hashUDF(col(column)))
+  }
+}
+
+object MurmurModel {
+  
+  lazy val encodeSingle = udf((s: String) => MurmurHash3.stringHash(s, PREDEF.HASH_SEED))
+
+  def toSortedSet(df: DataFrame, inputCol: String): SortedSet[Int] = {
+    val uniqValues = df.withColumn(inputCol, explode(col(inputCol)))
+      .withColumn(inputCol, encodeSingle(col(inputCol)))
+      .select(inputCol)
+      .distinct
+      .rdd.map(_.getAs[Int](inputCol))
+      .collect
+      .toList
+    SortedSet(uniqValues:_*)
   }
 }
 
