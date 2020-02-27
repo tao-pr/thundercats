@@ -38,7 +38,7 @@ object Features {
     df: DataFrame, 
     encoder: EncoderMethod = Murmur,
     tokeniser: TokenMethod = WhiteSpaceToken,
-    suffix: String = "", // TAOTODO use Option[Output col] in case want to override
+    suffix: String = "",
     ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
