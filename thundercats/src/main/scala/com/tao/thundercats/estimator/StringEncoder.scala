@@ -57,8 +57,13 @@ case class AsianLanguageToken(lang: String) extends TokenMethod {
 trait StringEncoderParams extends Params
 with HasInputColExposed
 with HasOutputColExposed {
+  
+  val tempCols: Param[List[String]] = new Param[List[String]](
+    this, "tempCols", "A list of temporary columns to be dropped before returning")
+
   setDefault(inputCol -> "input")
   setDefault(outputCol -> "output")
+  setDefault(tempCols -> List.empty)
 }
 
 /**
@@ -92,14 +97,18 @@ with DefaultParamsWritable {
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
       case TFIDF(minFreq) =>
+        val TEMP_TF_COL = "$tf$"
         val tf = new HashingTF()
           .setInputCol($(inputCol))
-          .setOutputCol($(outputCol))
+          .setOutputCol(TEMP_TF_COL)
         val idf = new IDF()
-          .setInputCol($(outputCol))
+          .setInputCol(TEMP_TF_COL)
           .setOutputCol($(outputCol))
-          .fit(tf.transform(dataset))
+          .fit(tf.transform(tokeniser.splitDF(dataset.toDF, $(inputCol), $(inputCol))))
         new StringEncoderModel(TFIDFModel(tf, idf), tokeniser)
+          .setInputCol($(inputCol))
+          .setOutputCol($(outputCol))
+          .setTempCols(TEMP_TF_COL :: Nil)
       case _ => throw new java.util.InvalidPropertiesFormatException(s"Unsupported encoder method : ${method}")
     }
   }
@@ -148,6 +157,11 @@ object MurmurModel {
 
 case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame = {
+    // TAODEBUG
+    Console.println(s"column = ${column}")
+    dataset.show(5)
+    Console.println(s"tf====")
+    tf.transform(dataset).show(5)
     idf.transform(tf.transform(dataset))
   }
 }
@@ -169,10 +183,12 @@ with StringEncoderParams {
 
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
+  def setTempCols(value: List[String]): this.type = set(tempCols, value)
 
   def transformAndValidate(schema: StructType): StructType = {
     val inputColumn = $(inputCol)
     val outputColumn = $(outputCol)
+    val tempColumns = $(tempCols)
     require(schema.map(_.name) contains inputColumn, s"Dataset has to contain the input column : $inputColumn")
     schema.add(StructField(outputColumn, DoubleType, false))
   }
@@ -181,7 +197,9 @@ with StringEncoderParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    model.transform(tokenMethod(dataset, $(inputCol), $(outputCol)), $(outputCol))
+    // TAOTODO: Following output of tokenMethod should be a temp col
+    val df = model.transform(tokenMethod(dataset, $(inputCol), $(inputCol)), $(outputCol))
+    $(tempCols).foldLeft(df){ case(a,b) => a.drop(b) }
   }
 
 }

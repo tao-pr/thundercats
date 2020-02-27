@@ -640,6 +640,18 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // All arrays should have the desired fixed length
       out.rdd.map(_.getAs[Seq[Integer]]("s")).collect.exists(_.length != NUM_DISTINCT_VALUES) shouldBe false
     }
+
+    it("encode strings with StringEncoder (TFIDF)"){
+      val pipe = new Pipeline().setStages(
+        Array(Features.encodeStrings(dfTrain, encoder=TFIDF(minFreq=0), suffix="_feat"))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      val schema = out.schemaMap
+      schema("s_feat").toString.contains("VectorUDT") shouldBe true
+      schema("s2_feat").toString.contains("VectorUDT") shouldBe true
+    }
   }
 
   describe("Modeling test"){

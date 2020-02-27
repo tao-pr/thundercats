@@ -36,8 +36,9 @@ object Features {
    */
   def encodeStrings(
     df: DataFrame, 
-    encoder: EncoderMethod = Murmur, 
+    encoder: EncoderMethod = Murmur,
     tokeniser: TokenMethod = WhiteSpaceToken,
+    suffix: String = "", // TAOTODO use Option[Output col] in case want to override
     ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
@@ -45,7 +46,7 @@ object Features {
         case StructField(colName,StringType,_,_) if !ignoreColumns.contains(colName) => 
           new StringEncoder(encoder, tokeniser)
             .setInputCol(colName)
-            .setOutputCol(colName)
+            .setOutputCol(colName + suffix)
       }
 
     new Pipeline().setStages(blocks.toArray)
@@ -54,13 +55,18 @@ object Features {
   /**
    * Create a pipeline which scales or normalises the numbers 
    */
-  def scaleNumbers(df: DataFrame, normalised: Boolean = true, logScale: Boolean=false, ignoreColumns: Set[String]=Set.empty): PipelineStage = {
+  def scaleNumbers(
+    df: DataFrame, 
+    normalised: Boolean = true, 
+    logScale: Boolean=false, 
+    suffix: String = "",
+    ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
       .toList.collect{
         case StructField(colName,DoubleType,_,_) if !ignoreColumns.contains(colName) =>
           new Scaler().setInputCol(colName)
-                      .setOutputCol(colName)
+                      .setOutputCol(colName + suffix)
                       .setLogScale(logScale)
                       .setNorm(normalised)
       }
