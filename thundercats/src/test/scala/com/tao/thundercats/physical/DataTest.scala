@@ -649,6 +649,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val out = pipe.transform(dfTrain)
 
       val schema = out.schemaMap
+      schema("s") shouldBe ArrayType(StringType,true) // Original columns should also be tokenised and replaced
+      schema("s2") shouldBe ArrayType(StringType,true)
       schema("s_feat").toString.contains("VectorUDT") shouldBe true
       schema("s2_feat").toString.contains("VectorUDT") shouldBe true
     }

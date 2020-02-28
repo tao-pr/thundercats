@@ -157,11 +157,6 @@ object MurmurModel {
 
 case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame = {
-    // TAODEBUG
-    Console.println(s"column = ${column}")
-    dataset.show(5)
-    Console.println(s"tf====")
-    tf.transform(dataset).show(5)
     idf.transform(tf.transform(dataset))
   }
 }
