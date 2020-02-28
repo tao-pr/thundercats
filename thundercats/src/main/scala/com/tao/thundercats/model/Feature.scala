@@ -52,6 +52,22 @@ object Features {
     new Pipeline().setStages(blocks.toArray)
   }
 
+  def standardiseNumbers(
+    df: DataFrame,
+    suffix: String = "",
+    ignoreColumns: Set[String]=Set.empty
+  ): PipelineStage = {
+    val blocks = df
+      .schema
+      .toList.collect{
+        case StructField(colName,DoubleType,_,_) if !ignoreColumns.contains(colName) =>
+          new StandardScaler().setInputCol(colName)
+                              .setOutputCol(colName + suffix)
+    }
+
+    new Pipeline().setStages(blocks.toArray)
+  }
+
   /**
    * Create a pipeline which scales or normalises the numbers 
    */
