@@ -40,7 +40,7 @@ with DefaultParamsWritable {
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
-  override def fit(dataset: Dataset[_]): ScalerModel = {
+  override def fit(dataset: Dataset[_]): StandardScalerModel = {
     ???
   }
 }
@@ -50,9 +50,6 @@ with HasInputColExposed
 with HasOutputColExposed {
   setDefault(inputCol -> "input")
   setDefault(outputCol -> "output")
-
-  def getInputCol = $(inputCol)
-  def getOutputCol = $(outputCol)
 }
 
 class StandardScalerModel(
@@ -61,9 +58,12 @@ class StandardScalerModel(
   override val uid: String = Identifiable.randomUID("StandardScalerModel"))
 extends Model[StandardScalerModel] 
 with StandardScalerParams {
+
+  final def setInputCol(value: String): this.type = set(inputCol, value)
+  final def setOutputCol(value: String): this.type = set(outputCol, value)
   
-  override def copy(extra: ParamMap): ScalerModel = {
-    val copied = new StandardStandardScalerModel(mean, std)
+  override def copy(extra: ParamMap): StandardScalerModel = {
+    val copied = new StandardScalerModel(mean, std)
         .setInputCol(getInputCol)
         .setOutputCol(getOutputCol)
     copyValues(copied, extra).setParent(parent)
