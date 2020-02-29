@@ -51,7 +51,6 @@ with DefaultParamsWritable {
         .map(d => (d-mean)*(d-mean))
         .reduce(_ + _) / df.count.toDouble
       )
-    Console.println(s"array :${df.rdd.map(_.getAs[Double](getInputCol)).map(_.toString).collect.mkString(",")}, mean = $mean, std = $std") // TAODEBUG
     new StandardScalerModel(mean, std)
       .setInputCol(getInputCol)
       .setOutputCol(getOutputCol)
