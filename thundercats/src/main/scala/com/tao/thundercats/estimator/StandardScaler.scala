@@ -41,7 +41,20 @@ with DefaultParamsWritable {
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
   override def fit(dataset: Dataset[_]): StandardScalerModel = {
-    ???
+    // Calculate mean and standard deviation
+    val df = dataset.toDF
+    val sum = df.rdd.map(_.getAs[Double](getInputCol)).reduce(_ + _)
+    val mean = sum / df.count.toDouble
+    val std = java.lang.Math.sqrt(
+      df.rdd
+        .map(_.getAs[Double](getInputCol))
+        .map(d => (d-mean)*(d-mean))
+        .reduce(_ + _) / df.count.toDouble
+      )
+    Console.println(s"array :${df.rdd.map(_.getAs[Double](getInputCol)).map(_.toString).collect.mkString(",")}, mean = $mean, std = $std") // TAODEBUG
+    new StandardScalerModel(mean, std)
+      .setInputCol(getInputCol)
+      .setOutputCol(getOutputCol)
   }
 }
 
@@ -79,7 +92,11 @@ with StandardScalerParams {
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
 
-    ???
-
+    // Translate and scale
+    val standard = udf((x: java.lang.Double) => x match {
+      case null => None
+      case _    => Some((x - mean)/std)
+    })
+    dataset.toDF.withColumn(getOutputCol, standard(col(getInputCol)))
   }
 }
