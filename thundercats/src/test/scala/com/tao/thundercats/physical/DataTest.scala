@@ -620,6 +620,36 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       out.rdd.map(_.getAs[Double]("w")).collect shouldBe List(0, 0, -0.916290731874155, 0, -1.6094379124341003)
     }
 
+    it("standardise numbers so they have zero mean and unit variance"){
+      val pipe = new Pipeline().setStages(
+        Array(Features.standardiseNumbers(dfTrain))
+      ).fit(dfTrain)
+
+      val out = pipe.transform(dfTrain)
+
+      out.schemaMap shouldBe Map(
+        "i" -> IntegerType,
+        "d" -> DoubleType,
+        "v" -> DoubleType,
+        "w" -> DoubleType,
+        "s" -> StringType,
+        "s2" -> StringType
+      )
+
+      List("d","v","w").foreach{ c =>
+        val vector = out.rdd.map(_.getAs[Double](c)).collect
+        val mean = (vector.sum / vector.length.toDouble)
+        
+        val beCloseTo1 = be >= 0.99999 and be <= 1.00001
+        val beCloseToZero = be <= 1e-6
+
+        mean should beCloseToZero // zero mean
+        (vector.map(v => (v - mean)*(v-mean)).sum / vector.length) should beCloseTo1 // unit var
+      }
+
+      out.rdd.map(_.getAs[Int]("i")).collect shouldBe List(1,2,3,4,5)
+    }
+
     it("encode strings with StringEncoder (Murmur Hashing)"){
       val NUM_DISTINCT_VALUES = 4
       val pipe = new Pipeline().setStages(
