@@ -17,6 +17,9 @@ import org.apache.spark.ml.param.ParamMap
 
 import com.tao.thundercats.evaluation._
 
+/**
+ * Base cross validation method
+ */
 trait CV {
   val grid: ParamMap
   def run(df: DataFrame, pipe: Pipeline): PipelineModel = ???
