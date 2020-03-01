@@ -23,14 +23,18 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
-import com.tao.thundercats.model.{CV}
+import com.tao.thundercats.model.{CV, Pipe}
 
 /**
- * Base hypothesis
+ * Base hypothesis tester
  */
-trait Hypothesis[M <: Model[M]] {
-  val pipe: Pipeline
-  def featurePipe: Pipeline
-  def estimator: Estimator[M]
-  def runTest(): Unit
-}
+trait Hypothesis {}
+
+object Hypothesis extends Hypothesis {}
+
+private [evaluation] trait Select
+case class DropLeastSignificant(num: Int) extends Select
+case class TakeMostSignificant(num: Int) extends Select
+
+case class FeatureSelection(selector: Select) extends Hypothesis
+case object ModelSelection extends Hypothesis
