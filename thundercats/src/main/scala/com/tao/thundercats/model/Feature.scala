@@ -25,6 +25,7 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
+
 /**
  * Collection of basic transformer generators
  */
@@ -108,5 +109,6 @@ object Features {
     new VectorAssembler().setInputCols(columns).setOutputCol("features")
   }
 }
+
 
 

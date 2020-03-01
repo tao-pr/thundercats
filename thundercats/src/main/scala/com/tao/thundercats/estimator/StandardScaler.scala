@@ -40,6 +40,7 @@ with DefaultParamsWritable {
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
 
+  // REVIEW: Handle nulls (drop or impute)
   override def fit(dataset: Dataset[_]): StandardScalerModel = {
     // Calculate mean and standard deviation
     val df = dataset.toDF
