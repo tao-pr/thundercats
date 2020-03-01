@@ -15,6 +15,8 @@ import org.apache.spark.ml.{Pipeline, Estimator}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param.ParamMap
 
+import com.tao.thundercats.evaluation._
+
 trait CV {
   val grid: ParamMap
   def run(df: DataFrame, pipe: Pipeline): PipelineModel = ???
