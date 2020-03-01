@@ -13,6 +13,7 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
+import org.apache.spark.ml.Model
 
 import java.io.File
 import sys.process._
@@ -24,17 +25,12 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.model.{CV}
 
-
 /**
- * Base hypothesis, can be referred as either null hypothesis or alternative hypothesis
+ * Base hypothesis
  */
-trait Hypothesis {
-  val pipeline: Pipeline
-  def fit(trainDataset: DataFrame, cv: CV): PipelineModel
-  def numPredictors: Int
-  def degreeOfFreedom(trainDataset: DataFrame): Int
+trait Hypothesis[M <: Model[M]] {
+  val pipe: Pipeline
+  def featurePipe: Pipeline
+  def estimator: Estimator[M]
+  def runTest(): Unit
 }
-
-trait RegressionHypothesis extends Hypothesis
-trait ClassificationHypothesis extends Hypothesis
-trait ClusteringHypothesis extends Hypothesis
