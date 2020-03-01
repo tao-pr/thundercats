@@ -25,32 +25,24 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.model.{CV, Pipe}
 
-/**
- * Base hypothesis tester
- */
-trait Hypothesis {
-  def run(data: DataFrame, verbose: Boolean=true): MayFail[Outcome]
+case class LinearFeatureSelection(
+  model: Pipeline,
+  override val selector: Select,
+  measure: FeatureMeasure
+) extends FeatureSelection {
+  
+  override def run(data: DataFrame, verbose: Boolean=true): MayFail[Outcome] = MayFail {
+
+    select match {
+      case DropLeastSignificant(numFeat) => ???
+      case TakeMostSignificant(numFeat) => ???
+    }
+
+    val models: List[(PipelineModel,Double)] = List.empty
+    FeatureSelectionOutcome(models)
+  }
 }
 
-/**
- * Base hypothesis test outcome
- */
-trait Outcome {
-  def getBestModels: List[PipelineModel]
-}
-
-
-private [evaluation] trait Select
-case class DropLeastSignificant(num: Int) extends Select
-case class TakeMostSignificant(num: Int) extends Select
-
-trait FeatureSelection extends Hypothesis { val selector: Select }
-trait ModelSelection extends Hypothesis
-
-case class FeatureSelectionOutcome(models: List[(PipelineModel,Double)]) extends Outcome {
-  override def getBestModels: List[PipelineModel] = models.map(_._1)
-}
-
-case class ModelSelectionOutcome(model: PipelineModel) extends Outcome {
-  override def getBestModels: List[PipelineModel] = List(model)
+case class LinearModelSelection(feature: Pipeline, models: Pipeline) extends ModelSelection {
+  override def run(data: DataFrame, verbose: Boolean=true): MayFail[Outcome] = ???
 }
