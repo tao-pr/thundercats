@@ -53,6 +53,10 @@ object Features {
     new Pipeline().setStages(blocks.toArray)
   }
 
+  /**
+   * Scale all numbers in the specified columns
+   * so they have zero mean and unit variance
+   */
   def standardiseNumbers(
     df: DataFrame,
     suffix: String = "",
