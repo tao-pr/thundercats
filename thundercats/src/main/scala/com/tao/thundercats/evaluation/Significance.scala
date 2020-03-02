@@ -30,6 +30,9 @@ trait Significance extends MayFail[Significance] {
   def > (another: Significance): Boolean
 }
 
+/**
+ * Failure of significance test or operation
+ */
 case class FailSig(errorMessage: String) extends Significance with MayFail[Significance] {
   override def map(f: Significance => Significance): MayFail[Significance] = this
   override def flatMap(g: Significance => MayFail[Significance]): MayFail[Significance] = this
@@ -46,6 +49,7 @@ trait FeatureSignificance extends Significance { val featureCol: String }
 
 object Significance {
   def apply(modelPipe: Pipeline): Significance = {
+    assert(modelPipe.getStages.size >= 1)
     ???
   }
 }
