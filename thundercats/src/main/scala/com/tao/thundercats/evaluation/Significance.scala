@@ -25,14 +25,27 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-trait Significance {
-  def with(metric: Metric): Significance
+trait Significance extends MayFail[Significance] {
+  def by(metric: Metric): Significance
   def > (another: Significance): Boolean
 }
 
+case class FailSig(errorMessage: String) extends Significance with MayFail[Significance] {
+  override def map(f: Significance => Significance): MayFail[Significance] = this
+  override def flatMap(g: Significance => MayFail[Significance]): MayFail[Significance] = this
+  override def get: Significance = throw new java.util.NoSuchElementException("No value resolved")
+  override def isFailing = true
+  override def getError: Option[String] = Some(errorMessage)
+
+  override def by(metric: Metric): Significance = this
+  override def > (another: Significance): Boolean = false
+}
+
 trait ModelSignificance extends Significance
-trait FeatureSignificance { val featureCol: String } extends Significance
+trait FeatureSignificance extends Significance { val featureCol: String }
 
 object Significance {
-  def apply(modelPipe: Pipeline): ModelSignificance
+  def apply(modelPipe: Pipeline): Significance = {
+    ???
+  }
 }

@@ -27,3 +27,4 @@ import com.tao.thundercats.estimator._
 
 trait Metric
 case object TSNE extends Metric
+case class ConfidenceInterval(lower: Double, upper: Double, level: Double) extends Metric
