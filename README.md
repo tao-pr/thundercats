@@ -136,7 +136,7 @@ for {
   _ <- Write.kafka(dfBatch, "topic")
 
   ...
-} yield ???s
+} yield ???
 ```
 
 ### Show streaming dataframe

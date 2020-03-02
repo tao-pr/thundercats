@@ -13,7 +13,7 @@ import scala.util.Try
 import com.tao.thundercats.functional._
 
 object ColumnEncoder {
-  private [physical] trait Encoder 
+  private [physical] trait Encoder
   case object None extends Encoder
   case class Avro(schema: String) extends Encoder
 }
