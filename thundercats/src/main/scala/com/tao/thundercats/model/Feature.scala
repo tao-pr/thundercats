@@ -77,8 +77,8 @@ object Features {
    * Create a pipeline which scales or normalises the numbers 
    */
   def scaleNumbers(
-    df: DataFrame, 
-    normalised: Boolean = true, 
+    df: DataFrame,
+    normalised: Boolean = true,
     logScale: Boolean=false, 
     suffix: String = "",
     ignoreColumns: Set[String]=Set.empty): PipelineStage = {

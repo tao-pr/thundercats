@@ -26,16 +26,7 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 trait Significance extends MayFail[Significance] {
-
-  /**
-   * Calculate a significance by a metric
-   */
-  def by(metric: Metric): Significance
-
-  /**
-   * Comparison of the two metrics, which one is more significant
-   */
-  def > (another: Significance): Boolean
+  def on(data: DataFrame): Double
 }
 
 /**
@@ -48,19 +39,36 @@ case class FailSig(errorMessage: String) extends Significance with MayFail[Signi
   override def isFailing = true
   override def getError: Option[String] = Some(errorMessage)
 
-  override def by(metric: Metric): Significance = this
-  override def > (another: Significance): Boolean = false
+  override def on(data: DataFrame): Double = ???
 }
 
+/**
+ * Generic model significance or confidence score
+ */
 trait ModelSignificance extends Significance
+
+/**
+ * Generic feature significance or confidence score
+ */
 trait FeatureSignificance extends Significance { val featureCol: String }
 
-object ModelSignificance
-object FeatureSignificance
+object ModelSignificance {
+  
+  final case class Setup(
+    model: Pipeline, 
+    metric: ModelMetric=FStats) 
+  extends Significance
 
-object Significance {
-  def apply(modelPipe: Pipeline): Significance = {
-    assert(modelPipe.getStages.size >= 1)
-    ???
-  }
+  def apply(model: Pipeline) = Setup(model)
+}
+
+object FeatureSignificance {
+
+  final case class Setup(
+    model: Pipeline, 
+    feat: String, 
+    metric: FeatureMetric=Chi2) 
+  extends Significance
+
+  def apply(model: Pipeline, feat: String) = Setup(model, feat)
 }

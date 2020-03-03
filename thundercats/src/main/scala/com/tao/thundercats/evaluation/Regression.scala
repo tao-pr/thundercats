@@ -25,12 +25,6 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-sealed trait Metric 
-trait FeatureMetric extends Metric
-trait ModelMetric extends Metric
+class RegressionModelSignificance extends ModelSignificance
 
-case object TSNE extends Metric
-case object FStats extends ModelMetric
-case object Chi2 extends FeatureMetric
-case class ConfidenceInterval(lower: Double, upper: Double, level: Double) 
-extends FeatureMetric with ModelMetric
+class RegressionFeatureSignificance extends ModelSignificance
