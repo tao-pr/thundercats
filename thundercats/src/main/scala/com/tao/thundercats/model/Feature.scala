@@ -36,7 +36,7 @@ object Features {
    * as an array of double
    */
   def encodeStrings(
-    df: DataFrame, 
+    df: DataFrame,
     encoder: EncoderMethod = Murmur,
     tokeniser: TokenMethod = WhiteSpaceToken,
     suffix: String = "",
