@@ -1,4 +1,4 @@
-package com.tao.thundercats.model
+package com.tao.thundercats.evaluation
 
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession

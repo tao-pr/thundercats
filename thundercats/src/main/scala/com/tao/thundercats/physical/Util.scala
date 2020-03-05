@@ -30,4 +30,8 @@ object Implicits {
 
   }
 
+  implicit class DoubleOps(val d: Double) extends AnyVal {
+    def sqrt = scala.math.sqrt(d)
+  }
+
 }
