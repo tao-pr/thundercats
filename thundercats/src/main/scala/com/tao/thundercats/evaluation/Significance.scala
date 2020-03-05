@@ -30,14 +30,16 @@ import com.tao.thundercats.estimator._
  * Base significance / score of model or individual feature
  */
 trait Significance[T <: Metric] {
-  val metric: T
-  def measure(df: DataFrame, model: Pipeline): Double = metric.evaluate(df, model)
+  def measure(df: DataFrame, model: Pipeline): Metric
 }
 
 /**
  * Base metric to measure significance level
  */
 trait Metric {
-  def evaluate(df: DataFrame, model: Pipeline): Double
+  /**
+   * Returns true if this metric is better than another
+   */
+  def > (b: Metric): Boolean
 }
 
