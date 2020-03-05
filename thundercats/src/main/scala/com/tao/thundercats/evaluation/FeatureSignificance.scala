@@ -14,6 +14,7 @@ import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
+import org.apache.spark.ml.regression.LinearRegression
 
 import java.io.File
 import sys.process._
@@ -25,12 +26,15 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-sealed trait Metric 
-trait FeatureMetric extends Metric
-trait ModelMetric extends Metric
+sealed trait FeatureSignificance[T <: Metric] extends Significance[T] {
+  val featureCol: String
+}
 
-case object TSNE extends Metric
-case object FStats extends ModelMetric
-case object Chi2 extends FeatureMetric
-case class ConfidenceInterval(lower: Double, upper: Double, level: Double) 
-extends FeatureMetric with ModelMetric
+case class LinearModelFeatureSig[T <: LinearMetric](
+  override val featureCol: String,
+  override val metric: T
+) extends FeatureSignificance[T] {
+
+}
+
+sealed trait LinearMetric extends Metric

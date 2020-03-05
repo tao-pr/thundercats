@@ -14,6 +14,7 @@ import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
+import org.apache.spark.ml.regression.LinearRegression
 
 import java.io.File
 import sys.process._
@@ -25,6 +26,4 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-class RegressionModelSignificance extends ModelSignificance
-
-class RegressionFeatureSignificance extends ModelSignificance
+trait ModelSignificance[T <: Metric] extends Significance[T]
