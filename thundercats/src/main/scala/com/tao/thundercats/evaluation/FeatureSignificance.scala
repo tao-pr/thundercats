@@ -31,10 +31,23 @@ sealed trait FeatureSignificance[T <: Metric] extends Significance[T] {
 }
 
 case class LinearModelFeatureSig[T <: LinearMetric](
-  override val featureCol: String,
-  override val metric: T
+  override val featureCol: String
 ) extends FeatureSignificance[T] {
 
+  override def measure(df: DataFrame, model: Pipeline): Metric = ???
 }
 
 sealed trait LinearMetric extends Metric
+case class StandardError(e: Double) extends LinearMetric {
+  override def > (b: Metric): Boolean = b match {
+    case StandardError(e_) => e < e_
+    case _ => ???
+  }
+}
+case class ZScore(e: Double) extends LinearMetric {
+  override def > (b: Metric): Boolean = b match {
+    case ZScore(e_) => e > e_
+    case _ => ???
+  }
+}
+
