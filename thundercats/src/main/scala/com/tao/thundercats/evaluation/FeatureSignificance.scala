@@ -35,11 +35,11 @@ case class LinearModelFeatureSig[T <: LinearMetric](
   override val featureCol: String
 ) extends FeatureSignificance[T] {
 
-  override def measure(df: DataFrame, model: Pipeline): Metric = ???
+  override def measure(df: DataFrame, model: Pipeline): LinearMetric = ???
 }
 
 /**
- * Base metric of  feature for linear model
+ * Base metric of feature for linear model
  */
 sealed trait LinearMetric extends Metric
 
