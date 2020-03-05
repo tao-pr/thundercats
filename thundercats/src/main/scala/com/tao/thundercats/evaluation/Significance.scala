@@ -1,4 +1,4 @@
-package com.tao.thundercats.model
+package com.tao.thundercats.evaluation
 
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
@@ -30,7 +30,7 @@ import com.tao.thundercats.estimator._
  * Base significance / score of model or individual feature
  */
 trait Significance[T <: Metric] {
-  def measure(df: DataFrame, model: Pipeline): Metric
+  def measure(df: DataFrame, model: PipelineModel): Metric
 }
 
 /**
