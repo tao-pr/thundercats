@@ -27,3 +27,4 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 trait ModelSignificance[T <: Metric] extends Significance[T]
+
