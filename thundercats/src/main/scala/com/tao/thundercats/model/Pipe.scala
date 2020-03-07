@@ -61,3 +61,4 @@ object Pipe {
     new Pipeline().setStages(s +: pipe.getStages)
   }
 }
+
