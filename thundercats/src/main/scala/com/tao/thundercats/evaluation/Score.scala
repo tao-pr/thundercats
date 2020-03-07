@@ -15,6 +15,7 @@ import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.mllib.stat.correlation.PearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
 
 import java.io.File
@@ -51,11 +52,20 @@ trait EstimateScore extends Score {
   /**
    * Root mean square error of the estimate
    */
-  def rmse(df: DataFrame, model: PipelineModel): MayFail[Double] = MayFail {
+  def rmse(df: DataFrame): MayFail[Double] = MayFail {
     val agg = new DoubleRDDFunctions(df
       .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
       .rdd.map(_.getAs[Double]("sqe")))
 
     agg.mean.sqrt
+  }
+
+  /**
+   * Pearson correlation between input and labels
+   */
+  def pearsonCorr(df: DataFrame): MayFail[Double] = MayFail {
+    val rddX = df.rdd.map(_.getAs[Double](inputCol))
+    val rddY = df.rdd.map(_.getAs[Double](labelCol))
+    PearsonCorrelation.computeCorrelation(rddX, rddY)
   }
 }
