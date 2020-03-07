@@ -15,8 +15,10 @@ import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.rdd.DoubleRDDFunctions
 
 import java.io.File
+import java.lang.IllegalArgumentException
 import sys.process._
 import scala.reflect.io.Directory
 import scala.util.Try
@@ -26,5 +28,34 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-trait ModelSignificance[T <: Metric] extends Significance[T]
+/**
+ * Base score representation for evaluation
+ */
+trait Score {
+  val model: PipelineModel
+  val inputCol: String
+  val outputCol: String
+  val labelCol: String
+  def > (s: Score): Boolean = e > s.e
+  def e : Double
+}
 
+
+/**
+ * Estimate expects the following:
+ * - Double label
+ * - Double output
+ */
+trait EstimateScore extends Score {
+
+  /**
+   * Root mean square error of the estimate
+   */
+  def rmse(df: DataFrame, model: PipelineModel): MayFail[Double] = MayFail {
+    val agg = new DoubleRDDFunctions(df
+      .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
+      .rdd.map(_.getAs[Double]("sqe")))
+
+    agg.mean.sqrt
+  }
+}
