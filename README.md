@@ -6,7 +6,7 @@ Write Spark in Functional way.
 
 ## Motivation
 
-What if we can write Spark in the following way.
+What if we can write Spark in the following `Monadic` way.
 
 ```scala
 val p = for {
