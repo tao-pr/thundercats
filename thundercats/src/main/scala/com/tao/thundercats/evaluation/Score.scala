@@ -41,8 +41,8 @@ trait Score {
   def e : Double
 }
 
-
 /**
+ * Suitable for regression
  * Estimate expects the following:
  * - Double label
  * - Double output
