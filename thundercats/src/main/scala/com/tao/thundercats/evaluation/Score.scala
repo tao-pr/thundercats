@@ -12,6 +12,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
+import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
@@ -34,7 +35,6 @@ import com.tao.thundercats.estimator._
  */
 trait Score {
   val model: PipelineModel
-  val inputCol: String
   val outputCol: String
   val labelCol: String
   def > (s: Score): Boolean = e > s.e
@@ -63,7 +63,7 @@ trait EstimateScore extends Score {
   /**
    * Pearson correlation between input and labels
    */
-  def pearsonCorr(df: DataFrame): MayFail[Double] = MayFail {
+  def pearsonCorr(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
