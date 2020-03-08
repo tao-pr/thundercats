@@ -15,8 +15,6 @@ scalaVersion         := "2.12.0"
 // Compatibility NOTE: 
 // https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-12-compatibility-notes
 
-version := "1.0-SNAPSHOT"
-
 // Circe
 libraryDependencies ++= List(
   "io.circe" %% "circe-core",

@@ -15,7 +15,7 @@ import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
-import org.apache.spark.mllib.stat.correlation.PearsonCorrelation
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
 
 import java.io.File
@@ -66,6 +66,6 @@ trait EstimateScore extends Score {
   def pearsonCorr(df: DataFrame): MayFail[Double] = MayFail {
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
-    PearsonCorrelation.computeCorrelation(rddX, rddY)
+    ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
   }
 }
