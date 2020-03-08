@@ -16,9 +16,10 @@ import scala.util.{Try, Success, Failure}
  * but carrying error message in case of failure
  */
 trait MayFail[A] {
-  def map(f: A => A): MayFail[A]
-  def flatMap(g: A => MayFail[A]): MayFail[A]
+  def map[B](f: A => B): MayFail[B]
+  def flatMap[B](g: A => MayFail[B]): MayFail[B]
   def get: A
+  def getOrElse(a: A): A
   def getError: Option[String]
   def isFailing: Boolean
 }
@@ -30,24 +31,33 @@ object MayFail {
   }
 }
 
+// REVIEW: add logger compliance to following Monads
+
 case class Fail[A](errorMessage: String) extends MayFail[A] {
-  override def map(f: A => A): MayFail[A] = this
-  override def flatMap(g: A => MayFail[A]): MayFail[A] = this
+  override def map[B](f: A => B): MayFail[B] = Fail[B](errorMessage)
+  override def flatMap[B](g: A => MayFail[B]): MayFail[B] = Fail[B](errorMessage)
   override def get: A = throw new java.util.NoSuchElementException("No value resolved")
+  override def getOrElse(a: A): A = a
   override def isFailing = true
   override def getError: Option[String] = Some(errorMessage)
 }
 case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
-  override def map(f: A => A): MayFail[A] = IgnorableFail(errorMessage, f(data))
-  override def flatMap(g: A => MayFail[A]): MayFail[A] = this
+  override def map[B](f: A => B): MayFail[B] = IgnorableFail(errorMessage, f(data))
+  override def flatMap[B](g: A => MayFail[B]): MayFail[B] = g(data) match {
+    case Fail(e)            => Fail(e)
+    case IgnorableFail(e,b) => IgnorableFail(e,b)
+    case Ok(b)              => Ok(b)
+  }
   override def get: A = data
+  override def getOrElse(a: A): A = a
   override def isFailing = true
   override def getError: Option[String] = Some(errorMessage)
 }
 case class Ok[A](data: A) extends MayFail[A] {
-  override def map(f: A => A): MayFail[A] = Ok(f(data))
-  override def flatMap(g: A => MayFail[A]): MayFail[A] = g(data)
+  override def map[B](f: A => B): MayFail[B] = Ok(f(data))
+  override def flatMap[B](g: A => MayFail[B]): MayFail[B] = g(data)
   override def get: A = data
+  override def getOrElse(a: A): A = data
   override def isFailing = false
   override def getError: Option[String] = None
 }
