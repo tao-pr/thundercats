@@ -32,7 +32,21 @@ import com.tao.thundercats.estimator._
 
 /**
  * Comparison between two predictors
- * A represents the base model score
- * B represents the contender model score
  */
-trait ModelCompare[A <: Score, B <: Score] {}
+trait ModelCompare[A <: Score] {
+  val baseModel: Score
+  val contenderModel: Score
+
+  def a = baseModel
+  def b = contenderModel
+}
+
+/**
+ * A comparison between to estimate or regression models
+ */
+case class RegressionModelCompare[A <: EstimateScore](
+  override val baseModel: A,
+  override val contenderModel: A
+) extends ModelCompare[A] {
+  
+}
