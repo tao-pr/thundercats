@@ -36,13 +36,13 @@ import com.tao.thundercats.estimator._
 trait ModelCompare[A <: Score] {
   val model: A
   val data: DataFrame
-  def betterThan(baseModel: A): Boolean = model.e > baseModel.e
+  def betterThan(baseModel: A): Boolean
 }
 
 /**
  * A comparison between to estimate or regression models
  */
-case class RegressionModelCompare[A <: EstimateScore](
+case class RegressionModelCompare[A <: RegressionScore](
   override val model: A,
   override val data: DataFrame
 ) extends ModelCompare[A] {

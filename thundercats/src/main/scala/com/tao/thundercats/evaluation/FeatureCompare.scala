@@ -30,10 +30,9 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-trait FeatureCompare {
-
-}
-
-object LinearRegressionFeatureCompare extends FeatureCompare {
-  
+/**
+ * Feature comparison suite
+ */
+object FeatureCompare {
+  ???
 }
