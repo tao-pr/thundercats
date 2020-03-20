@@ -31,14 +31,13 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Base score representation for evaluation
+ * Base model score representation for evaluation
  */
 trait Score {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
-  def > (s: Score): Boolean = e > s.e
-  def e : Double
+  def betterThan(baseModel: Score): Boolean
 }
 
 /**
@@ -47,10 +46,11 @@ trait Score {
  * - Double label
  * - Double output
  */
-trait EstimateScore extends Score {
+trait RegressionScore extends Score {
 
   /**
    * Root mean square error of the estimate
+   * Smaller value : better model
    */
   def rmse(df: DataFrame): MayFail[Double] = MayFail {
     val agg = new DoubleRDDFunctions(df
@@ -62,10 +62,19 @@ trait EstimateScore extends Score {
 
   /**
    * Pearson correlation between input and labels
+   * Bigger value : better model
    */
   def pearsonCorr(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
+  }
+
+  /**
+   * Calculate Z-score of standard error of estimate
+   * Bigger value : better model
+   */
+  def zscore(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
+    ??? // z = coeff / sigma * sqrt(v)
   }
 }
