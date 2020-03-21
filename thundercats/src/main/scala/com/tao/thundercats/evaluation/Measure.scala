@@ -36,10 +36,9 @@ trait Measure {
 
 trait RegressionMeasure extends Measure
 
-// TAOTODO Derive into following
-// - Response precision measure
-// - Input-Label relation measure
-
+/**
+ * Calculate fitting error between real label and predicted output
+ */
 case class RMSE(override val df: DataFrame) extends RegressionMeasure {
   override def % (df: DataFrame): MayFail[Double] = MayFail {
     // TAOTODO Assert type of input
@@ -51,6 +50,9 @@ case class RMSE(override val df: DataFrame) extends RegressionMeasure {
   }
 }
 
+/**
+ * Calculate correlation between input and real label
+ */
 case class PearsonCorr(
   override val df: DataFrame, 
   inputCol: String,

@@ -31,28 +31,12 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Trained Model for evaluation
+ * Untrained model for evaluation
  */
-trait Specimen {
-  val model: PipelineModel
+trait Blueprint {
+  val estimator: Pipeline
   val outputCol: String
   val labelCol: String
   def score: MayFail[Double]
-}
-
-/**
- * Linear regression
- */
-case class RegressionSpecimen(
-  override val model: PipelineModel,
-  featureCol: FeatureColumn,
-  override val outputCol: String,
-  override val labelCol: String,
-  measure: RegressionMeasure
-) extends Specimen {
-  override def score = measure match {
-    case RMSE(df)                    => ???
-    case PearsonCorr(df,input,label) => ???
-    case _                           => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
-  }
+  def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen]
 }

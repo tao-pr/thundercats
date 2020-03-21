@@ -35,6 +35,9 @@ import com.tao.thundercats.estimator._
  * Representations of feature columns
  */
 trait FeatureColumn {
+  /**
+   * Create a pipeline for training
+   */
   def %(estimator: Pipeline): Pipeline
 }
 
@@ -51,39 +54,51 @@ extends FeatureColumn {
     new Pipeline().setStages(Array(vecAsm, estimator))
 }
 
+trait FeatureCompare[A <: Measure] {
+  def bestOf(comb: Iterable[FeatureColumn]): Option[FeatureColumn]
+}
+
+/**
+ * Compare features for linear regression model
+ */
+class RegressionFeatureCompare[A <: RegressionMeasure](m: A)
+extends FeatureCompare[A] {
+  override def bestOf(comb: Iterable[FeatureColumn]) = ???
+}
+
 
 /**
  * Feature comparison suite
  */
-trait FeatureCompare {
-  val baseFeature: FeatureColumn
-  val data: DataFrame
-  val estimator: Pipeline
-  def betterThan(newFeature: FeatureColumn): Boolean
-}
+// trait FeatureCompare {
+//   val baseFeature: FeatureColumn
+//   val data: DataFrame
+//   val estimator: Pipeline
+//   def betterThan(newFeature: FeatureColumn): Boolean
+// }
 
 
-/**
- * Comparison of features for regression model
- */
-case class RegressionFeatureCompare(
-  override val baseFeature: FeatureColumn,
-  override val data: DataFrame,
-  override val estimator: Pipeline
-) extends FeatureCompare {
+// /**
+//  * Comparison of features for regression model
+//  */
+// case class RegressionFeatureCompare(
+//   override val baseFeature: FeatureColumn,
+//   override val data: DataFrame,
+//   override val estimator: Pipeline
+// ) extends FeatureCompare {
 
-  override def betterThan(newFeature: FeatureColumn): Boolean = {
-    val Seq(oldModel, newModel) = Seq(baseFeature, newFeature).map{ m =>
-      val pipe  = new Pipeline().setStages(Array(estimator))
-      val df    = m % data
-      val model = pipe.fit(df)
-      RegressionSpecimen(
-        model, 
-        featureCol,
-        outputCol,
-        labelCol)
-    }
-    newModel.betterThan(oldModel)
-  }
+//   override def betterThan(newFeature: FeatureColumn): Boolean = {
+//     val Seq(oldModel, newModel) = Seq(baseFeature, newFeature).map{ m =>
+//       val pipe  = new Pipeline().setStages(Array(estimator))
+//       val df    = m % data
+//       val model = pipe.fit(df)
+//       RegressionSpecimen(
+//         model, 
+//         featureCol,
+//         outputCol,
+//         labelCol)
+//     }
+//     newModel.betterThan(oldModel)
+//   }
 
-}
+// }
