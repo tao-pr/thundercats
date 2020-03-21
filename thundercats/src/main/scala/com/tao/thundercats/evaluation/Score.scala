@@ -37,7 +37,6 @@ trait Score {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
-  def betterThan(baseModel: Score): Boolean
 }
 
 /**
@@ -59,6 +58,7 @@ trait RegressionScore extends Score {
 
     agg.mean.sqrt
   }
+
 
   /**
    * Pearson correlation between input and labels
