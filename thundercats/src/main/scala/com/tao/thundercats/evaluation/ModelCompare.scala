@@ -30,35 +30,46 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-/**
- * Comparison between two predictors
- */
-trait ModelCompare[A <: Specimen]{
-  val model: A
-  val data: DataFrame
-  def betterThan(baseModel: A): Boolean
+trait ModelCompare[A <: Measure] {
+  def bestOf(models: Iterable[Specimen]): Option[Specimen]
 }
 
-/**
- * A comparison between to estimate or regression models
- */
-case class RegressionModelCompare[A <: RegressionSpecimen](
-  override val model: A,
-  override val data: DataFrame
-) extends ModelCompare[A] {
+class RegressionModelCompare[A <: RegressionMeasure](m: A) 
+extends ModelCompare[A] {
+  override bestOf(models: Iterable[Specimen]): Option[Specimen] = ???
+}
+
+
+
+// /**
+//  * Comparison between two predictors
+//  */
+// trait ModelCompare[A <: Specimen]{
+//   val model: A
+//   val data: DataFrame
+//   def betterThan(baseModel: A): Boolean
+// }
+
+// /**
+//  * A comparison between to estimate or regression models
+//  */
+// case class RegressionModelCompare[A <: RegressionSpecimen](
+//   override val model: A,
+//   override val data: DataFrame
+// ) extends ModelCompare[A] {
   
-  override def betterThan(baseModel: A): Boolean = (for {
-    eb <- model.rmse(data) 
-    ea <- baseModel.rmse(data)
-  } yield (ea < ea)).getOrElse(false)
-}
+//   override def betterThan(baseModel: A): Boolean = (for {
+//     eb <- model.rmse(data) 
+//     ea <- baseModel.rmse(data)
+//   } yield (ea < ea)).getOrElse(false)
+// }
 
-case class CorrelationCompare[A <: RegressionSpecimen](
-  override val model: A,
-  override val data: DataFrame
-) extends ModelCompare[A] {
-  override def betterThan(baseModel: A): Boolean = (for {
-    eb <- model.pearsonCorr(data) 
-    ea <- baseModel.pearsonCorr(data)
-  } yield (ea > ea)).getOrElse(false)
-}
+// case class CorrelationCompare[A <: RegressionSpecimen](
+//   override val model: A,
+//   override val data: DataFrame
+// ) extends ModelCompare[A] {
+//   override def betterThan(baseModel: A): Boolean = (for {
+//     eb <- model.pearsonCorr(data) 
+//     ea <- baseModel.pearsonCorr(data)
+//   } yield (ea > ea)).getOrElse(false)
+// }
