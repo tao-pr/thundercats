@@ -30,9 +30,23 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
+
+/**
+ * Representations of feature columns
+ */
+trait FeatureColumn
+case class Feature(c: String) extends FeatureColumn
+case class AssemblyFeature(cs: Seq[String]) extends FeatureColumn
+
+
 /**
  * Feature comparison suite
  */
-object FeatureCompare {
-  ???
+trait FeatureCompare[A <: Score] extends Score {
+  val baseFeature: FeatureColumn
+  val newFeature: FeatureColumn
+
+  override val model: PipelineModel = ???
+  override val outputCol: String = ???
+  override val labelCol: String = ???
 }
