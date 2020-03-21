@@ -34,9 +34,27 @@ import com.tao.thundercats.estimator._
 /**
  * Representations of feature columns
  */
-trait FeatureColumn
-case class Feature(c: String) extends FeatureColumn
-case class AssemblyFeature(cs: Seq[String]) extends FeatureColumn
+trait FeatureColumn {
+  /**
+   * Take the features out of the input dataframe
+   */
+  def %(df: DataFrame, cols: String*): DataFrame
+}
+
+case class Feature(c: String) extends FeatureColumn {
+  override def %(df: DataFrame, cols: String*) = df.select(c, cols:_*)
+}
+
+case class AssemblyFeature(cs: Seq[String], outputCol: String="features") extends FeatureColumn {
+  def assembly(df: DataFrame, cols: String*): DataFrame = {
+    new VectorAssembler()
+      .setInputCols(cs.toArray)
+      .setOutputCol(outputCol)
+      .transform(df)
+      .select(outputCol, cols:_*)
+  }
+  override def %(df: DataFrame, cols: String*) = assembly(df, cols:_*)
+}
 
 
 /**
