@@ -35,36 +35,55 @@ import com.tao.thundercats.estimator._
  * Representations of feature columns
  */
 trait FeatureColumn {
-  /**
-   * Take the features out of the input dataframe
-   */
-  def %(df: DataFrame, cols: String*): DataFrame
+  def %(estimator: Pipeline): Pipeline
 }
 
 case class Feature(c: String) extends FeatureColumn {
-  override def %(df: DataFrame, cols: String*) = df.select(c, cols:_*)
+  override def %(estimator: Pipeline) = estimator
 }
 
-case class AssemblyFeature(cs: Seq[String], outputCol: String="features") extends FeatureColumn {
-  def assembly(df: DataFrame, cols: String*): DataFrame = {
-    new VectorAssembler()
+case class AssemblyFeature(cs: Seq[String], outputCol: String="features") 
+extends FeatureColumn {
+  override def %(estimator: Pipeline) = {
+    val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
       .setOutputCol(outputCol)
-      .transform(df)
-      .select(outputCol, cols:_*)
-  }
-  override def %(df: DataFrame, cols: String*) = assembly(df, cols:_*)
+    new Pipeline().setStages(Array(vecAsm, estimator))
 }
 
 
 /**
  * Feature comparison suite
  */
-trait FeatureCompare[A <: Score] extends Score {
+trait FeatureCompare {
   val baseFeature: FeatureColumn
-  val newFeature: FeatureColumn
+  val data: DataFrame
+  val estimator: Pipeline
+  def betterThan(newFeature: FeatureColumn): Boolean
+}
 
-  override val model: PipelineModel = ???
-  override val outputCol: String = ???
-  override val labelCol: String = ???
+
+/**
+ * Comparison of features for regression model
+ */
+case class RegressionFeatureCompare(
+  override val baseFeature: FeatureColumn,
+  override val data: DataFrame,
+  override val estimator: Pipeline
+) extends FeatureCompare {
+
+  override def betterThan(newFeature: FeatureColumn): Boolean = {
+    val Seq(oldModel, newModel) = Seq(baseFeature, newFeature).map{ m =>
+      val pipe  = new Pipeline().setStages(Array(estimator))
+      val df    = m % data
+      val model = pipe.fit(df)
+      RegressionSpecimen(
+        model, 
+        featureCol,
+        outputCol,
+        labelCol)
+    }
+    newModel.betterThan(oldModel)
+  }
+
 }

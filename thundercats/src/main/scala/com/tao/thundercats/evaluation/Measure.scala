@@ -30,51 +30,36 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-/**
- * Base model score representation for evaluation
- */
-trait Score {
-  val model: PipelineModel
-  val outputCol: String
-  val labelCol: String
+trait Measure {
+  def % (df: DataFrame): MayFail[Double]
 }
 
-/**
- * Suitable for regression
- * Estimate expects the following:
- * - Double label
- * - Double output
- */
-trait RegressionScore extends Score {
+trait RegressionMeasure extends Measure
 
-  /**
-   * Root mean square error of the estimate
-   * Smaller value : better model
-   */
-  def rmse(df: DataFrame): MayFail[Double] = MayFail {
+// TAOTODO Derive into following
+// - Response precision measure
+// - Input-Label relation measure
+
+case class RMSE(override val df: DataFrame) extends RegressionMeasure {
+  override def % (df: DataFrame): MayFail[Double] = MayFail {
+    // TAOTODO Assert type of input
     val agg = new DoubleRDDFunctions(df
       .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
       .rdd.map(_.getAs[Double]("sqe")))
 
     agg.mean.sqrt
   }
+}
 
-
-  /**
-   * Pearson correlation between input and labels
-   * Bigger value : better model
-   */
-  def pearsonCorr(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
+case class PearsonCorr(
+  override val df: DataFrame, 
+  inputCol: String,
+  labelCol: String) extends RegressionMeasure {
+  override def % (df: DataFrame): MayFail[Double] = MayFail {
+    // TAOTODO Assert type of input
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
   }
-
-  /**
-   * Calculate Z-score of standard error of estimate
-   * Bigger value : better model
-   */
-  def zscore(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
-    ??? // z = coeff / sigma * sqrt(v)
-  }
 }
+

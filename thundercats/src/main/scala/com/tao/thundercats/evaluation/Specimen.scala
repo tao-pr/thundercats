@@ -31,34 +31,28 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Comparison between two predictors
+ * Model for evaluation
  */
-trait ModelCompare[A <: Specimen]{
-  val model: A
-  val data: DataFrame
-  def betterThan(baseModel: A): Boolean
+trait Specimen {
+  val model: PipelineModel
+  val outputCol: String
+  val labelCol: String
+  def score: MayFail[Double]
 }
 
 /**
- * A comparison between to estimate or regression models
+ * Linear regression
  */
-case class RegressionModelCompare[A <: RegressionSpecimen](
-  override val model: A,
-  override val data: DataFrame
-) extends ModelCompare[A] {
-  
-  override def betterThan(baseModel: A): Boolean = (for {
-    eb <- model.rmse(data) 
-    ea <- baseModel.rmse(data)
-  } yield (ea < ea)).getOrElse(false)
-}
-
-case class CorrelationCompare[A <: RegressionSpecimen](
-  override val model: A,
-  override val data: DataFrame
-) extends ModelCompare[A] {
-  override def betterThan(baseModel: A): Boolean = (for {
-    eb <- model.pearsonCorr(data) 
-    ea <- baseModel.pearsonCorr(data)
-  } yield (ea > ea)).getOrElse(false)
+case class RegressionSpecimen(
+  override val model: PipelineModel,
+  featureCol: FeatureColumn,
+  override val outputCol: String,
+  override val labelCol: String,
+  measure: RegressionMeasure
+) extends Specimen {
+  override def score = measure match {
+    case RMSE(df)                    => ???
+    case PearsonCorr(df,input,label) => ???
+    case _                           => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
+  }
 }
