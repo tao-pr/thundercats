@@ -40,3 +40,12 @@ trait Blueprint {
   def score: MayFail[Double]
   def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen]
 }
+
+case class RegressionBlueprint(
+  override val estimator: Pipeline,
+  override val outputCol: String,
+  override val labelCol: String
+) extends Blueprint {
+  override def score: MayFail[Double] = ???
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen] = ???
+}
