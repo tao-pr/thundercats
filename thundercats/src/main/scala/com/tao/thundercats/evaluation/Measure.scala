@@ -51,6 +51,15 @@ case class RMSE(override val df: DataFrame) extends RegressionMeasure {
 }
 
 /**
+ * Calculate fitting error between real label and predicted output
+ */
+case class MAE(override val df: DataFrame) extends RegressionMeasure {
+  override def % (df: DataFrame): MayFail[Double] = MayFail {
+    ???
+  }
+}
+
+/**
  * Calculate correlation between input and real label
  */
 case class PearsonCorr(
