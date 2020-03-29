@@ -39,5 +39,5 @@ trait ModelCompare[A <: Measure] {
 
 class RegressionModelCompare[A <: RegressionMeasure](m: A) 
 extends ModelCompare[A] {
-  override bestOf(models: Iterable[Specimen]): Option[Specimen] = ???
+  override def bestOf(models: Iterable[Specimen]): Option[Specimen] = ???
 }
