@@ -37,7 +37,7 @@ trait Specimen {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
-  def score: MayFail[Double]
+  def score(df: DataFrame): MayFail[Double]
 }
 
 /**
@@ -50,9 +50,10 @@ case class RegressionSpecimen(
   override val labelCol: String,
   measure: RegressionMeasure
 ) extends Specimen {
-  override def score = measure match {
-    case RMSE               => ???
-    case PearsonCorr(input) => ???
+  override def score(df: DataFrame) = measure match {
+    case RMSE               => measure % (df, this)
+    case MAE                => measure % (df, this)
+    case PearsonCorr(input) => measure % (df, this)
     case _                  => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
   }
 }
