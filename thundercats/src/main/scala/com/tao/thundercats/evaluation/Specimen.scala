@@ -51,8 +51,8 @@ case class RegressionSpecimen(
   measure: RegressionMeasure
 ) extends Specimen {
   override def score = measure match {
-    case RMSE(df)                    => ???
-    case PearsonCorr(df,input,label) => ???
-    case _                           => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
+    case RMSE               => ???
+    case PearsonCorr(input) => ???
+    case _                  => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
   }
 }

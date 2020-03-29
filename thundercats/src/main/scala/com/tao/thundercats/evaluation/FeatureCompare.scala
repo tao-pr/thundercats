@@ -52,6 +52,7 @@ extends FeatureColumn {
       .setInputCols(cs.toArray)
       .setOutputCol(outputCol)
     new Pipeline().setStages(Array(vecAsm, estimator))
+  }
 }
 
 trait FeatureCompare[A <: Measure] {

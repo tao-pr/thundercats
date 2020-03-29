@@ -31,17 +31,20 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 trait Measure {
-  def % (df: DataFrame): MayFail[Double]
+  def % (df: DataFrame, specimen: Specimen): MayFail[Double]
 }
 
 trait RegressionMeasure extends Measure
 
 /**
- * Calculate fitting error between real label and predicted output
+ * Calculate fitting error between real label and predicted output.
+ * Metric: Root mean square error
  */
-case class RMSE(override val df: DataFrame) extends RegressionMeasure {
-  override def % (df: DataFrame): MayFail[Double] = MayFail {
+case object RMSE
+extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     // TAOTODO Assert type of input
+    import specimen._
     val agg = new DoubleRDDFunctions(df
       .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
       .rdd.map(_.getAs[Double]("sqe")))
@@ -51,23 +54,29 @@ case class RMSE(override val df: DataFrame) extends RegressionMeasure {
 }
 
 /**
- * Calculate fitting error between real label and predicted output
+ * Calculate fitting error between real label and predicted output.
+ * Metric: Mean absolute error
  */
-case class MAE(override val df: DataFrame) extends RegressionMeasure {
-  override def % (df: DataFrame): MayFail[Double] = MayFail {
-    ???
+case object MAE 
+extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    // TAOTODO Assert type of input
+    import specimen._
+    val agg = new DoubleRDDFunctions(df
+      .withColumn("mae", abs(col(outputCol) - col(labelCol)))
+      .rdd.map(_.getAs[Double]("mae")))
+
+    agg.mean
   }
 }
 
 /**
  * Calculate correlation between input and real label
  */
-case class PearsonCorr(
-  override val df: DataFrame, 
-  inputCol: String,
-  labelCol: String) extends RegressionMeasure {
-  override def % (df: DataFrame): MayFail[Double] = MayFail {
+case class PearsonCorr(inputCol: String) extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     // TAOTODO Assert type of input
+    import specimen._
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
