@@ -37,7 +37,13 @@ trait Specimen {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
-  def score(df: DataFrame): MayFail[Double]
+
+  /**
+   * Score the specimen with the given data
+   */
+  def score(df: DataFrame, measure: Measure): MayFail[Double]
+
+  // TAOTODO: before scoring, [df] should be fitted and transformed by [model]
 }
 
 /**
@@ -47,13 +53,14 @@ case class RegressionSpecimen(
   override val model: PipelineModel,
   featureCol: FeatureColumn,
   override val outputCol: String,
-  override val labelCol: String,
-  measure: RegressionMeasure
+  override val labelCol: String
 ) extends Specimen {
-  override def score(df: DataFrame) = measure match {
-    case RMSE               => measure % (df, this)
-    case MAE                => measure % (df, this)
-    case PearsonCorr(input) => measure % (df, this)
-    case _                  => Fail(s"Unsupported measure type : ${measure.getClass.getName}")
-  }
+  override def score(df: DataFrame, measure: Measure) = 
+    measure match {
+      case RMSE               => measure % (df, this)
+      case MAE                => measure % (df, this)
+      case PearsonCorr(input) => measure % (df, this)
+      case _                  => Fail(
+        s"Unsupported measure type : ${measure.getClass.getName}")
+    }
 }

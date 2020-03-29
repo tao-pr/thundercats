@@ -58,6 +58,8 @@ case class Kx(key: String, value: String, b: Int)
 
 case class Train(i: Int, d: Double, v: Double, w: Double, s: String, s2: String)
 
+case class W(i: Int, d: Double, label: Double)
+
 class DataSuite extends SparkStreamTestInstance with Matchers {
 
   import spark.implicits._
@@ -686,11 +688,22 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
   }
 
-  describe("Modeling test"){
+  describe("Regression Modeling test"){
 
     import spark.implicits._
     import Implicits._
 
+    lazy val df = List(
+      W(0, 0, label=0),
+      W(1, 1, label=1),
+      W(2, 1, label=2),
+      W(3, 1, label=3),
+      W(4, 1, label=4)
+    ).toDS.toDF
+
+    it("Measure RMSE"){
+      
+    }
   }
 
 }
