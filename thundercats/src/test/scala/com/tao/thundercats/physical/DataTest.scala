@@ -704,6 +704,10 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     it("Measure RMSE"){
       
     }
+
+    it("Measure MAE"){
+
+    }
   }
 
 }
