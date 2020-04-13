@@ -694,6 +694,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     import Implicits._
 
     lazy val df = List(
+      // i, d, label
       W(0, 0, label=0),
       W(1, 1, label=1),
       W(2, 1, label=2),
@@ -702,7 +703,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     ).toDS.toDF
 
     it("Measure RMSE"){
-      
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+
+      // TAOTODO
     }
 
     it("Measure MAE"){

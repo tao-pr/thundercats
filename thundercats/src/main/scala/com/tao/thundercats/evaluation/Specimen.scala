@@ -44,8 +44,10 @@ trait Specimen {
   protected def ensure(df: DataFrame): DataFrame = {
     if (df.columns contains outputCol)
       df
-    else
+    else{
+      // REVIEW: Log that the transformation is triggered
       model.transform(df)
+    }
   }
 
   /**
@@ -53,6 +55,28 @@ trait Specimen {
    */
   def score(df: DataFrame, measure: Measure): MayFail[Double] = 
     measure % (ensure(df), this)
+}
+
+/**
+ * No machine learning, just wraps the predicted data for further usage
+ */
+case class DummySpecimen(
+  featureCol: FeatureColumn,
+  override val outputCol: String,
+  override val labelCol: String
+) extends Specimen {
+
+  override lazy val model = {
+    throw new NotImplementedError
+  }
+  override def score(df: DataFrame, measure: Measure) = {
+    // Never use the pipeline model in [[DummySpecimen]]
+    super.score(df, measure)
+  }
+
+  override protected def ensure(df: DataFrame): DataFrame = {
+    df // Just do nothing
+  }
 }
 
 /**
@@ -66,9 +90,9 @@ case class RegressionSpecimen(
 ) extends Specimen {
   override def score(df: DataFrame, measure: Measure) = 
     measure match {
-      case RMSE               => super.score(df, measure)
-      case MAE                => super.score(df, measure)
-      case PearsonCorr(input) => super.score(df, measure)
+      case RMSE               => super.score(ensure(df), measure)
+      case MAE                => super.score(ensure(df), measure)
+      case PearsonCorr(input) => super.score(ensure(df), measure)
       case _                  => Fail(
         s"Unsupported measure type : ${measure.getClass.getName}")
     }
