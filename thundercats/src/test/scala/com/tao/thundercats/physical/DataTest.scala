@@ -22,6 +22,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.model._
 import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
 import org.scalatest.{Filter => _, _}
 import Matchers._
@@ -704,8 +705,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("Measure RMSE"){
       val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
-
-      // TAOTODO
+      val score = spec.score(df, RMSE)
+      score shouldBe Ok(scala.math.sqrt(2.8))
     }
 
     it("Measure MAE"){

@@ -67,6 +67,7 @@ case class DummySpecimen(
 ) extends Specimen {
 
   override lazy val model = {
+    // Dirty hack
     throw new NotImplementedError
   }
   override def score(df: DataFrame, measure: Measure) = {
