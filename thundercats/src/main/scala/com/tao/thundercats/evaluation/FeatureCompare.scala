@@ -56,7 +56,24 @@ extends FeatureColumn {
 }
 
 trait FeatureCompare[A <: Measure] {
-  def bestOf(comb: Iterable[FeatureColumn]): Option[FeatureColumn]
+  lazy val blueprint: Blueprint
+  lazy val measure: A
+  def bestOf(comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
+    // Find the best features out of the bound specimen
+    val measures = comb.map{ c => 
+      // Train the model (specimen) by given column(s)
+      val specimen = blueprint.toSpecimen(c, df)
+      val score = specimen.score(df, measure).get
+      (score, c)
+    }
+    // Identify the best specimen
+    measures.reduceLeftOption{ case(a,b) => 
+      val (bestScore, bestSpecimen) = a
+      val (anotherScore, anotherSpecimen) = b
+      if (m.isBetter(bestScore, anotherScore)) a
+      else b
+    }
+  }
 }
 
 /**
@@ -65,4 +82,14 @@ trait FeatureCompare[A <: Measure] {
 class RegressionFeatureCompare[A <: RegressionMeasure](m: A)
 extends FeatureCompare[A] {
   override def bestOf(comb: Iterable[FeatureColumn]) = ???
+}
+
+/**
+ * Non-binding feature comparison, supports any feature types
+ */
+class DummyFeatureCompare(m: Measure)
+extends FeatureCompare[Measure] {
+  override def bestOf(comb: Iterable[FeatureColumn]) = {
+    ???
+  }
 }
