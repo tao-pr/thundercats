@@ -39,11 +39,20 @@ trait Specimen {
   val labelCol: String
 
   /**
+   * Ensure the dataframe is transformed before use
+   */
+  protected def ensure(df: DataFrame): DataFrame = {
+    if (df.columns contains outputCol)
+      df
+    else
+      model.transform(df)
+  }
+
+  /**
    * Score the specimen with the given data
    */
-  def score(df: DataFrame, measure: Measure): MayFail[Double]
-
-  // TAOTODO: before scoring, [df] should be fitted and transformed by [model]
+  def score(df: DataFrame, measure: Measure): MayFail[Double] = 
+    measure % (ensure(df), this)
 }
 
 /**
@@ -57,9 +66,9 @@ case class RegressionSpecimen(
 ) extends Specimen {
   override def score(df: DataFrame, measure: Measure) = 
     measure match {
-      case RMSE               => measure % (df, this)
-      case MAE                => measure % (df, this)
-      case PearsonCorr(input) => measure % (df, this)
+      case RMSE               => super.score(df, measure)
+      case MAE                => super.score(df, measure)
+      case PearsonCorr(input) => super.score(df, measure)
       case _                  => Fail(
         s"Unsupported measure type : ${measure.getClass.getName}")
     }

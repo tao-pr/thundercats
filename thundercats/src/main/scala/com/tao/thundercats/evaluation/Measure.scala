@@ -30,6 +30,9 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
+/**
+ * Measure of a specimen
+ */
 trait Measure {
   def % (df: DataFrame, specimen: Specimen): MayFail[Double]
 }
@@ -43,7 +46,6 @@ trait RegressionMeasure extends Measure
 case object RMSE
 extends RegressionMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    // TAOTODO Assert type of input
     import specimen._
     val agg = new DoubleRDDFunctions(df
       .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
@@ -60,7 +62,6 @@ extends RegressionMeasure {
 case object MAE 
 extends RegressionMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    // TAOTODO Assert type of input
     import specimen._
     val agg = new DoubleRDDFunctions(df
       .withColumn("mae", abs(col(outputCol) - col(labelCol)))
@@ -75,7 +76,6 @@ extends RegressionMeasure {
  */
 case class PearsonCorr(inputCol: String) extends RegressionMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    // TAOTODO Assert type of input
     import specimen._
     val rddX = df.rdd.map(_.getAs[Double](inputCol))
     val rddY = df.rdd.map(_.getAs[Double](labelCol))
