@@ -710,7 +710,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
 
     it("Measure MAE"){
-
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+      val score = spec.score(df, MAE)
+      score shouldBe Ok(1.2)
     }
   }
 
