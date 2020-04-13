@@ -35,6 +35,7 @@ import com.tao.thundercats.estimator._
  */
 trait Measure {
   def % (df: DataFrame, specimen: Specimen): MayFail[Double]
+  def isBetter(a: Double, b: Double) = a > b
 }
 
 trait RegressionMeasure extends Measure
@@ -53,6 +54,8 @@ extends RegressionMeasure {
 
     agg.mean.sqrt
   }
+
+  override def isBetter(a: Double, b: Double) = a < b
 }
 
 /**
@@ -69,6 +72,8 @@ extends RegressionMeasure {
 
     agg.mean
   }
+
+  override def isBetter(a: Double, b: Double) = a < b
 }
 
 /**
