@@ -59,6 +59,7 @@ trait Specimen {
 
 /**
  * No machine learning, just wraps the predicted data for further usage
+ * NOTE: [[PipelineModel]] is never used in [[DummySpecimen]]
  */
 case class DummySpecimen(
   featureCol: FeatureColumn,
@@ -66,18 +67,8 @@ case class DummySpecimen(
   override val labelCol: String
 ) extends Specimen {
 
-  override lazy val model = {
-    // Dirty hack
-    throw new NotImplementedError
-  }
-  override def score(df: DataFrame, measure: Measure) = {
-    // Never use the pipeline model in [[DummySpecimen]]
-    super.score(df, measure)
-  }
-
-  override protected def ensure(df: DataFrame): DataFrame = {
-    df // Just do nothing
-  }
+  override lazy val model = throw new NotImplementedError
+  override protected def ensure(df: DataFrame): DataFrame = df // No transformation, no pipeline model
 }
 
 /**

@@ -41,13 +41,13 @@ trait Blueprint {
   def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen]
 }
 
-object DummyBlueprint extends Blueprint {
+case class DummyBlueprint(override val outputCol: String, override val labelCol: String) 
+extends Blueprint {
   override val estimator: Pipeline = throw new NotImplementedError
-  override val outputCol: String = throw new NotImplementedError
-  override val labelCol: String = throw new NotImplementedError
-
   override def score = Fail("Not implemented")
-  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = Fail("Not implemented")
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = Ok{
+    DummySpecimen(feature, outputCol, labelCol)
+  }
 }
 
 case class RegressionBlueprint(
