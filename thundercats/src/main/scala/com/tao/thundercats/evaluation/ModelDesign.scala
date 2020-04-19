@@ -40,6 +40,9 @@ trait ModelDesign {
   def toSpecimen(feature: FeatureColumn, df: DataFrame): Specimen
 }
 
+/**
+ * [[DummyModelDesign]] does not train any pipeline
+ */
 case class DummyModelDesign(override val outputCol: String, override val labelCol: String) 
 extends ModelDesign {
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = 
@@ -51,5 +54,9 @@ case class FeatureModelDesign(
   override val labelCol: String,
   estimator: Pipeline)
 extends ModelDesign {
-  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = ??? // TAOTODO Train model
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
+    var pipe = feature % estimator 
+    val fitted = pipe.fit(df)
+    TrainedSpecimen(fitted, feature, labelCol, outputCol)
+  }
 }

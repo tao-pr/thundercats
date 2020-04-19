@@ -45,12 +45,13 @@ case class Feature(c: String) extends FeatureColumn {
   override def %(estimator: Pipeline) = estimator
 }
 
-case class AssemblyFeature(cs: Seq[String], outputCol: String="features") 
+case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
 extends FeatureColumn {
   override def %(estimator: Pipeline) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
-      .setOutputCol(outputCol)
+      .setOutputCol(asVectorCol)
+    // NOTE: Presume [[estimator]] takes a vector input [[asVectorCol]]
     new Pipeline().setStages(Array(vecAsm, estimator))
   }
 }
