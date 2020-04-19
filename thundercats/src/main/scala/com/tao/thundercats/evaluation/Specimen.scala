@@ -71,10 +71,7 @@ case class DummySpecimen(
   override protected def ensure(df: DataFrame): DataFrame = df // No transformation, no pipeline model
 }
 
-/**
- * Linear regression
- */
-case class RegressionSpecimen(
+case class TrainedSpecimen(
   override val model: PipelineModel,
   featureCol: FeatureColumn,
   override val outputCol: String,
