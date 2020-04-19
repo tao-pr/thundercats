@@ -715,10 +715,17 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       score shouldBe Ok(1.2)
     }
 
-    it("Find the best model by measures"){
-      // TAOTODO
-      val blueprints = List()
-      val comp = RegressionFeatureCompare(MAE, DummyBlueprint)
+    it("Find the best model by measures (dummy)"){
+      val candidates = List(
+        Feature("i"),
+        Feature("d")
+      )
+      val design = DummyModelDesign(labelCol="label")
+      val comp = new RegressionFeatureCompare(MAE)
+      val (bestScore, bestSpec) = comp.bestOf(design, candidates, df).get
+
+      bestSpec.isInstanceOf[DummySpecimen] shouldBe true
+      bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
     }
   }
 

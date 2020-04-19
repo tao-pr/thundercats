@@ -43,10 +43,12 @@ trait ModelDesign {
 /**
  * [[DummyModelDesign]] does not train any pipeline
  */
-case class DummyModelDesign(override val outputCol: String, override val labelCol: String) 
+case class DummyModelDesign(override val labelCol: String) 
 extends ModelDesign {
+  override val outputCol = ""
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = 
-    DummySpecimen(feature, labelCol, outputCol) 
+    // NOTE: Specified feature col will be used as direct output 
+    DummySpecimen(feature, labelCol, feature.colName)
 }
 
 case class FeatureModelDesign(
