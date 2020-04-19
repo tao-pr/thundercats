@@ -39,10 +39,12 @@ trait FeatureColumn {
    * Create a pipeline for training
    */
   def %(estimator: Pipeline): Pipeline
+  def colName: String
 }
 
 case class Feature(c: String) extends FeatureColumn {
   override def %(estimator: Pipeline) = estimator
+  override def colName = c
 }
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
@@ -54,10 +56,22 @@ extends FeatureColumn {
     // NOTE: Presume [[estimator]] takes a vector input [[asVectorCol]]
     new Pipeline().setStages(Array(vecAsm, estimator))
   }
+  override def colName = asVectorCol
 }
 
 trait FeatureCompare[A <: Measure] {
   val measure: A
+
+  protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
+    val takeBetterScore = (a: (Double,Specimen), b: (Double, Specimen)) => {
+      val (bestScore, bestSpecimen) = a
+      val (anotherScore, anotherSpecimen) = b
+      if (measure.isBetter(bestScore, anotherScore)) a
+      else b
+    }
+    measures.reduceLeftOption(takeBetterScore)
+  }
+
   def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
@@ -67,18 +81,14 @@ trait FeatureCompare[A <: Measure] {
 
       scoreOpt.mapOpt{ score => (score, specimen) }
     }.flatten
-
-    val takeBetterScore = (a: (Double,Specimen), b: (Double, Specimen)) => {
-      val (bestScore, bestSpecimen) = a
-      val (anotherScore, anotherSpecimen) = b
-      if (measure.isBetter(bestScore, anotherScore)) a
-      else b
-    }
-
-    measures.reduceLeftOption(takeBetterScore)
+    
+    bestMeasures(measures)
   }
 }
 
+/**
+ * No-trained model, just simply presume the data has all candidate prediction columns
+ */
 class DummyFeatureCompare(override val measure: Measure)
 extends FeatureCompare[Measure]
 
