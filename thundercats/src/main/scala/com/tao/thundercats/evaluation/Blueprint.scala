@@ -31,30 +31,25 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Untrained model for evaluation
+ * Draft model
+ * can be trained multiple times with different feature columns
  */
-trait Blueprint {
-  val estimator: Pipeline
+trait ModelDesign {
   val outputCol: String
   val labelCol: String
-  def score: MayFail[Double]
-  def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen]
+  def toSpecimen(feature: FeatureColumn, df: DataFrame): Specimen
 }
 
-case class DummyBlueprint(override val outputCol: String, override val labelCol: String) 
-extends Blueprint {
-  override val estimator: Pipeline = throw new NotImplementedError
-  override def score = Fail("Not implemented")
-  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = Ok{
-    DummySpecimen(feature, outputCol, labelCol)
-  }
+case class DummyModelDesign(override val outputCol: String, override val labelCol: String) 
+extends ModelDesign {
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = 
+    DummySpecimen(feature, labelCol, outputCol) 
 }
 
-case class RegressionBlueprint(
-  override val estimator: Pipeline,
-  override val outputCol: String,
-  override val labelCol: String
-) extends Blueprint {
-  override def score: MayFail[Double] = ???
-  override def toSpecimen(feature: FeatureColumn, df: DataFrame): MayFail[Specimen] = ???
+case class FeatureModelDesign(
+  override val outputCol: String, 
+  override val labelCol: String,
+  estimator: Pipeline)
+extends ModelDesign {
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = ??? // TAOTODO Train model
 }
