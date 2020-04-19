@@ -69,7 +69,6 @@ extends RegressionMeasure {
     val agg = new DoubleRDDFunctions(df
       .withColumn("mae", abs(col(outputCol) - col(labelCol)))
       .rdd.map(_.getAs[Double]("mae")))
-
     agg.mean
   }
 
