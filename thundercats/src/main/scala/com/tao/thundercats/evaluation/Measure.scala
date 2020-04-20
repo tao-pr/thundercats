@@ -78,11 +78,11 @@ extends RegressionMeasure {
 /**
  * Calculate correlation between input and real label
  */
-case class PearsonCorr(inputCol: String) extends RegressionMeasure {
+case object PearsonCorr extends RegressionMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     import specimen._
-    val rddX = df.rdd.map(_.getAs[Double](inputCol))
-    val rddY = df.rdd.map(_.getAs[Double](labelCol))
+    val rddX = df getDoubleRDD outputCol
+    val rddY = df getDoubleRDD labelCol
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
   }
 }

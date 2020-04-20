@@ -72,7 +72,7 @@ trait FeatureCompare[A <: Measure] {
     measures.reduceLeftOption(takeBetterScore)
   }
 
-  def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
+  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
@@ -81,8 +81,12 @@ trait FeatureCompare[A <: Measure] {
 
       scoreOpt.mapOpt{ score => (score, specimen) }
     }.flatten
-    
-    bestMeasures(measures)
+
+    measures
+  }
+
+  def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
+    bestMeasures(allOf(design, comb, df))
   }
 }
 
