@@ -79,10 +79,8 @@ case class TrainedSpecimen(
 ) extends Specimen {
   override def score(df: DataFrame, measure: Measure) = 
     measure match {
-      case RMSE               => super.score(ensure(df), measure)
-      case MAE                => super.score(ensure(df), measure)
-      case PearsonCorr(input) => super.score(ensure(df), measure)
-      case _                  => Fail(
+      case _:RegressionMeasure => super.score(ensure(df), measure)
+      case _                   => Fail(
         s"Unsupported measure type : ${measure.getClass.getName}")
     }
 }
