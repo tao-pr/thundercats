@@ -739,10 +739,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         .bestOf(design, candidates, df)
         .get
 
-      // TAOTODO:
-      Console.println(Console.CYAN + "BEST MODELS" + Console.RESET)
-      Console.print(new RegressionFeatureCompare(PearsonCorr).allOf(design, candidates, df))
-
       bestSpec.isInstanceOf[DummySpecimen] shouldBe true
       bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
     }
