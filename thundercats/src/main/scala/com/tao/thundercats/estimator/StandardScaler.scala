@@ -44,8 +44,7 @@ with DefaultParamsWritable {
   override def fit(dataset: Dataset[_]): StandardScalerModel = {
     // Calculate mean and standard deviation
     val df = dataset.toDF
-    // TAOTODO Should use Util's [[getDoubleRDD]]
-    val sum = df.rdd.map(_.getAs[Double](getInputCol)).reduce(_ + _)
+    val sum = df.getDoubleRDD(getInputCol).reduce(_ + _)
     val mean = sum / df.count.toDouble
     val std = java.lang.Math.sqrt(
       df.rdd
