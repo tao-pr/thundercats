@@ -22,6 +22,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.model._
 import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
 import org.scalatest.{Filter => _, _}
 import Matchers._
@@ -57,6 +58,8 @@ case class K(key: String, value: String)
 case class Kx(key: String, value: String, b: Int)
 
 case class Train(i: Int, d: Double, v: Double, w: Double, s: String, s2: String)
+
+case class W(i: Int, d: Double, label: Double)
 
 class DataSuite extends SparkStreamTestInstance with Matchers {
 
@@ -686,11 +689,59 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
   }
 
-  describe("Modeling test"){
+  describe("Regression Modeling test"){
 
     import spark.implicits._
     import Implicits._
 
+    lazy val df = List(
+      // i, d, label
+      W(0, 0, label=0),
+      W(1, 1, label=1),
+      W(2, 1, label=2),
+      W(3, 1, label=3),
+      W(4, 1, label=4)
+    ).toDS.toDF
+
+    it("Measure RMSE"){
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+      val score = spec.score(df, RMSE)
+      score shouldBe Ok(scala.math.sqrt(2.8))
+    }
+
+    it("Measure MAE"){
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+      val score = spec.score(df, MAE)
+      score shouldBe Ok(1.2)
+    }
+
+    it("Find the best model by measures (dummy + MAE)"){
+      val candidates = List(
+        Feature("i"),
+        Feature("d")
+      )
+      val design = DummyModelDesign(labelCol="label")
+      val (bestScore, bestSpec) = new RegressionFeatureCompare(MAE)
+        .bestOf(design, candidates, df)
+        .get
+
+      bestSpec.isInstanceOf[DummySpecimen] shouldBe true
+      bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
+    }
+
+    it("Find the best model by measures (dummy + Pearson)"){
+      val candidates = List(
+        Feature("i"),
+        Feature("d")
+      )
+      val design = DummyModelDesign(labelCol="label")
+      val (bestScore, bestSpec) = new RegressionFeatureCompare(PearsonCorr)
+        .bestOf(design, candidates, df)
+        .get
+
+      bestSpec.isInstanceOf[DummySpecimen] shouldBe true
+      bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
+    }
   }
 
 }

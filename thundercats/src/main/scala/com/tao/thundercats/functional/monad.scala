@@ -18,6 +18,7 @@ import scala.util.{Try, Success, Failure}
 trait MayFail[A] {
   def map[B](f: A => B): MayFail[B]
   def flatMap[B](g: A => MayFail[B]): MayFail[B]
+  def mapOpt[B](g: A => B): Option[B]
   def get: A
   def getOrElse(a: A): A
   def getError: Option[String]
@@ -36,6 +37,7 @@ object MayFail {
 case class Fail[A](errorMessage: String) extends MayFail[A] {
   override def map[B](f: A => B): MayFail[B] = Fail[B](errorMessage)
   override def flatMap[B](g: A => MayFail[B]): MayFail[B] = Fail[B](errorMessage)
+  override def mapOpt[B](g: A => B): Option[B] = None
   override def get: A = throw new java.util.NoSuchElementException("No value resolved")
   override def getOrElse(a: A): A = a
   override def isFailing = true
@@ -48,6 +50,7 @@ case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
     case IgnorableFail(e,b) => IgnorableFail(e,b)
     case Ok(b)              => Ok(b)
   }
+  override def mapOpt[B](g: A => B): Option[B] = Some(g(data))
   override def get: A = data
   override def getOrElse(a: A): A = a
   override def isFailing = true
@@ -56,6 +59,7 @@ case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
 case class Ok[A](data: A) extends MayFail[A] {
   override def map[B](f: A => B): MayFail[B] = Ok(f(data))
   override def flatMap[B](g: A => MayFail[B]): MayFail[B] = g(data)
+  override def mapOpt[B](g: A => B): Option[B] = Some(g(data))
   override def get: A = data
   override def getOrElse(a: A): A = data
   override def isFailing = false

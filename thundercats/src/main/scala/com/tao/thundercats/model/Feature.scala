@@ -24,6 +24,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
 
 /**
@@ -43,7 +44,7 @@ object Features {
     ignoreColumns: Set[String]=Set.empty): PipelineStage = {
     val blocks = df
       .schema
-      .toList.collect{ 
+      .toList.collect{
         case StructField(colName,StringType,_,_) if !ignoreColumns.contains(colName) => 
           new StringEncoder(encoder, tokeniser)
             .setInputCol(colName)

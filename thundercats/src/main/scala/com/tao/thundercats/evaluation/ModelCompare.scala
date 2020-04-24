@@ -31,24 +31,13 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Comparison between two predictors
+ * Picking the best out of candidate models
  */
-trait ModelCompare[A <: Score] {
-  val model: A
-  val data: DataFrame
-  def betterThan(baseModel: A): Boolean = model.e > baseModel.e
+trait ModelCompare[A <: Measure] {
+  def bestOf(models: Iterable[Specimen]): Option[Specimen]
 }
 
-/**
- * A comparison between to estimate or regression models
- */
-case class RegressionModelCompare[A <: EstimateScore](
-  override val model: A,
-  override val data: DataFrame
-) extends ModelCompare[A] {
-  
-  override def betterThan(baseModel: A): Boolean = (for {
-    eb <- model.rmse(data) 
-    ea <- baseModel.rmse(data)
-  } yield (ea < ea)).getOrElse(false)
+class RegressionModelCompare[A <: RegressionMeasure](m: A) 
+extends ModelCompare[A] {
+  override def bestOf(models: Iterable[Specimen]): Option[Specimen] = ???
 }

@@ -52,7 +52,7 @@ with DefaultParamsWritable {
   override def fit(dataset: Dataset[_]): ScalerModel = {
     transformSchema(dataset.schema, logging=true)
     if ($(norm)) {
-      val values = dataset.toDF.rdd.map(row => row.getAs[Double]($(inputCol))).collect
+      val values = dataset.toDF.getDoubleRDD($(inputCol)).collect
       new ScalerModel(values.sum, values.min)
         .setLogScale($(logScale))
         .setNorm($(norm))

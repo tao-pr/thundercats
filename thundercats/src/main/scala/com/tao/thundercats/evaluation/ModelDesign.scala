@@ -30,8 +30,35 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-trait FeatureSelection
+/**
+ * Draft model
+ * can be trained multiple times with different feature columns
+ */
+trait ModelDesign {
+  val outputCol: String
+  val labelCol: String
+  def toSpecimen(feature: FeatureColumn, df: DataFrame): Specimen
+}
 
-object LinearRegressionFeatureSelection extends FeatureSelection {
-  
+/**
+ * [[DummyModelDesign]] does not train any pipeline
+ */
+case class DummyModelDesign(override val labelCol: String) 
+extends ModelDesign {
+  override val outputCol = ""
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = 
+    // NOTE: Specified feature col will be used as direct output 
+    DummySpecimen(feature, labelCol, feature.colName)
+}
+
+case class FeatureModelDesign(
+  override val outputCol: String, 
+  override val labelCol: String,
+  estimator: Pipeline)
+extends ModelDesign {
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
+    var pipe = feature % estimator 
+    val fitted = pipe.fit(df)
+    TrainedSpecimen(fitted, feature, labelCol, outputCol)
+  }
 }
