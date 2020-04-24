@@ -31,28 +31,23 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Base score representation for evaluation
+ * Measure of a specimen
  */
-trait Score {
-  val model: PipelineModel
-  val outputCol: String
-  val labelCol: String
-  def > (s: Score): Boolean = e > s.e
-  def e : Double
+trait Measure {
+  def % (df: DataFrame, specimen: Specimen): MayFail[Double]
+  def isBetter(a: Double, b: Double) = a > b
 }
 
-/**
- * Suitable for regression
- * Estimate expects the following:
- * - Double label
- * - Double output
- */
-trait EstimateScore extends Score {
+trait RegressionMeasure extends Measure
 
-  /**
-   * Root mean square error of the estimate
-   */
-  def rmse(df: DataFrame): MayFail[Double] = MayFail {
+/**
+ * Calculate fitting error between real label and predicted output.
+ * Metric: Root mean square error
+ */
+case object RMSE
+extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    import specimen._
     val agg = new DoubleRDDFunctions(df
       .withColumn("sqe", pow(col(outputCol) - col(labelCol), 2.0))
       .rdd.map(_.getAs[Double]("sqe")))
@@ -60,12 +55,35 @@ trait EstimateScore extends Score {
     agg.mean.sqrt
   }
 
-  /**
-   * Pearson correlation between input and labels
-   */
-  def pearsonCorr(df: DataFrame, inputCol: String): MayFail[Double] = MayFail {
-    val rddX = df.rdd.map(_.getAs[Double](inputCol))
-    val rddY = df.rdd.map(_.getAs[Double](labelCol))
+  override def isBetter(a: Double, b: Double) = a < b
+}
+
+/**
+ * Calculate fitting error between real label and predicted output.
+ * Metric: Mean absolute error
+ */
+case object MAE 
+extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    import specimen._
+    val agg = new DoubleRDDFunctions(df
+      .withColumn("mae", abs(col(outputCol) - col(labelCol)))
+      .rdd.map(_.getAs[Double]("mae")))
+    agg.mean
+  }
+
+  override def isBetter(a: Double, b: Double) = a < b
+}
+
+/**
+ * Calculate correlation between input and real label
+ */
+case object PearsonCorr extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    import specimen._
+    val rddX = df getDoubleRDD outputCol
+    val rddY = df getDoubleRDD labelCol
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
   }
 }
+
