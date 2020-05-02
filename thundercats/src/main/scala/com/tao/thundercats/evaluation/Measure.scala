@@ -18,6 +18,9 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
+import org.apache.spark.ml.classification._
+
+import breeze.linalg.DenseVector
 
 import java.io.File
 import java.lang.IllegalArgumentException
@@ -38,7 +41,12 @@ trait Measure {
   def isBetter(a: Double, b: Double) = a > b
 }
 
+trait MeasureVector {
+  def % (df: DataFrame, specimen: Specimen): MayFail[Array[Double]]
+}
+
 trait RegressionMeasure extends Measure
+trait RegressionMeasureVector extends MeasureVector
 
 /**
  * Calculate fitting error between real label and predicted output.
@@ -84,6 +92,37 @@ case object PearsonCorr extends RegressionMeasure {
     val rddX = df getDoubleRDD outputCol
     val rddY = df getDoubleRDD labelCol
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
+  }
+}
+
+case object ZScore extends RegressionMeasureVector {
+  override def % (df: DataFrame, specimen: Specimen) = MayFail {
+    import specimen._
+
+    /***
+      zj     = ßj/sigma.sqrt(vj), 
+
+      where vj      = 1/xj^2
+            sigma^2 = (1/N-M-1) sum[i<-N](yi - f(xi))^2
+    **/
+
+    // Extract coefficients of logistic regression model
+    val betas  = specimen.model.asInstanceOf[LogisticRegressionModel].coefficients
+    val N      = df.count.toFloat
+    val M      = df.columns.size.toFloat
+    val sigma2 = (1/N-M-1) * df.sumOfSquareDiff(specimen.labelCol, specimen.outputCol)
+    val sigma  = scala.math.sqrt(sigma2)
+    val sumX2  = 0 // TAOTODO
+
+    betas.toArray.map(_ / (sigma * scala.math.sqrt(1/sumX2)))
+  }
+}
+
+case class Significance(level: Double = 0.95) extends RegressionMeasureVector {
+  override def % (df: DataFrame, specimen: Specimen) = MayFail {
+    import specimen._
+
+    ???
   }
 }
 
