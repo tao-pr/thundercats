@@ -37,6 +37,7 @@ trait Specimen {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
+  // TAOTODO: Should also track input columns?
 
   /**
    * Ensure the dataframe is transformed before use
