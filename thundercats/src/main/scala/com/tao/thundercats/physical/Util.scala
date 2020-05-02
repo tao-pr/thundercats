@@ -35,11 +35,17 @@ object Implicits {
       }
     }
 
-    def sumOfSquareDiff(colA: String, colB: String): Double = {
+    def sumOfSqrDiff(colA: String, colB: String): Double = {
       val tmpCol = s"${colA}-${colB}"
       val dfDiff = df.withColumn(tmpCol, col(colA).cast(DoubleType) - col(colB).cast(DoubleType))
       val diff = new DoubleRDDFunctions(dfDiff.rdd.map(_.getAs[Double](tmpCol)))
       diff.sum
+    }
+
+    def sumOfSqr(colName: String): Double = {
+      val x2 = new DoubleRDDFunctions(df.rdd.map{ d => 
+        scala.math.pow(d.getAs[Double](colName), 2.0)})
+      x2.sum
     }
   }
 

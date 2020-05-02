@@ -40,11 +40,13 @@ trait FeatureColumn {
    */
   def %(estimator: Pipeline): Pipeline
   def colName: String
+  def asArray: Array[String]
 }
 
 case class Feature(c: String) extends FeatureColumn {
   override def %(estimator: Pipeline) = estimator
   override def colName = c
+  override def asArray = Array(c)
 }
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
@@ -57,6 +59,7 @@ extends FeatureColumn {
     new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = asVectorCol
+  override def asArray = cs.toArray
 }
 
 trait FeatureCompare[A <: Measure] {
