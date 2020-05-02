@@ -110,11 +110,15 @@ case object ZScore extends RegressionMeasureVector {
     val betas  = specimen.model.asInstanceOf[LogisticRegressionModel].coefficients
     val N      = df.count.toFloat
     val M      = df.columns.size.toFloat
-    val sigma2 = (1/N-M-1) * df.sumOfSquareDiff(specimen.labelCol, specimen.outputCol)
+    val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
     val sigma  = scala.math.sqrt(sigma2)
-    val sumX2  = 0 // TAOTODO
+    val sumX2  = specimen.featureCol.asArray.map{ c =>
+      df.sumOfSqr(c)
+    }
 
-    betas.toArray.map(_ / (sigma * scala.math.sqrt(1/sumX2)))
+    betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
+      beta / (sigma * scala.math.sqrt(1/sumx2))
+    }
   }
 }
 
