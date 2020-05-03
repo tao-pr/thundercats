@@ -62,10 +62,15 @@ extends FeatureColumn {
   override def asArray = cs.toArray
 }
 
-trait FeatureCompare[A <: Measure] {
+trait BaseCompare[A <: BaseMeasure] {
   val measure: A
+  protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)]
+}
 
-  protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
+trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
+  override val measure: A
+
+  override protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
     val takeBetterScore = (a: (Double,Specimen), b: (Double, Specimen)) => {
       val (bestScore, bestSpecimen) = a
       val (anotherScore, anotherSpecimen) = b
