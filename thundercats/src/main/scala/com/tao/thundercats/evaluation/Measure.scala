@@ -28,10 +28,6 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 
-sealed trait BaseMeasure[A] {
-  def % (df: DataFrame, specimen: Specimen): MayFail[A]
-}
-
 /**
  * Overall measure of the whole specimen
  */

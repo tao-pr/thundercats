@@ -64,13 +64,16 @@ extends FeatureColumn {
 
 trait BaseCompare[A <: BaseMeasure] {
   val measure: A
-  protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)]
+  def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)]
 }
 
+/**
+ * Feature comparison on whole model level
+ */
 trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
   override val measure: A
 
-  override protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
+  protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
     val takeBetterScore = (a: (Double,Specimen), b: (Double, Specimen)) => {
       val (bestScore, bestSpecimen) = a
       val (anotherScore, anotherSpecimen) = b
@@ -93,7 +96,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     measures
   }
 
-  def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
+  override def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
     bestMeasures(allOf(design, comb, df))
   }
 }
