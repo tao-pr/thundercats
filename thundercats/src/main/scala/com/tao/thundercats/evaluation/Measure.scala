@@ -22,31 +22,25 @@ import org.apache.spark.ml.classification._
 
 import breeze.linalg.DenseVector
 
-import java.io.File
-import java.lang.IllegalArgumentException
-import sys.process._
-import scala.reflect.io.Directory
-import scala.util.Try
-
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
+
+sealed trait BaseMeasure[A] {
+  def % (df: DataFrame, specimen: Specimen): MayFail[A]
+}
+
 /**
- * Measure of a specimen
+ * Overall measure of the whole specimen
  */
-trait Measure {
-  def % (df: DataFrame, specimen: Specimen): MayFail[Double]
+trait Measure extends BaseMeasure[Double] {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double]
   def isBetter(a: Double, b: Double) = a > b
 }
 
-trait MeasureVector {
-  def % (df: DataFrame, specimen: Specimen): MayFail[Array[Double]]
-}
-
 trait RegressionMeasure extends Measure
-trait RegressionMeasureVector extends MeasureVector
 
 /**
  * Calculate fitting error between real label and predicted output.
@@ -95,38 +89,4 @@ case object PearsonCorr extends RegressionMeasure {
   }
 }
 
-case object ZScore extends RegressionMeasureVector {
-  override def % (df: DataFrame, specimen: Specimen) = MayFail {
-    import specimen._
-
-    /***
-      zj     = ßj/sigma.sqrt(vj), 
-
-      where vj      = 1/xj^2
-            sigma^2 = (1/N-M-1) sum[i<-N](yi - f(xi))^2
-    **/
-
-    // Extract coefficients of logistic regression model
-    val betas  = specimen.model.asInstanceOf[LogisticRegressionModel].coefficients
-    val N      = df.count.toFloat
-    val M      = df.columns.size.toFloat
-    val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
-    val sigma  = scala.math.sqrt(sigma2)
-    val sumX2  = specimen.featureCol.asArray.map{ c =>
-      df.sumOfSqr(c)
-    }
-
-    betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
-      beta / (sigma * scala.math.sqrt(1/sumx2))
-    }
-  }
-}
-
-case class Significance(level: Double = 0.95) extends RegressionMeasureVector {
-  override def % (df: DataFrame, specimen: Specimen) = MayFail {
-    import specimen._
-
-    ???
-  }
-}
 
