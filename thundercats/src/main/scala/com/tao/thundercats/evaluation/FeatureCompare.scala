@@ -62,6 +62,12 @@ extends FeatureColumn {
   override def asArray = cs.toArray
 }
 
+object AssemblyFeature {
+  def fromIterable(arr: Iterable[FeatureColumn]): AssemblyFeature = {
+    AssemblyFeature(arr.map(_.asArray).flatten)
+  }
+}
+
 trait BaseCompare[A <: BaseMeasure] {
   val measure: A
   def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)]
