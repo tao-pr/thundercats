@@ -13,6 +13,10 @@ import com.tao.thundercats.estimator._
  * Individual measure of each feature used in the specimen
  */
 trait MeasureVector extends BaseMeasure[Array[Double]] {
+
+  /**
+   * Create a score vector, each element represents each column in order
+   */
   override def % (df: DataFrame, specimen: Specimen): MayFail[Array[Double]]
 }
 
