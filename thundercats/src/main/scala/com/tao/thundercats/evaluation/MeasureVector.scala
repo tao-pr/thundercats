@@ -20,6 +20,7 @@ trait MeasureVector extends BaseMeasure[Array[Double]] {
    * Create a score vector, each element represents each column in order
    */
   override def % (df: DataFrame, specimen: Specimen): MayFail[Array[Double]]
+  def findBest(zippedScore: Array[(Double, String)]) = zippedScore.max
 }
 
 trait RegressionMeasureVector extends MeasureVector
@@ -32,7 +33,7 @@ case object ZScore extends RegressionMeasureVector {
     import specimen._
 
     /***
-      zj     = ßj/sigma.sqrt(vj), 
+      zj            = ßj/sigma.sqrt(vj), 
 
       where vj      = 1/xj^2
             sigma^2 = (1/N-M-1) sum[i<-N](yi - f(xi))^2
@@ -52,6 +53,10 @@ case object ZScore extends RegressionMeasureVector {
       beta / (sigma * scala.math.sqrt(1/sumx2))
     }
   }
+
+  override def findBest(zippedScore: Array[(Double, String)]) = {
+    zippedScore.min
+  }
 }
 
 /**
@@ -62,5 +67,9 @@ case class Significance(level: Double = 0.95) extends RegressionMeasureVector {
     import specimen._
 
     ???
+  }
+
+  override def findBest(zippedScore: Array[(Double, String)]) = {
+    zippedScore.max
   }
 }

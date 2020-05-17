@@ -46,3 +46,12 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
     }
   }
 }
+
+case class DummyFeatureCompareVector(override val measure: MeasureVector)
+extends FeatureCompareVector[MeasureVector]
+
+case class RegressionFeatureCompareVector(override val measure: RegressionMeasureVector)
+extends FeatureCompareVector[RegressionMeasureVector]
+
+
+
