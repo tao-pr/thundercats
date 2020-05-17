@@ -745,14 +745,18 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
     }
 
-    ignore("Measure z-score from model design (Linear Reg)"){
+    it("Measure z-score from model design (vector measure)"){
       val features = AssemblyFeature(Array("i","d"), "features")
       val design = FeatureModelDesign(
         outputCol="z",
         labelCol="label",
         estimator=Preset.linearReg(features, "label", "z"))
 
-      ??? // TAOTODO: evaluate with z-score
+      val (bestScore, bestCol, bestSpec) = RegressionFeatureCompareVector(ZScore)
+
+      bestCol shouldBe "i"
+      bestSpec.isInstanceOf[TrainedSpecimen] shouldBe true
+      bestSpec.asInstanceOf[TrainedSpecimen].featureCol.colName shouldBe "i"
     }
   }
 
