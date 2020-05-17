@@ -19,25 +19,30 @@ import com.tao.thundercats.evaluation._
 trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
   override val measure: A
 
-  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): (Array[(Double,String)], Specimen) = {
+  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): (Array[(Double, String)], Specimen) = {
     val features = AssemblyFeature.fromIterable(comb)
     val specimen = design.toSpecimen(features, df)
     val scoreVectorOpt = measure % (df, specimen)
 
-    assert(features.size == scoreVectorOpt.size)
+    scoreVectorOpt.map{ scoreVector =>
+      assert(features.asArray.size == scoreVector.size)
+      val zippedScore = scoreVector.zip(features.asArray)
+      (zippedScore,specimen)
 
-    val zippedScore = scoreVectorOpt(_.getOrElse(Double.MinValue)).zip(features)
-
-    (zippedScore, specimen)
+    }.getOrElse((Array.empty,specimen))
   }
+
+  protected def findBest(zippedScore: Array[(Double, String)]) = zippedScore.max
   
-  override def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
+  override def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, FeatureColumn, Specimen)] = {
     
     // Calculate scores of all columns individually
     // and locate the best
     val (zippedScore, specimen) = allOf(design, comb, df)
-    val best = zippedScore.max
-
-    // TAOTODO: Redesign this, it should return "string" column, not specimen
+    if (zippedScore.isEmpty) None
+    else {
+      val (bestScore, bestFeat) = findBest(zippedScore)
+      Some((bestScore, Feature(bestFeat), specimen))
+    }
   }
 }

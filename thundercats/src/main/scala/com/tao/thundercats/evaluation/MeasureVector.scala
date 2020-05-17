@@ -1,6 +1,7 @@
 package com.tao.thundercats.evaluation
 
 import org.apache.spark.sql.{Dataset, DataFrame}
+import org.apache.spark.ml.classification.LogisticRegressionModel
 
 import breeze.linalg.DenseVector
 
@@ -8,6 +9,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
+
 
 /**
  * Individual measure of each feature used in the specimen
