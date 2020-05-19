@@ -14,22 +14,10 @@ object Preset {
     features: FeatureColumn, 
     labelCol: String, 
     outputCol: String,
-    maxIters: Int = 10) = {
-    val (featureCol, initPipes): (String, Array[PipelineStage]) = features match {
-      case Feature(c) => (c, Array.empty)
-      case AssemblyFeature(arr,featCol) => 
-        ("features", Array(
-          new VectorAssembler()
-            .setInputCols(arr.toArray)
-            .setOutputCol(featCol)))
-    }
-    new Pipeline().setStages(
-      initPipes ++ Array(
-      new LogisticRegression()
-        .setFeaturesCol(featureCol)
+    maxIters: Int = 10) =  
+      new Pipeline().setStages(Array(new LogisticRegression()
+        .setFeaturesCol(features.colName)
         .setPredictionCol(outputCol)
         .setLabelCol(labelCol)
-        .setMaxIter(maxIters))
-    )
-  }
+        .setMaxIter(maxIters)))
 }
