@@ -1,7 +1,7 @@
 package com.tao.thundercats.evaluation
 
 import org.apache.spark.sql.{Dataset, DataFrame}
-import org.apache.spark.ml.classification.LogisticRegressionModel
+import org.apache.spark.ml.regression.LinearRegressionModel
 
 import breeze.linalg.DenseVector
 
@@ -9,6 +9,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
+import com.tao.thundercats.model.Pipe
 
 
 /**
@@ -29,30 +30,37 @@ trait RegressionMeasureVector extends MeasureVector
  * ZScore vector of each feature
  */
 case object ZScore extends RegressionMeasureVector {
-  override def % (df: DataFrame, specimen: Specimen) = MayFail {
-    import specimen._
+  override def % (df: DataFrame, specimen: Specimen) = 
+    // Since the fitted model can be Array(VectorAssembler, PipelineModel)
+    // we need to extract the very last transformer as a LinearRegressionModel
+    Pipe.fittedEstimator(specimen.model).map{ estimator => 
+      import specimen._
 
-    /***
-      zj            = ßj/sigma.sqrt(vj), 
+      /***
+        zj            = ßj/sigma.sqrt(vj), 
 
-      where vj      = 1/xj^2
-            sigma^2 = (1/N-M-1) sum[i<-N](yi - f(xi))^2
-    **/
+        where vj      = 1/xj^2
+              sigma^2 = (1/N-M-1) sum[i<-N](yi - f(xi))^2
+      **/
 
-    // Extract coefficients of logistic regression model
-    val betas  = specimen.model.asInstanceOf[LogisticRegressionModel].coefficients
-    val N      = df.count.toFloat
-    val M      = df.columns.size.toFloat
-    val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
-    val sigma  = scala.math.sqrt(sigma2)
-    val sumX2  = specimen.featureCol.asArray.map{ c =>
-      df.sumOfSqr(c)
+      // Extract coefficients of regression model
+      val lg     = estimator.asInstanceOf[LinearRegressionModel]
+      val betas  = lg.coefficients
+      val N      = df.count.toFloat
+      val M      = df.columns.size.toFloat
+
+      // TAOTODO: Should force predict (df) here?
+
+      val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
+      val sigma  = scala.math.sqrt(sigma2)
+      val sumX2  = specimen.featureCol.asArray.map{ c =>
+        df.sumOfSqr(c)
+      }
+
+      betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
+        beta / (sigma * scala.math.sqrt(1/sumx2))
+      }
     }
-
-    betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
-      beta / (sigma * scala.math.sqrt(1/sumx2))
-    }
-  }
 
   override def findBest(zippedScore: Array[(Double, String)]) = {
     zippedScore.min

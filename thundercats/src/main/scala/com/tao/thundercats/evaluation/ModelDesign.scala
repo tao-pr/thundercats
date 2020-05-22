@@ -59,6 +59,6 @@ extends ModelDesign {
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
     var pipe = feature % estimator 
     val fitted = pipe.fit(df)
-    TrainedSpecimen(fitted, feature, labelCol, outputCol)
+    TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
 }

@@ -18,7 +18,7 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
-import org.apache.spark.ml.classification._
+import org.apache.spark.ml.regression._
 
 import breeze.linalg.DenseVector
 
