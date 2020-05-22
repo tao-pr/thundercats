@@ -41,12 +41,14 @@ trait FeatureColumn {
   def %(estimator: Pipeline): Pipeline
   def colName: String
   def asArray: Array[String]
+  def size: Int
 }
 
 case class Feature(c: String) extends FeatureColumn {
   override def %(estimator: Pipeline) = estimator
   override def colName = c
   override def asArray = Array(c)
+  override def size = 1
 }
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
@@ -60,6 +62,7 @@ extends FeatureColumn {
   }
   override def colName = asVectorCol
   override def asArray = cs.toArray
+  override def size = cs.size
 }
 
 object AssemblyFeature {

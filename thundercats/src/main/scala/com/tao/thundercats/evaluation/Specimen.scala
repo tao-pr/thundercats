@@ -47,9 +47,7 @@ trait Specimen {
       df
     else{
       // REVIEW: Log that the transformation is triggered
-      val trans = model.transform(df)
-      trans.show(25)  // TAODEBUG
-      trans
+      model.transform(df)
     }
   }
 
@@ -60,10 +58,6 @@ trait Specimen {
     measure % (ensure(df), this)
 
   def scoreVector(df: DataFrame, measure: MeasureVector): MayFail[Array[Double]] = {
-    Console.println("SCORE VECTOR") // TAODEBUG
-    Console.println("BEFORE : ", df.columns.mkString(", "))
-    Console.println("AFTER  : ", ensure(df).columns.mkString(", "))
-    Console.println("OUTPUT COL = ", outputCol)
     measure % (ensure(df), this)
   }
 }

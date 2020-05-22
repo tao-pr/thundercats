@@ -1,5 +1,7 @@
 package com.tao.thundercats.evaluation
 
+import scala.math.abs
+
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.ml.regression.LinearRegressionModel
 
@@ -47,9 +49,7 @@ case object ZScore extends RegressionMeasureVector {
       val lg     = estimator.asInstanceOf[LinearRegressionModel]
       val betas  = lg.coefficients
       val N      = df.count.toFloat
-      val M      = df.columns.size.toFloat
-
-      // TAOTODO: Should force predict (df) here?
+      val M      = specimen.featureCol.size
 
       val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
       val sigma  = scala.math.sqrt(sigma2)
