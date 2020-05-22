@@ -43,8 +43,8 @@ object Implicits {
     }
 
     def sumOfSqr(colName: String): Double = {
-      val x2 = new DoubleRDDFunctions(df.rdd.map{ d => 
-        scala.math.pow(d.getAs[Double](colName), 2.0)})
+      val x2 = new DoubleRDDFunctions(getDoubleRDD(colName).map{ v => 
+        scala.math.pow(v, 2.0)})
       x2.sum
     }
   }
