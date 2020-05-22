@@ -27,6 +27,7 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
     scoreVectorOpt.map{ scoreVector =>
       assert(features.asArray.size == scoreVector.size)
       val zippedScore = scoreVector.zip(features.asArray)
+
       (zippedScore,specimen)
 
     }.getOrElse((Array.empty,specimen))
