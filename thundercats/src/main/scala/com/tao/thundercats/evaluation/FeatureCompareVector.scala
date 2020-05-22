@@ -22,7 +22,7 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
   def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): (Array[(Double, String)], Specimen) = {
     val features = AssemblyFeature.fromIterable(comb)
     val specimen = design.toSpecimen(features, df)
-    val scoreVectorOpt = measure % (df, specimen)
+    val scoreVectorOpt = specimen.scoreVector(df, measure)
 
     scoreVectorOpt.map{ scoreVector =>
       assert(features.asArray.size == scoreVector.size)
