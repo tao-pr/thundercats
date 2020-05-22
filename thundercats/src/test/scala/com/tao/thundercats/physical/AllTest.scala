@@ -754,7 +754,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         estimator=Preset.linearReg(features, "label", "z"))
 
       val (bestScore, bestCol, bestSpec) = RegressionFeatureCompareVector(ZScore)
-        .bestOf(design, candidates.map(Feature.apply), df)
+        .bestOf(design, candidates.map(Feature.apply), df.toDF)
         .get
 
       bestCol shouldBe "i"
