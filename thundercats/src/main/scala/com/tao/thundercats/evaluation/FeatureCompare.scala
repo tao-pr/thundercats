@@ -81,14 +81,6 @@ trait BaseCompare[A <: BaseMeasure[_]] {
     design: ModelDesign, 
     comb: Iterable[FeatureColumn],
     df: DataFrame): Option[(Double, FeatureColumn, Specimen)]
-
-  /**
-   * Evaluate all features, create specimens out of each of them
-   */
-  def allOf(
-    design: ModelDesign, 
-    comb: Iterable[FeatureColumn], 
-    df: DataFrame): Iterable[(Double, Specimen)]
 }
 
 /**
@@ -107,14 +99,18 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     measures.reduceLeftOption(takeBetterScore)
   }
 
-  override def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+    Log.info(s"[FeatureCompare] allOf : ${comb.map(_.colName).mkString(", ")}")
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
       val specimen = design.toSpecimen(c, df)
       val scoreOpt = specimen.score(df, measure)
 
-      scoreOpt.mapOpt{ score => (score, specimen) }
+      scoreOpt.mapOpt{ score => 
+        Log.info(s"[FeatureCompare] ${measure.className} score : ${c.colName} = ${score}")
+        (score, specimen) 
+      }
     }.flatten
 
     measures
@@ -125,6 +121,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
       // Just take feature column from the specimen
       // It's already the only feature we use
       val bestFeat = specimen.featureCol
+      Log.info(s"[FeatureCompare] bestOf : identifying ${bestFeat} as the best feature (score = ${bestScore})")
       (bestScore, bestFeat, specimen)
     }
   }
