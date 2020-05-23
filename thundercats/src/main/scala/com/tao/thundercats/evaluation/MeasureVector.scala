@@ -66,18 +66,3 @@ case object ZScore extends RegressionMeasureVector {
     zippedScore.min
   }
 }
-
-/**
- * Significance vector of each feature
- */
-case class Significance(level: Double = 0.95) extends RegressionMeasureVector {
-  override def % (df: DataFrame, specimen: Specimen) = MayFail {
-    import specimen._
-
-    ???
-  }
-
-  override def findBest(zippedScore: Array[(Double, String)]) = {
-    zippedScore.max
-  }
-}
