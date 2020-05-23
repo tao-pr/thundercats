@@ -721,10 +721,11 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         Feature("d")
       )
       val design = DummyModelDesign(labelCol="label")
-      val (bestScore, bestSpec) = new RegressionFeatureCompare(MAE)
+      val (bestScore, bestCol, bestSpec) = new RegressionFeatureCompare(MAE)
         .bestOf(design, candidates, df)
         .get
 
+      bestCol.colName shouldBe "i"
       bestSpec.isInstanceOf[DummySpecimen] shouldBe true
       bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
     }
@@ -735,13 +736,36 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         Feature("d")
       )
       val design = DummyModelDesign(labelCol="label")
-      val (bestScore, bestSpec) = new RegressionFeatureCompare(PearsonCorr)
+      val (bestScore, bestCol, bestSpec) = new RegressionFeatureCompare(PearsonCorr)
         .bestOf(design, candidates, df)
         .get
 
+      bestCol.colName shouldBe "i"
       bestSpec.isInstanceOf[DummySpecimen] shouldBe true
       bestSpec.asInstanceOf[DummySpecimen].featureCol.colName shouldBe "i"
     }
+
+    it("Measure z-score from model design (vector measure)"){
+      val df_ = df.withColumn("label-lg", 'label + lit(0.01)*'i)
+      val candidates = Array("i","d")
+      val features = AssemblyFeature(candidates, "features")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="label-lg",
+        estimator=Preset.linearReg(features, "label-lg", "z"))
+
+      val (bestScore, bestCol, bestSpec) = RegressionFeatureCompareVector(ZScore)
+        .bestOf(design, candidates.map(Feature.apply), df_.toDF)
+        .get
+
+      bestCol shouldBe Feature("i")
+      bestSpec.isInstanceOf[TrainedSpecimen] shouldBe true
+
+      // When measuring vector of features, 
+      // the feature cols of specimen will not be the best one, but all in feature vector
+      bestSpec.asInstanceOf[TrainedSpecimen].featureCol.colName shouldBe "features"
+    }
+
   }
 
 }

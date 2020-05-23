@@ -40,11 +40,15 @@ trait FeatureColumn {
    */
   def %(estimator: Pipeline): Pipeline
   def colName: String
+  def asArray: Array[String]
+  def size: Int
 }
 
 case class Feature(c: String) extends FeatureColumn {
   override def %(estimator: Pipeline) = estimator
   override def colName = c
+  override def asArray = Array(c)
+  override def size = 1
 }
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
@@ -57,13 +61,44 @@ extends FeatureColumn {
     new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = asVectorCol
+  override def asArray = cs.toArray
+  override def size = cs.size
 }
 
-trait FeatureCompare[A <: Measure] {
+object AssemblyFeature {
+  def fromIterable(arr: Iterable[FeatureColumn]): AssemblyFeature = {
+    AssemblyFeature(arr.map(_.asArray).flatten.toSeq)
+  }
+}
+
+trait BaseCompare[A <: BaseMeasure[_]] {
   val measure: A
 
+  /**
+   * Get the best feature and best specimen
+   */
+  def bestOf(
+    design: ModelDesign, 
+    comb: Iterable[FeatureColumn],
+    df: DataFrame): Option[(Double, FeatureColumn, Specimen)]
+
+  /**
+   * Evaluate all features, create specimens out of each of them
+   */
+  def allOf(
+    design: ModelDesign, 
+    comb: Iterable[FeatureColumn], 
+    df: DataFrame): Iterable[(Double, Specimen)]
+}
+
+/**
+ * Feature comparison on whole model level
+ */
+trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
+  override val measure: A
+
   protected def bestMeasures(measures: Iterable[(Double,Specimen)]): Option[(Double, Specimen)] = {
-    val takeBetterScore = (a: (Double,Specimen), b: (Double, Specimen)) => {
+    val takeBetterScore = (a: (Double, Specimen), b: (Double, Specimen)) => {
       val (bestScore, bestSpecimen) = a
       val (anotherScore, anotherSpecimen) = b
       if (measure.isBetter(bestScore, anotherScore)) a
@@ -72,7 +107,7 @@ trait FeatureCompare[A <: Measure] {
     measures.reduceLeftOption(takeBetterScore)
   }
 
-  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+  override def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
@@ -85,8 +120,13 @@ trait FeatureCompare[A <: Measure] {
     measures
   }
 
-  def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, Specimen)] = {
-    bestMeasures(allOf(design, comb, df))
+  override def bestOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Option[(Double, FeatureColumn, Specimen)] = {
+    bestMeasures(allOf(design, comb, df)).map{ case (bestScore, specimen) => 
+      // Just take feature column from the specimen
+      // It's already the only feature we use
+      val bestFeat = specimen.featureCol
+      (bestScore, bestFeat, specimen)
+    }
   }
 }
 
