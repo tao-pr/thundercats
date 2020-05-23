@@ -19,6 +19,8 @@ import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
 
+import org.apache.log4j.Logger
+
 import java.io.File
 import java.lang.IllegalArgumentException
 import sys.process._
@@ -81,14 +83,6 @@ trait BaseCompare[A <: BaseMeasure[_]] {
     design: ModelDesign, 
     comb: Iterable[FeatureColumn],
     df: DataFrame): Option[(Double, FeatureColumn, Specimen)]
-
-  /**
-   * Evaluate all features, create specimens out of each of them
-   */
-  def allOf(
-    design: ModelDesign, 
-    comb: Iterable[FeatureColumn], 
-    df: DataFrame): Iterable[(Double, Specimen)]
 }
 
 /**
@@ -107,7 +101,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     measures.reduceLeftOption(takeBetterScore)
   }
 
-  override def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
