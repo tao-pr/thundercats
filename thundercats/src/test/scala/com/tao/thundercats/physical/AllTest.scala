@@ -765,6 +765,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // the feature cols of specimen will not be the best one, but all in feature vector
       bestSpec.asInstanceOf[TrainedSpecimen].featureCol.colName shouldBe "features"
     }
+
   }
 
 }
