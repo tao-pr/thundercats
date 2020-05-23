@@ -44,6 +44,7 @@ object Read {
   def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
+    Log.info(s"[IO] Read CSV : ${path}")
     MayFail {
       val df = spark
         .read
@@ -57,6 +58,7 @@ object Read {
   
   def parquet(path: String) 
   (implicit spark: SparkSession): MayFail[DataFrame] = {
+    Log.info(s"[IO] Read parquet : ${path}")
     import spark.implicits._
     MayFail {
       val df = spark
@@ -73,6 +75,7 @@ object Read {
     offset: Option[Int] = None,
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
+    Log.info(s"[IO] Read kafka stream : ${serverAddr}:${port} => topic = ${topic}")
     import spark.implicits._
     MayFail {
       val df = spark.readStream
@@ -95,6 +98,7 @@ object Read {
 
   def kafka(topic: String, serverAddr: String, port: Int = 9092, colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
+    Log.info(s"[IO] Read kafka batch : ${serverAddr}:${port} => topic = ${topic}")
     import spark.implicits._
     MayFail {
       val df = spark.read
@@ -122,7 +126,9 @@ object Write {
   
   trait Partition
   case object NoPartition extends Partition
-  case class PartitionCol(cols: List[String]) extends Partition
+  case class PartitionCol(cols: List[String]) extends Partition {
+    override def toString = s"ParitionCol(${cols.mkString(", ")})"
+  }
 
   protected def preprocess(df: DataFrame, partition: Partition) = partition match {
     case NoPartition => df.coalesce(1).write
@@ -135,6 +141,7 @@ object Write {
     partition: Partition = NoPartition,
     delimiter: String = ",")
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
+    Log.info(s"[IO] Write CSV : ${path}, partitioned with ${partition}")
     import spark.implicits._
     preprocess(df, partition)
       .option("header", "true")
@@ -149,6 +156,7 @@ object Write {
     path: String,
     partition: Partition = NoPartition)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
+    Log.info(s"[IO] Write parquet : ${path}, partitioned with ${partition}")
     import spark.implicits._
     preprocess(df, partition).parquet(path)
     df
@@ -162,7 +170,7 @@ object Write {
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None,
     checkpointLocation: String = "./chk",
     timeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
-
+    Log.info(s"[IO] Write kafka stream : ${serverAddr}:${port} => topic = ${topic}")
     import df.sqlContext.implicits._
     val dfEncoded = colEncoder match {
       case ColumnEncoder.None => df
@@ -194,6 +202,7 @@ object Write {
     serverAddr: String, 
     port: Int = 9092,
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None): MayFail[DataFrame] = MayFail {
+    Log.info(s"[IO] Write kafka batch : ${serverAddr}:${port} => topic = ${topic}")
     import df.sqlContext.implicits._
     val dfEncoded = colEncoder match {
       case ColumnEncoder.None => df
@@ -218,6 +227,8 @@ object Write {
     partition: Partition = NoPartition,
     checkpointLocation: String = "./chk",
     timeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
+
+    Log.info(s"[IO] Write stream of file : ${path}, partitioned by ${partition}")
     assert(Set("parquet", "csv", "orc", "json") contains(fileType))
 
     val stream = df.writeStream
