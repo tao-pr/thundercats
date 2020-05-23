@@ -86,6 +86,6 @@ case class TrainedSpecimen(
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
       case _                   => Fail(
-        s"Unsupported measure type : ${measure.getClass.getName}")
+        s"Unsupported measure type : ${measure.className}")
     }
 }
