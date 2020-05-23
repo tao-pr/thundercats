@@ -107,7 +107,10 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
       val specimen = design.toSpecimen(c, df)
       val scoreOpt = specimen.score(df, measure)
 
-      scoreOpt.mapOpt{ score => (score, specimen) }
+      scoreOpt.mapOpt{ score => 
+        Log.info(s"[FeatureCompare] ${getClass.getName} score : ${c.colName} = ${score}")
+        (score, specimen) 
+      }
     }.flatten
 
     measures

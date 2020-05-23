@@ -20,6 +20,7 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
   override val measure: A
 
   def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): (Array[(Double, String)], Specimen) = {
+    Log.info(s"[FeatureCompareVector] allOf : ${comb.map(_.colName).mkString(", ")}")
     val features = AssemblyFeature.fromIterable(comb)
     val specimen = design.toSpecimen(features, df)
     val scoreVectorOpt = specimen.scoreVector(df, measure)
@@ -28,6 +29,7 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
       assert(features.asArray.size == scoreVector.size)
       val zippedScore = scoreVector.zip(features.asArray)
 
+      Log.info(s"[FeatureCompareVector] ${getClass.getName} score vector : [${zippedScore.map{ case (s,c) => s"${c} = ${s}" }.mkString(", ")}]")
       (zippedScore,specimen)
 
     }.getOrElse((Array.empty,specimen))
