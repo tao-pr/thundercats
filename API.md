@@ -110,7 +110,6 @@ Some subtypes of `MeasureVector`
 - MeasureVector
   - RegressionMeasureVector
     - ZScore
-    - Significance
 ```
 
 To evaluate the features by predefined methods
@@ -123,4 +122,14 @@ val model: Specimen = design.toSpecimen(feature, df)
 val mae: MayFail[Double] = model.score(df, MAE)
 val rmse: MayFail[Double] = model.score(df, MAE)
 val zscores: MayFail[Vector[Double]] = model.scoreVector(df, ZScore)
+```
+
+To compare multiple features, and identify the best model, best feature out of them
+
+```scala
+val design: ModelDesign = ???
+val feature = List(Feature("f1"), Feature("f2"), Feature("f3"))
+val (bestScore, bestCol, bestSpecimen) = new RegressionFeatureCompare(PearsonCorr)
+  .bestOf(design, features, df)
+  .get
 ```
