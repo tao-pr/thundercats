@@ -34,6 +34,7 @@ import com.tao.thundercats.estimator._
 trait Measure extends BaseMeasure[Double] {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double]
   def isBetter(a: Double, b: Double) = a > b
+  def className: String = getClass.getName.split('.').last.replace("$","")
 }
 
 trait RegressionMeasure extends Measure

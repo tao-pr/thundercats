@@ -108,7 +108,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
       val scoreOpt = specimen.score(df, measure)
 
       scoreOpt.mapOpt{ score => 
-        Log.info(s"[FeatureCompare] ${getClass.getName} score : ${c.colName} = ${score}")
+        Log.info(s"[FeatureCompare] ${measure.className} score : ${c.colName} = ${score}")
         (score, specimen) 
       }
     }.flatten
@@ -121,7 +121,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
       // Just take feature column from the specimen
       // It's already the only feature we use
       val bestFeat = specimen.featureCol
-      Log.info(s"[FeatureCompare] bestOf : identifying ${bestFeat} as the best feature")
+      Log.info(s"[FeatureCompare] bestOf : identifying ${bestFeat} as the best feature (score = ${bestScore})")
       (bestScore, bestFeat, specimen)
     }
   }
