@@ -29,7 +29,7 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
       assert(features.asArray.size == scoreVector.size)
       val zippedScore = scoreVector.zip(features.asArray)
 
-      Log.info(s"[FeatureCompareVector] ${getClass.getName} score vector : [${zippedScore.map{ case (s,c) => s"${c} = ${s}" }.mkString(", ")}]")
+      Log.info(s"[FeatureCompareVector] ${measure.className} score vector : [${zippedScore.map{ case (s,c) => s"${c} = ${s}" }.mkString(", ")}]")
       (zippedScore,specimen)
 
     }.getOrElse((Array.empty,specimen))
@@ -42,9 +42,13 @@ trait FeatureCompareVector[A <: MeasureVector] extends BaseCompare[A] {
     // Calculate scores of all columns individually
     // and locate the best
     val (zippedScore, specimen) = allOf(design, comb, df)
-    if (zippedScore.isEmpty) None
+    if (zippedScore.isEmpty) {
+      Log.info(s"[FeatureCompareVector] bestOf ${measure.className} No scores to choose from")
+      None
+    }
     else {
       val (bestScore, bestFeat) = findBest(zippedScore)
+      Log.info(s"[FeatureCompareVector] bestOf ${measure.className} : identifying ${bestFeat} as best feature (score = ${bestScore})")
       Some((bestScore, Feature(bestFeat), specimen))
     }
   }
