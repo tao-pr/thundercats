@@ -19,8 +19,6 @@ import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
 
-import org.apache.log4j.Logger
-
 import java.io.File
 import java.lang.IllegalArgumentException
 import sys.process._
@@ -102,6 +100,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
   }
 
   def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+    Log.info(s"[FeatureCompare] allOf : ${comb.map(_.colName).mkString(", ")}")
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
@@ -119,6 +118,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
       // Just take feature column from the specimen
       // It's already the only feature we use
       val bestFeat = specimen.featureCol
+      Log.info(s"[FeatureCompare] bestOf : identifying ${bestFeat} as the best feature")
       (bestScore, bestFeat, specimen)
     }
   }
