@@ -79,8 +79,16 @@ trait BaseCompare[A <: BaseMeasure[_]] {
    */
   def bestOf(
     design: ModelDesign, 
-    comb: Iterable[FeatureColumn], 
+    comb: Iterable[FeatureColumn],
     df: DataFrame): Option[(Double, FeatureColumn, Specimen)]
+
+  /**
+   * Evaluate all features, create specimens out of each of them
+   */
+  def allOf(
+    design: ModelDesign, 
+    comb: Iterable[FeatureColumn], 
+    df: DataFrame): Iterable[(Double, Specimen)]
 }
 
 /**
@@ -99,7 +107,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     measures.reduceLeftOption(takeBetterScore)
   }
 
-  def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
+  override def allOf(design: ModelDesign, comb: Iterable[FeatureColumn], df: DataFrame): Iterable[(Double, Specimen)] = {
     // Find the best features out of the bound specimen
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)

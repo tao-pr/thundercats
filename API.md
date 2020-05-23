@@ -133,3 +133,13 @@ val (bestScore, bestCol, bestSpecimen) = new RegressionFeatureCompare(PearsonCor
   .bestOf(design, features, df)
   .get
 ```
+
+Or, measure all features
+
+```scala
+val design: ModelDesign = ???
+val feature = List(Feature("f1"), Feature("f2"), Feature("f3"))
+val scores = new RegressionFeatureCompare(PearsonCorr)
+  .allOf(design, features, df)
+  .get
+```
