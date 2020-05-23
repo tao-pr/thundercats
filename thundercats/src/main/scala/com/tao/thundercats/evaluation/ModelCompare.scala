@@ -34,6 +34,7 @@ import com.tao.thundercats.estimator._
  * Picking the best out of candidate models
  */
 trait ModelCompare[A <: Measure] {
+  // TAOTODO: Should also expose [[allOf]]
   def bestOf(models: Iterable[Specimen]): Option[Specimen]
 }
 
