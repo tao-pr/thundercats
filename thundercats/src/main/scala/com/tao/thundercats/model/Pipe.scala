@@ -42,6 +42,13 @@ object Pipe {
     pipe.getStages.collect{ case p: Estimator[_] => new Pipeline().setStages(Array(p)) }.last
   }
 
+  def fittedEstimator(pipelineModel: PipelineModel): MayFail[Transformer] = {
+    if (pipelineModel.stages.last.isInstanceOf[PipelineModel]) {
+      fittedEstimator(pipelineModel.stages.last.asInstanceOf[PipelineModel])
+    }
+    else Ok(pipelineModel.stages.last) // as [[Transformer]]
+  }
+
   def withoutEstimator(pipe: Pipeline): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(pipe.getStages.collect{ case t: Transformer => t })
   }
@@ -61,4 +68,5 @@ object Pipe {
     new Pipeline().setStages(s +: pipe.getStages)
   }
 }
+
 

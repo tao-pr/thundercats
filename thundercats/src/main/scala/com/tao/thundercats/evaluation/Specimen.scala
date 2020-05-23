@@ -37,6 +37,7 @@ trait Specimen {
   val model: PipelineModel
   val outputCol: String
   val labelCol: String
+  val featureCol: FeatureColumn
 
   /**
    * Ensure the dataframe is transformed before use
@@ -55,6 +56,10 @@ trait Specimen {
    */
   def score(df: DataFrame, measure: Measure): MayFail[Double] = 
     measure % (ensure(df), this)
+
+  def scoreVector(df: DataFrame, measure: MeasureVector): MayFail[Array[Double]] = {
+    measure % (ensure(df), this)
+  }
 }
 
 /**
@@ -62,7 +67,7 @@ trait Specimen {
  * NOTE: [[PipelineModel]] is never used in [[DummySpecimen]]
  */
 case class DummySpecimen(
-  featureCol: FeatureColumn,
+  override val featureCol: FeatureColumn,
   override val outputCol: String,
   override val labelCol: String
 ) extends Specimen {
@@ -73,7 +78,7 @@ case class DummySpecimen(
 
 case class TrainedSpecimen(
   override val model: PipelineModel,
-  featureCol: FeatureColumn,
+  override val featureCol: FeatureColumn,
   override val outputCol: String,
   override val labelCol: String
 ) extends Specimen {
