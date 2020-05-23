@@ -18,23 +18,21 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
+import org.apache.spark.ml.regression._
 
-import java.io.File
-import java.lang.IllegalArgumentException
-import sys.process._
-import scala.reflect.io.Directory
-import scala.util.Try
+import breeze.linalg.DenseVector
 
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
+
 /**
- * Measure of a specimen
+ * Overall measure of the whole specimen
  */
-trait Measure {
-  def % (df: DataFrame, specimen: Specimen): MayFail[Double]
+trait Measure extends BaseMeasure[Double] {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double]
   def isBetter(a: Double, b: Double) = a > b
 }
 
@@ -86,4 +84,5 @@ case object PearsonCorr extends RegressionMeasure {
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
   }
 }
+
 
