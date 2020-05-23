@@ -11,6 +11,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.RDD
 
+import org.apache.log4j.Logger
+
 import scala.util.Try
 
 import com.tao.thundercats.functional._
@@ -53,4 +55,11 @@ object Implicits {
     def sqrt = scala.math.sqrt(d)
   }
 
+}
+
+object Log extends Serializable {
+  @transient lazy val log = Logger.getLogger("com.tao.thundercats")
+  def info(s: String) = log.info(s)
+  def error(s: String) = log.error(s)
+  def debug(s: String) = log.debug(s)
 }
