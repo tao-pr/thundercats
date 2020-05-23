@@ -31,6 +31,12 @@ libraryDependencies ++= List(
 //     ExclusionRule("org.apache.avro", "avro"))
 // )
 
+// Logging
+libraryDependencies ++= List(
+  "org.apache.logging.log4j" % "log4j-api",
+  "org.apache.logging.log4j" % "log4j-core"
+).map(_ % "2.13.3")
+
 // Test
 val devDependencies = List(
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
