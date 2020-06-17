@@ -29,8 +29,7 @@ val q = for {
 
 - [x] Physical file types: CSV, Parquet
 - [x] Streaming sources: Kafka
-- [ ] Relational databases: TBD
-- [ ] NoSQL databases: TBD
+- [x] MongoDB
 
 ## Prerequisites
 
@@ -107,6 +106,7 @@ val df = for {
   a <- Read.csv("path/to/file.csv", withHeader=false, delimiter=";")
   b <- Read.csv("path/to/file.csv")
   c <- Read.parquet("path/to/file.parquet")
+  d <- Read.mongo("localhost", "db1", "collection1")
 } yield ???
 ```
 
@@ -135,6 +135,16 @@ for {
   _ <- Write.kafka(dfBatch, "topic", colEncoder=ColumnEncoder.Avro(schemaStr))
   _ <- Write.kafka(dfBatch, "topic")
 
+  ...
+} yield ???
+```
+
+### Read from MongoDB
+
+```scala
+for {
+  ...
+  a <- Read.mongo("127.0.0.1", "db-name", "collection-name")
   ...
 } yield ???
 ```
