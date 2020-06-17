@@ -119,7 +119,12 @@ object Read {
   }
 
   def rabbit: MayFail[DataFrame] = ???
-  def mongo: MayFail[DataFrame] = ???
+  
+  def mongo(serverAddr: String, db: String, collection: String): MayFail[DataFrame] = {
+    spark.read.format("mongo")
+      .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
+      .load()
+  }
 }
 
 object Write {
@@ -253,5 +258,16 @@ object Write {
       case Some(t) => q.awaitTermination(t)
     }
     df
+  }
+
+  def mongo(
+    df: DataFrame, 
+    serverAddr: String, 
+    db: String, 
+    collection: String): MayFail[DataFrame] = {
+    df.write.format("mongo")
+      .mode("append")
+      .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
+      .save()
   }
 }
