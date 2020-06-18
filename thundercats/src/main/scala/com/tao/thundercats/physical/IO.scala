@@ -120,7 +120,8 @@ object Read {
 
   def rabbit: MayFail[DataFrame] = ???
   
-  def mongo(serverAddr: String, db: String, collection: String): MayFail[DataFrame] = {
+  def mongo(serverAddr: String, db: String, collection: String)
+  (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     spark.read.format("mongo")
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .load()
@@ -264,10 +265,11 @@ object Write {
     df: DataFrame, 
     serverAddr: String, 
     db: String, 
-    collection: String): MayFail[DataFrame] = {
+    collection: String): MayFail[DataFrame] = MayFail {
     df.write.format("mongo")
       .mode("append")
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .save()
+    df
   }
 }
