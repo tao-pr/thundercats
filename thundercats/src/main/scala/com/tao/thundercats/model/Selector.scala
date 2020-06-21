@@ -37,7 +37,7 @@ trait SpecimenGenerator {
   def genIter(pipe: Pipeline, df: DataFrame, outputCol: String, labelCol: String): Iterable[Specimen]
 }
 
-class MultiFeatureGenerator(
+class FeatureAssemblyGenerator(
   minFeatureCombination: Int,
   maxFeatureCombination: Int = Int.MaxValue,
   ignoreCols: Seq[String] = Nil
