@@ -769,4 +769,28 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   }
 
+  describe("Model selector test"){
+
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
+      Train(i=2, d=2.0, v=1.5, w=0.0, s="", s2=""),
+      Train(i=3, d=3.0, v=2.2, w=0.0, s="", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.0, s="", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.0, s="", s2=""),
+      Train(i=6, d=6.0, v=5.0, w=0.0, s="", s2=""),
+    ).toDS.toDF
+
+    it("generate model specimens from feature combinations"){
+      val df = dfPreset.withColumn("u", lit(-1)*col("i"))
+      val selector = new FeatureAssemblyGenerator(
+        minFeatureCombination=1,
+        maxFeatureCombination=3,
+        ignoreCols=List("w"))
+
+      val pipe = Preset.linearReg(features, "label-lg", "z")
+      val specimens = selector.genIter(pipe, df, outputCol="out", labelCol="s")
+    }
+
+  }
+
 }

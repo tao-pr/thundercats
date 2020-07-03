@@ -25,7 +25,7 @@ trait SpecimenGenerator {
   /**
    * Collect numerical columns from the given dataframe, vectors are not included
    */
-  protected def numericalCols(df: DataFrame, ignoredCols: Seq[String] = Nil): List[String] = {
+  protected def numericalCols(df: DataFrame, ignoredCols: List[String] = Nil): List[String] = {
     df.schema.toList.collect{ 
       case StructField(p,DoubleType,_,_) if (!ignoredCols.contains(p)) => p
       case StructField(p,IntegerType,_,_) if (!ignoredCols.contains(p))=> p
@@ -37,10 +37,14 @@ trait SpecimenGenerator {
   def genIter(pipe: Pipeline, df: DataFrame, outputCol: String, labelCol: String): Iterable[Specimen]
 }
 
+/**
+ * Generating a combination of features. The size of the feature vector 
+ * varies within the given range, exclusion of some columns are also possible.
+ */
 class FeatureAssemblyGenerator(
   minFeatureCombination: Int,
   maxFeatureCombination: Int = Int.MaxValue,
-  ignoreCols: Seq[String] = Nil
+  ignoreCols: List[String] = Nil
 ) 
 extends SpecimenGenerator {
   override def genIter(pipe: Pipeline, df: DataFrame, outputCol: String, labelCol: String): Iterable[Specimen] = {
@@ -49,12 +53,19 @@ extends SpecimenGenerator {
     val featCols = numericalCols(df, ignoreCols)
     val numMaxComb = scala.math.min(maxFeatureCombination, featCols.size)
     (minFeatureCombination to numMaxComb).flatMap{
+      // Try different combinations of features
       numFeat => featCols.combinations(numFeat).map{
-        features => FeatureModelDesign(outputCol, labelCol, pipe).toSpecimen(
-          if (numFeat==1) Feature(features.head)
-          else AssemblyFeature(features),
-          df
-        )
+        features => {
+          // Override input column by each in the combination
+          val featuresCol = 
+            if (numFeat==1) Feature(features.head)
+            else AssemblyFeature(features)
+          val design = FeatureModelDesign(
+            outputCol, 
+            labelCol, 
+            Pipe.setInputCol(pipe, featuresCol.colName).get)
+          design.toSpecimen(featuresCol, df)
+        }
       }
     }
   }
