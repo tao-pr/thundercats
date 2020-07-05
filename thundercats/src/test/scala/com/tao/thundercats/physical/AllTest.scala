@@ -788,9 +788,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         ignoreCols=List("w"))
 
       val pipe = Preset.linearReg(Feature("features"), "i", "z")
-      val specimens = selector.genIter(pipe, df, outputCol="out", labelCol="s")
+      val combinations = selector.genCombinations(pipe, df)
 
-      val features = specimens.map(_.featureCol.asArray)
+      val features = combinations.map(_.asArray)
 
       // Should not include "w" as excluded
       val expectedCombinations = Vector(

@@ -21,7 +21,6 @@ import com.tao.thundercats.evaluation._
  * Generates a lot of specimens
  */
 trait SpecimenGenerator {
-
   /**
    * Collect numerical columns from the given dataframe, vectors are not included
    */
@@ -33,8 +32,8 @@ trait SpecimenGenerator {
     }
   }
 
-  // Generate multiple [[Specimen]]
-  def genIter(pipe: Pipeline, df: DataFrame, outputCol: String, labelCol: String): Iterable[Specimen]
+  // Generate feature combinations
+  def genCombinations(pipe: Pipeline, df: DataFrame): Iterable[FeatureColumn]
 }
 
 /**
@@ -47,24 +46,14 @@ class FeatureAssemblyGenerator(
   ignoreCols: List[String] = Nil
 ) 
 extends SpecimenGenerator {
-  override def genIter(pipe: Pipeline, df: DataFrame, outputCol: String, labelCol: String): Iterable[Specimen] = {
+  override def genCombinations(pipe: Pipeline, df: DataFrame): Iterable[FeatureColumn] = {
     assert(minFeatureCombination > 0)
     assert(minFeatureCombination <= maxFeatureCombination)
     val featCols = numericalCols(df, ignoreCols)
     val numMaxComb = scala.math.min(maxFeatureCombination, featCols.size)
     (minFeatureCombination to numMaxComb).flatMap{
-      // Try different combinations of features
       numFeat => featCols.combinations(numFeat).map{
-        features => {
-          val featuresCol = AssemblyFeature(features)
-          Log.info(s"Generating feature assembly combination : ${features.mkString(", ")} => `${featuresCol.colName}`")
-          // Override input column by each in the combination          
-          val design = FeatureModelDesign(
-            outputCol,
-            labelCol,
-            pipe)
-          design.toSpecimen(featuresCol, df)
-        }
+        features => AssemblyFeature(features)
       }
     }
   }
