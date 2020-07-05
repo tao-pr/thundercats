@@ -787,8 +787,21 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         maxFeatureCombination=3,
         ignoreCols=List("w"))
 
-      val pipe = Preset.linearReg(features, "label-lg", "z")
+      val pipe = Preset.linearReg(Feature("features"), "i", "z")
       val specimens = selector.genIter(pipe, df, outputCol="out", labelCol="s")
+
+      val features = specimens.map(_.featureCol.asArray)
+
+      val expectedCombinations = Vector(
+        Array("i"), Array("d"), Array("v"), Array("u"), 
+        Array("i", "d"), Array("i", "v"), Array("i", "u"), 
+        Array("d", "v"), Array("d", "u"), Array("v", "u"), 
+        Array("i", "d", "v"), Array("i", "d", "u"), 
+        Array("i", "v", "u"), Array("d", "v", "u"))
+
+      expectedCombinations.foreach(comb => features should contain (comb))
+
+      // TAOTODO should not have "w" in any combinations
     }
 
   }

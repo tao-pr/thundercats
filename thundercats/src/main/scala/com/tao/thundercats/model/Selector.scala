@@ -56,14 +56,13 @@ extends SpecimenGenerator {
       // Try different combinations of features
       numFeat => featCols.combinations(numFeat).map{
         features => {
-          // Override input column by each in the combination
-          val featuresCol = 
-            if (numFeat==1) Feature(features.head)
-            else AssemblyFeature(features)
+          val featuresCol = AssemblyFeature(features)
+          Log.info(s"Generating feature assembly combination : ${features.mkString(", ")} => `${featuresCol.colName}`")
+          // Override input column by each in the combination          
           val design = FeatureModelDesign(
-            outputCol, 
-            labelCol, 
-            Pipe.setInputCol(pipe, featuresCol.colName).get)
+            outputCol,
+            labelCol,
+            pipe)
           design.toSpecimen(featuresCol, df)
         }
       }
