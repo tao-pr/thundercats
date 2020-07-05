@@ -9,6 +9,7 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
+import org.apache.spark.ml.param.shared.HasInputCol
 import org.apache.spark.ml.feature.{HashingTF, IDF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
@@ -66,6 +67,33 @@ object Pipe {
 
   def prepend(pipe: Pipeline, s: PipelineStage): MayFail[Pipeline] = MayFail {
     new Pipeline().setStages(s +: pipe.getStages)
+  }
+
+  /**
+   * Override input col of the estimator inside the pipeline (if any)
+   */
+  def setInputCol(pipe: Pipeline, inputCol: String): MayFail[Pipeline] = MayFail {
+    // Assume the last stage is always the estimator
+    val featureStages = pipe.getStages.dropRight(1)
+    val estimator = pipe.getStages.last match {
+      case c:HasInputCol => c.set(c.inputCol, inputCol)
+      case any => any
+    }
+    new Pipeline().setStages(featureStages :+ estimator)
+  }
+
+  /**
+   * Override output col of the estimator inside the pipeline (if any)
+   */
+  def setOutputCol(pipe: Pipeline, inputCol: String): MayFail[Pipeline] = MayFail {
+    ???
+  }
+
+  /**
+   * Override label col of the estimator inside the pipeline (if any)
+   */
+  def setLabelCol(pipe: Pipeline, inputCol: String): MayFail[Pipeline] = MayFail {
+    ???
   }
 }
 
