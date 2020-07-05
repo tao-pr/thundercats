@@ -792,6 +792,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       val features = specimens.map(_.featureCol.asArray)
 
+      // Should not include "w" as excluded
       val expectedCombinations = Vector(
         Array("i"), Array("d"), Array("v"), Array("u"), 
         Array("i", "d"), Array("i", "v"), Array("i", "u"), 
@@ -800,8 +801,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         Array("i", "v", "u"), Array("d", "v", "u"))
 
       expectedCombinations.foreach(comb => features should contain (comb))
-
-      // TAOTODO should not have "w" in any combinations
     }
 
   }
