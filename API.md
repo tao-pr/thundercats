@@ -143,3 +143,29 @@ val scores = new RegressionFeatureCompare(PearsonCorr)
   .allOf(design, features, df)
   .get
 ```
+
+### 1.4 Evaluate combinations of features
+
+Try combinations of feature columns by
+
+```scala
+val selector = new FeatureAssemblyGenerator(
+  minFeatureCombination=1,
+  maxFeatureCombination=3,
+  ignoreCols=List("i"))
+
+// Preset linear regression pipeline
+// NOTE: Always use "features" column
+val estimator = Preset.linearReg(Feature("features"), "i", "z")
+val combinations = selector.genCombinations(estimator, df)
+val design = FeatureModelDesign(
+  outputCol="z",
+  labelCol="i",
+  estimator=estimator)
+
+// Measure feature combinations with MAE
+val bestModel = new RegressionFeatureCompare(MAE)
+  .bestOf(design, combinations, df.toDF)
+  .get
+
+```
