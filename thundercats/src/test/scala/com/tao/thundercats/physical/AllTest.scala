@@ -803,6 +803,35 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       expectedCombinations.foreach(comb => features should contain (comb))
     }
 
+    it("find the best feature combinations"){
+      val df = dfPreset.withColumn("u", lit(-1)*col("i"))
+      val selector = new FeatureAssemblyGenerator(
+        minFeatureCombination=1,
+        maxFeatureCombination=3,
+        ignoreCols=List("i"))
+
+      val estimator = Preset.linearReg(Feature("features"), "i", "z")
+      val combinations = selector.genCombinations(estimator, df)
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=estimator)
+
+      // Measure feature combinations with MAE
+      val results = new RegressionFeatureCompare(MAE)
+        .allOf(design, combinations, df.toDF)
+
+      val (bestScore, bestCol, bestSpec) = new RegressionFeatureCompare(MAE)
+        .bestOf(design, combinations, df.toDF)
+        .get
+
+      results.size shouldBe (combinations.size)
+
+      // The best model should be the one with least MAE
+      val minScore = results.map{ case(score,_) => score }.min
+      bestScore shouldBe minScore
+    }
+
   }
 
 }
