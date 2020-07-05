@@ -769,4 +769,69 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   }
 
+  describe("Model selector test"){
+
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
+      Train(i=2, d=2.0, v=1.5, w=0.0, s="", s2=""),
+      Train(i=3, d=3.0, v=2.2, w=0.0, s="", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.0, s="", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.0, s="", s2=""),
+      Train(i=6, d=6.0, v=5.0, w=0.0, s="", s2=""),
+    ).toDS.toDF
+
+    it("generate model specimens from feature combinations"){
+      val df = dfPreset.withColumn("u", lit(-1)*col("i"))
+      val selector = new FeatureAssemblyGenerator(
+        minFeatureCombination=1,
+        maxFeatureCombination=3,
+        ignoreCols=List("w"))
+
+      val pipe = Preset.linearReg(Feature("features"), "i", "z")
+      val combinations = selector.genCombinations(pipe, df)
+
+      val features = combinations.map(_.asArray)
+
+      // Should not include "w" as excluded
+      val expectedCombinations = Vector(
+        Array("i"), Array("d"), Array("v"), Array("u"), 
+        Array("i", "d"), Array("i", "v"), Array("i", "u"), 
+        Array("d", "v"), Array("d", "u"), Array("v", "u"), 
+        Array("i", "d", "v"), Array("i", "d", "u"), 
+        Array("i", "v", "u"), Array("d", "v", "u"))
+
+      expectedCombinations.foreach(comb => features should contain (comb))
+    }
+
+    it("find the best feature combinations"){
+      val df = dfPreset.withColumn("u", lit(-1)*col("i"))
+      val selector = new FeatureAssemblyGenerator(
+        minFeatureCombination=1,
+        maxFeatureCombination=3,
+        ignoreCols=List("i"))
+
+      val estimator = Preset.linearReg(Feature("features"), "i", "z")
+      val combinations = selector.genCombinations(estimator, df)
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=estimator)
+
+      // Measure feature combinations with MAE
+      val results = new RegressionFeatureCompare(MAE)
+        .allOf(design, combinations, df.toDF)
+
+      val (bestScore, bestCol, bestSpec) = new RegressionFeatureCompare(MAE)
+        .bestOf(design, combinations, df.toDF)
+        .get
+
+      results.size shouldBe (combinations.size)
+
+      // The best model should be the one with least MAE
+      val minScore = results.map{ case(score,_) => score }.min
+      bestScore shouldBe minScore
+    }
+
+  }
+
 }

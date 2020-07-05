@@ -109,7 +109,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
 
       scoreOpt.mapOpt{ score => 
         Log.info(s"[FeatureCompare] ${measure.className} score : ${c.colName} = ${score}")
-        (score, specimen) 
+        (score, specimen)
       }
     }.flatten
 
