@@ -22,5 +22,12 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
-object Builder {}
+/**
+ * Generates a lot of models for selection!
+ */
+trait ModelGenerator {
+  def generate(estimatorChoices: Iterable[_]): ???
+}
