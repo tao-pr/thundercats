@@ -31,7 +31,8 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Choosing the best model
+ * Choosing the best model 
+ * from Iterable[ModelDesign] => (Specimen)
  */
 trait ModelCompare[A <: Measure] {
   val measure: A
@@ -48,11 +49,17 @@ trait ModelCompare[A <: Measure] {
   def allOf(df: DataFrame, models: Iterable[ModelDesign]): Iterable[(Double, Specimen)]
 }
 
-class RegressionModelCompare[A <: RegressionMeasure](override val measure: A) 
+class RegressionModelCompare[A <: RegressionMeasure](override val measure: A, feature: Feature) 
 extends ModelCompare[A] {
   override def allOf(df: DataFrame, models: Iterable[ModelDesign]): Iterable[(Double, Specimen)] = {
-    ???
+    models.map{ design =>
+      val specimen = design.toSpecimen(feature, df)
+      val scoreOpt = specimen.score(df, measure)
+
+      scoreOpt.mapOpt{ score => 
+        Log.info(s"[RegressionModelCompare] ${measure.className} score : ${feature.colName} = ${score}")
+        (score, specimen)
+      }
+    }.flatten
   }
 }
-
-// TAOTODO: ClassificationModelCompare
