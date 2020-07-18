@@ -31,7 +31,7 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Draft model
+ * Draft model for training
  * can be trained multiple times with different feature columns
  */
 trait ModelDesign {
