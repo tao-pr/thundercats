@@ -832,6 +832,26 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       bestScore shouldBe minScore
     }
 
+    it("Evaluate all models with ModelCompare"){
+      val measure = MAE
+      val feat = AssemblyFeature("v"::Nil, "features")
+
+      val allModels = List(
+        FeatureModelDesign(
+          outputCol="z",
+          labelCol="i",
+          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z")),
+        FeatureModelDesign(
+          outputCol="z",
+          labelCol="i",
+          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z", elasticNetParam=Some(1.0)))
+      )
+      val allScores = new RegressionModelCompare(measure, feat)
+        .allOf(dfPreset, allModels)
+
+      allScores.size shouldBe (allModels.size)
+    }
+
   }
 
 }
