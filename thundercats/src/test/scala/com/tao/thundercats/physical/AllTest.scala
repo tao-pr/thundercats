@@ -836,6 +836,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val measure = MAE
       val feat = AssemblyFeature("v"::Nil, "features")
 
+      val df = dfPreset.withColumn("i2", col("i")+col("d"))
+
       val allModels = List(
         FeatureModelDesign(
           outputCol="z",
@@ -843,13 +845,17 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
           estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z")),
         FeatureModelDesign(
           outputCol="z",
-          labelCol="i",
-          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z", elasticNetParam=Some(1.0)))
+          labelCol="i2",
+          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z", elasticNetParam=Some(0.01)))
       )
       val allScores = new RegressionModelCompare(measure, feat)
-        .allOf(dfPreset, allModels)
+        .allOf(df, allModels)
 
       allScores.size shouldBe (allModels.size)
+      allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
+        "com.tao.thundercats.evaluation.TrainedSpecimen",
+        "com.tao.thundercats.evaluation.TrainedSpecimen")
+      allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
     }
 
   }
