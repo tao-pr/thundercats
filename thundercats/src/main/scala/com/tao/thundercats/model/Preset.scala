@@ -12,6 +12,8 @@ import com.tao.thundercats.evaluation._
 object Preset {
 
   // Simple linear regression
+  // elasticNetParam = 0 -> ridge
+  // elasticNetParam = 1 -> lasso
   def linearReg(
     features: FeatureColumn, 
     labelCol: String, 
