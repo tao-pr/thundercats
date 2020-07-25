@@ -75,6 +75,23 @@ extends RegressionMeasure {
 }
 
 /**
+ * Mean percentage error
+ */
+case object MPE
+extends RegressionMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    import specimen._
+    // NOTE: Undefined labels result in exception
+    val agg = new DoubleRDDFunctions(df
+      .withColumn("mpe", abs(col(outputCol) - col(labelCol)) / col(labelCol))
+      .rdd.map(_.getAs[Double]("mpe")))
+    agg.mean
+  }
+
+  override def isBetter(a: Double, b: Double) = a < b
+}
+
+/**
  * Calculate correlation between input and real label
  */
 case object PearsonCorr extends RegressionMeasure {
