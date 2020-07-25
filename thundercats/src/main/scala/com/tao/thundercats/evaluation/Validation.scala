@@ -24,8 +24,39 @@ import com.tao.thundercats.estimator._
 /**
  * Model validation suite
  */
-trait Validation[D <: ModelDesign] {
-  val design: D
-  def run[M <: Measure](df: DataFrame): MayFail[Double]
+trait Validation[M <: Measure, D <: ModelDesign] {
+  val measure: M
+  def run(df: DataFrame, design: D, feature: Feature): MayFail[Double]
+}
+
+case class CrossValidation[M <: Measure, D <: ModelDesign](
+  override val measure: M,
+  nFolds: Int=3) 
+extends Validation[M,D] {
+  override def run(df: DataFrame, design: D, feature: Feature): MayFail[Double] = MayFail {
+    // TAOTODO: Log
+    val splits = df.randomSplit((1 to nFolds).toArray.map(_ => 1/nFolds.toDouble))
+    val folds = (0 until nFolds).map{ i => 
+      val dfTrain = splits.zipWithIndex.filter(_._2 != i).map(_._1).reduce(_ union _)
+      val dfTest = splits(i)
+
+      // Build the model
+      val m = design.toSpecimen(feature, dfTrain)
+
+      // Validate with test set
+      m.score(dfTest, measure).get
+    }
+    
+    folds.sum.toDouble / nFolds.toDouble
+  }
+}
+
+case class SplitValidation[M <: Measure, D <: ModelDesign](
+  override val measure: M,
+  trainRatio: Float=0.9f) 
+extends Validation[M,D] {
+  override def run(df: DataFrame, design: D, feature: Feature): MayFail[Double] = MayFail {
+    ???
+  }
 }
 
