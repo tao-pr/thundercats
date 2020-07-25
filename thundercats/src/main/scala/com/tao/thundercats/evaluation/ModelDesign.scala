@@ -51,6 +51,9 @@ extends ModelDesign {
     DummySpecimen(feature, labelCol, feature.colName)
 }
 
+/**
+ * Model prototype of any kind
+ */
 case class FeatureModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
