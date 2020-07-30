@@ -34,7 +34,7 @@ case class CrossValidation[M <: Measure, D <: ModelDesign](
   nFolds: Int=3) 
 extends Validation[M,D] {
   override def run(df: DataFrame, design: D, feature: Feature): MayFail[Double] = MayFail {
-    // TAOTODO: Log
+    Log.info(s"CrossValidation : Running ${nFolds} folds, with measure = ${measure.getClass.getName}")
     val splits = df.randomSplit((1 to nFolds).toArray.map(_ => 1/nFolds.toDouble))
     val folds = (0 until nFolds).map{ i => 
       val dfTrain = splits.zipWithIndex.filter(_._2 != i).map(_._1).reduce(_ union _)
@@ -44,6 +44,7 @@ extends Validation[M,D] {
       val m = design.toSpecimen(feature, dfTrain)
 
       // Validate with test set
+      Log.info(s"CrossValidation : Scoring fold ${i+1} of ${nFolds}")
       m.score(dfTest, measure).get
     }
     
