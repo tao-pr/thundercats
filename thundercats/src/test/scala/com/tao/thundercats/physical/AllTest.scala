@@ -860,4 +860,32 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   }
 
+  describe("Crossvaliation test"){
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
+      Train(i=2, d=2.0, v=1.5, w=0.0, s="", s2=""),
+      Train(i=3, d=3.0, v=2.2, w=0.0, s="", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.0, s="", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.0, s="", s2=""),
+      Train(i=6, d=6.0, v=5.0, w=0.0, s="", s2=""),
+    ).toDS.toDF
+
+    it("Run crossvaliation on N folds"){
+      val cv = CrossValidation(
+        measure=MPE,
+        nFolds=5
+      )
+
+      val feature = AssemblyFeature("v"::Nil, "features")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+      val score = cv.run(dfPreset, design, feature)
+
+      score.isFailing shouldBe false
+      (score.get) should be > 0.0
+    }
+  }
+
 }

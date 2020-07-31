@@ -24,16 +24,16 @@ import com.tao.thundercats.estimator._
 /**
  * Model validation suite
  */
-trait Validation[M <: Measure, D <: ModelDesign] {
+trait Validation[M <: Measure] {
   val measure: M
-  def run(df: DataFrame, design: D, feature: Feature): MayFail[Double]
+  def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double]
 }
 
-case class CrossValidation[M <: Measure, D <: ModelDesign](
+case class CrossValidation[M <: Measure](
   override val measure: M,
   nFolds: Int=3) 
-extends Validation[M,D] {
-  override def run(df: DataFrame, design: D, feature: Feature): MayFail[Double] = MayFail {
+extends Validation[M] {
+  override def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double] = MayFail {
     Log.info(s"CrossValidation : Running ${nFolds} folds, with measure = ${measure.getClass.getName}")
     val splits = df.randomSplit((1 to nFolds).toArray.map(_ => 1/nFolds.toDouble))
     val folds = (0 until nFolds).map{ i => 
@@ -52,11 +52,11 @@ extends Validation[M,D] {
   }
 }
 
-case class SplitValidation[M <: Measure, D <: ModelDesign](
+case class SplitValidation[M <: Measure](
   override val measure: M,
   trainRatio: Float=0.9f) 
-extends Validation[M,D] {
-  override def run(df: DataFrame, design: D, feature: Feature): MayFail[Double] = MayFail {
+extends Validation[M] {
+  override def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double] = MayFail {
     ???
   }
 }
