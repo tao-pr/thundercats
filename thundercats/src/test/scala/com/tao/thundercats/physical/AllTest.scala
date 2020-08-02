@@ -886,6 +886,23 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       score.isFailing shouldBe false
       (score.get) should be > 0.0
     }
+
+    it("Run train-test split"){
+      val cv = SplitValidation(
+        measure=MPE,
+        trainRatio=0.65f
+      )
+
+      val feature = AssemblyFeature("v"::Nil, "features")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+      val score = cv.run(dfPreset, design, feature)
+
+      score.isFailing shouldBe false
+      (score.get) should be > 0.0
+    }
   }
 
 }
