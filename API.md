@@ -169,3 +169,40 @@ val bestModel = new RegressionFeatureCompare(MAE)
   .get
 
 ```
+
+### 1.5 Cross validation
+
+Thundercats supports model validation with train & test split and cross validation.
+
+Train-test split
+
+```scala
+val cv = SplitValidation(
+  measure=MPE,
+  trainRatio=0.65f
+)
+
+val feature = AssemblyFeature("v"::Nil, "features")
+val design = FeatureModelDesign(
+  outputCol="z",
+  labelCol="i",
+  estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+val score = cv.run(dfPreset, design, feature)
+```
+
+Cross validation
+
+```scala
+val cv = CrossValidation(
+  measure=MPE,
+  nFolds=5
+)
+
+val feature = AssemblyFeature("v"::Nil, "features")
+val design = FeatureModelDesign(
+  outputCol="z",
+  labelCol="i",
+  estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+val score = cv.run(dfPreset, design, feature)
+```
+
