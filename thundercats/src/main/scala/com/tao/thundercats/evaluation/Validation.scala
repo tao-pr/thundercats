@@ -56,8 +56,18 @@ case class SplitValidation[M <: Measure](
   override val measure: M,
   trainRatio: Float=0.9f) 
 extends Validation[M] {
-  override def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double] = MayFail {
-    ???
+  override def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double] = {
+    Log.info(s"SplitValidation : ratio of ${trainRatio}, with measure = ${measure.getClass.getName}")
+    if (trainRatio <= 0.0 || trainRatio >= 1.0){
+      Fail(s"SplitValidation fails with out-of-range training ratio : ${trainRatio}")
+    }
+    else MayFail {
+      val Array(dfTrain, dfTest) = df.randomSplit(Array(trainRatio, 1-trainRatio))
+      
+      // Build the model
+      val m = design.toSpecimen(feature, dfTrain)
+      m.score(dfTest, measure).get
+    }
   }
 }
 
