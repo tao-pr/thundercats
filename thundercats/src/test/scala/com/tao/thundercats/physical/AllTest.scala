@@ -832,6 +832,77 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       bestScore shouldBe minScore
     }
 
+    it("Evaluate all models with ModelCompare"){
+      val measure = MAE
+      val feat = AssemblyFeature("v"::Nil, "features")
+
+      val df = dfPreset.withColumn("i2", col("i")+col("d"))
+
+      val allModels = List(
+        FeatureModelDesign(
+          outputCol="z",
+          labelCol="i",
+          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z")),
+        FeatureModelDesign(
+          outputCol="z",
+          labelCol="i2",
+          estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z", elasticNetParam=Some(0.01)))
+      )
+      val allScores = new RegressionModelCompare(measure, feat)
+        .allOf(df, allModels)
+
+      allScores.size shouldBe (allModels.size)
+      allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
+        "com.tao.thundercats.evaluation.TrainedSpecimen",
+        "com.tao.thundercats.evaluation.TrainedSpecimen")
+      allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
+    }
+
+  }
+
+  describe("Crossvaliation test"){
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
+      Train(i=2, d=2.0, v=1.5, w=0.0, s="", s2=""),
+      Train(i=3, d=3.0, v=2.2, w=0.0, s="", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.0, s="", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.0, s="", s2=""),
+      Train(i=6, d=6.0, v=5.0, w=0.0, s="", s2=""),
+    ).toDS.toDF
+
+    it("Run crossvaliation on N folds"){
+      val cv = CrossValidation(
+        measure=MPE,
+        nFolds=5
+      )
+
+      val feature = AssemblyFeature("v"::Nil, "features")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+      val score = cv.run(dfPreset, design, feature)
+
+      score.isFailing shouldBe false
+      (score.get) should be > 0.0
+    }
+
+    it("Run train-test split"){
+      val cv = SplitValidation(
+        measure=MPE,
+        trainRatio=0.65f
+      )
+
+      val feature = AssemblyFeature("v"::Nil, "features")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
+      val score = cv.run(dfPreset, design, feature)
+
+      score.isFailing shouldBe false
+      (score.get) should be > 0.0
+    }
   }
 
 }
