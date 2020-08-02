@@ -31,7 +31,7 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 /**
- * Draft model
+ * Draft model for training
  * can be trained multiple times with different feature columns
  */
 trait ModelDesign {
@@ -51,6 +51,9 @@ extends ModelDesign {
     DummySpecimen(feature, labelCol, feature.colName)
 }
 
+/**
+ * Model prototype of any kind
+ */
 case class FeatureModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
