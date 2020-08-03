@@ -8,6 +8,7 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
 
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
@@ -19,6 +20,7 @@ import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.rdd.DoubleRDDFunctions
 import org.apache.spark.ml.regression._
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 
 import breeze.linalg.DenseVector
 
@@ -38,13 +40,29 @@ trait Measure extends BaseMeasure[Double] {
 }
 
 trait RegressionMeasure extends Measure
+trait ClassificationMeasure extends Measure {
+  def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
+    if (!df.columns.contains(specimen.labelCol)){
+      Fail(s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})")
+    }
+    else MayFail {
+      // Generate a sequence of (pred, label)
+      val pred = specimen.model.transform(df)
+      pred.rdd.map{ row => 
+        val pre = row.getAs[Double](specimen.outputCol)
+        val lbl = row.getAs[Double](specimen.labelCol)
+        (pre, lbl)
+      }
+    }
+}
 
 /**
  * Calculate fitting error between real label and predicted output.
  * Metric: Root mean square error
  */
 case object RMSE
-extends RegressionMeasure {
+extends RegressionMeasure
+with ClassificationMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     import specimen._
     val agg = new DoubleRDDFunctions(df
@@ -62,7 +80,8 @@ extends RegressionMeasure {
  * Metric: Mean absolute error
  */
 case object MAE 
-extends RegressionMeasure {
+extends RegressionMeasure 
+with ClassificationMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     import specimen._
     val agg = new DoubleRDDFunctions(df
@@ -78,7 +97,8 @@ extends RegressionMeasure {
  * Mean percentage error
  */
 case object MPE
-extends RegressionMeasure {
+extends RegressionMeasure 
+with ClassificationMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
     import specimen._
     // NOTE: Undefined labels result in exception
@@ -100,6 +120,39 @@ case object PearsonCorr extends RegressionMeasure {
     val rddX = df getDoubleRDD outputCol
     val rddY = df getDoubleRDD labelCol
     ExposedPearsonCorrelation.computeCorrelation(rddX, rddY)
+  }
+}
+
+case object Precision extends ClassificationMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    ???
+  }
+}
+
+case object Recall extends ClassificationMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    ???
+  }
+}
+
+case object FMeasure extends ClassificationMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    ???
+  }
+}
+
+/**
+ * Area under ROC curve
+ */
+case object AUC extends ClassificationMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    ???
+  }
+}
+
+case object AUCPrecisionRecall extends ClassificationMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
+    ???
   }
 }
 
