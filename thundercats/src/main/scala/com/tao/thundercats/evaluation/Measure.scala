@@ -52,7 +52,7 @@ trait ClassificationMeasure extends Measure {
         val pre = row.getAs[Double](specimen.outputCol)
         val lbl = row.getAs[Double](specimen.labelCol)
         (pre, lbl)
-      }
+      }.cache
     }
 }
 
@@ -124,15 +124,26 @@ case object PearsonCorr extends RegressionMeasure {
 }
 
 case object Precision extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    ???
-  }
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    pred(df, specimen).map{ rdd =>
+      new BinaryClassificationMetrics(rdd)
+        .precisionByThreshold
+        .filter{ case(thr,p) => thr==1.0 }
+        .map{ case(thr,p) => p }
+        .collect
+        .head
+    }
 }
 
 case object Recall extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    ???
-  }
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = pred(df, specimen).map{ rdd =>
+      new BinaryClassificationMetrics(rdd)
+        .recallByThreshold
+        .filter{ case(thr,p) => thr==1.0 }
+        .map{ case(thr,p) => p }
+        .collect
+        .head
+    }
 }
 
 case object FMeasure extends ClassificationMeasure {
