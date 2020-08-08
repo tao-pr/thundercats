@@ -766,10 +766,41 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // the feature cols of specimen will not be the best one, but all in feature vector
       bestSpec.asInstanceOf[TrainedSpecimen].featureCol.colName shouldBe "features"
     }
-
   }
 
-  describe("Model selector test"){
+  describe("Classification modeling test"){
+    import spark.implicits._
+    import Implicits._
+
+    lazy val df = List(
+      // i, d, label
+      W(0, 0.0, label=0),
+      W(1, 0.1, label=0),
+      W(0, 1.5, label=1),
+      W(1, 1.6, label=1),
+      W(1, 1.3, label=1)
+    ).toDS.toDF
+
+    it("Measure Precision"){
+
+      // 2020-08-08 10:16:45,712 INFO  - PRECISION : (1.6,1.0)
+      // 2020-08-08 10:16:45,712 INFO  - PRECISION : (1.6,1.0)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (1.5,0.5)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (1.5,0.5)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (1.3,0.6666666666666666)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (1.3,0.6666666666666666)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.1,0.75)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.1,0.75)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.0,0.6)
+      // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.0,0.6)
+      
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+      val score = spec.score(df, Precision)
+      score shouldBe Ok(scala.math.sqrt(2.8))
+    }
+  }
+
+  describe("Regression Model selector test"){
 
     lazy val dfPreset = List(
       Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
@@ -860,7 +891,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   }
 
-  describe("Crossvaliation test"){
+  describe("Crossvalidation test"){
     lazy val dfPreset = List(
       Train(i=1, d=1.0, v=1.2, w=0.0, s="", s2=""),
       Train(i=2, d=2.0, v=1.5, w=0.0, s="", s2=""),
