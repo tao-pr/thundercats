@@ -29,30 +29,33 @@ import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
-
-/**
- * Overall measure of the whole specimen
- */
+// Measure for the whole model
 trait Measure extends BaseMeasure[Double] {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double]
-  def isBetter(a: Double, b: Double) = a > b
-  def className: String = getClass.getName.split('.').last.replace("$","")
+  override def isBetter(a: Double, b: Double) = a > b
 }
 
 trait RegressionMeasure extends Measure
+
 trait ClassificationMeasure extends Measure {
+  // Measure classification as Map of [[threshold -> Score]]
+  def %% (df: DataFrame, specimen: Specimen): MayFail[scala.collection.Map[Double,Double]] = {
+    %(df, specimen).map{ v => Map(Double.NaN -> v) }
+  }
+
   def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
     if (!df.columns.contains(specimen.labelCol)){
       Fail(s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})")
     }
     else MayFail {
       // Generate a sequence of (pred, label)
-      val pred = specimen.model.transform(df)
-      pred.rdd.map{ row => 
-        val pre = row.getAs[Double](specimen.outputCol)
-        val lbl = row.getAs[Double](specimen.labelCol)
-        (pre, lbl)
-      }.cache
+      df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(DoubleType))
+        .withColumn(specimen.labelCol, col(specimen.labelCol).cast(DoubleType))
+        .rdd.map{ row => 
+          val pre = row.getAs[Double](specimen.outputCol)
+          val lbl = row.getAs[Double](specimen.labelCol)
+          (pre, lbl)
+        }.cache
     }
 }
 
@@ -124,26 +127,27 @@ case object PearsonCorr extends RegressionMeasure {
 }
 
 case object Precision extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+  override def %% (df: DataFrame, specimen: Specimen) = 
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
         .precisionByThreshold
-        .filter{ case(thr,p) => thr==1.0 }
-        .map{ case(thr,p) => p }
-        .collect
-        .head
+        .collectAsMap
     }
+
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    Fail("Precision only returns a map of threshold -> score. Checkout %% method")
 }
 
 case object Recall extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = pred(df, specimen).map{ rdd =>
+  override def %% (df: DataFrame, specimen: Specimen) = 
+    pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
-        .recallByThreshold
-        .filter{ case(thr,p) => thr==1.0 }
-        .map{ case(thr,p) => p }
-        .collect
-        .head
+        .precisionByThreshold
+        .collectAsMap
     }
+
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    Fail("Recall only returns a map of threshold -> score. Checkout %% method")
 }
 
 case object FMeasure extends ClassificationMeasure {
