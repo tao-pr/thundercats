@@ -29,6 +29,7 @@ import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
 /**
  * Trained Model for evaluation
@@ -60,6 +61,15 @@ trait Specimen {
   def scoreVector(df: DataFrame, measure: MeasureVector): MayFail[Array[Double]] = {
     measure % (ensure(df), this)
   }
+
+  /**
+   * Score the specimen, as a map (threshold -> score)
+   */
+  def scoreMap(df: DataFrame, measure: Measure): MayFail[Map[Double,Double]] = 
+    measure match {
+      case m:ClassificationMeasure => m %% (ensure(df), this)
+      case _ => Fail(f"${measure.className} does not support scoreMap")
+    }
 }
 
 /**

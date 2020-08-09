@@ -793,10 +793,15 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.1,0.75)
       // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.0,0.6)
       // 2020-08-08 10:16:45,714 INFO  - PRECISION : (0.0,0.6)
-      
+
       val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
-      val score = spec.score(df, Precision)
-      score shouldBe Ok(scala.math.sqrt(2.8))
+      val scoreMap = spec.scoreMap(df, Precision).get
+      scoreMap shouldNot contain (Double.MinValue)
+      scoreMap.get(0.0) shouldBe Some(0.6)
+      scoreMap.get(0.1) shouldBe Some(0.75)
+      scoreMap.get(1.3) shouldBe Some(0.6666666666666666)
+      scoreMap.get(1.5) shouldBe Some(0.5)
+      scoreMap.get(1.6) shouldBe Some(1.0)
     }
   }
 
