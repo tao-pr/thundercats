@@ -39,8 +39,8 @@ trait RegressionMeasure extends Measure
 
 trait ClassificationMeasure extends Measure {
   // Measure classification as Map of [[threshold -> Score]]
-  def %% (df: DataFrame, specimen: Specimen): MayFail[scala.collection.Map[Double,Double]] = {
-    %(df, specimen).map{ v => Map(Double.NaN -> v) }
+  def %% (df: DataFrame, specimen: Specimen): MayFail[Map[Double,Double]] = {
+    %(df, specimen).map{ v => Map(Double.MinValue -> v) }
   }
 
   def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
@@ -132,6 +132,7 @@ case object Precision extends ClassificationMeasure {
       new BinaryClassificationMetrics(rdd)
         .precisionByThreshold
         .collectAsMap
+        .toMap
     }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
@@ -144,6 +145,7 @@ case object Recall extends ClassificationMeasure {
       new BinaryClassificationMetrics(rdd)
         .precisionByThreshold
         .collectAsMap
+        .toMap
     }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
