@@ -24,7 +24,8 @@ trait MeasureVector extends BaseMeasure[Array[Double]] {
    */
   override def % (df: DataFrame, specimen: Specimen): MayFail[Array[Double]]
   def findBest(zippedScore: Array[(Double, String)]) = zippedScore.max
-  def className: String = getClass.getName.split('.').last.replace("$","")
+  override def className: String = getClass.getName.split('.').last.replace("$","")
+  override def isBetter(a: Array[Double], b: Array[Double]) = false
 }
 
 trait RegressionMeasureVector extends MeasureVector

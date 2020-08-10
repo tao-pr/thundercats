@@ -91,6 +91,9 @@ the process is designed as follows.
 
 ```
 - Measure          <-- Measurement of an individual feature
+  - %              <-- Measure as scalar 
+  - %%             <-- Measure as map (threshold -> scalar)
+                       For classification evaluation
 - MeasureVector    <-- Measurement of multiple feature at a time
 ```
 
@@ -102,6 +105,14 @@ Some subtypes of `Measure`
     - RMSE
     - MAE
     - PearsonCorr
+  - ClassificationMeasure
+    - RMSE
+    - MAE
+    - AUC
+    - AUCPrecisionRecall
+    - Precision     <-- with %% for threshold evaluation
+    - Recall        <-- with %% for threshold evaluation
+    - FMeasure      <-- with %% for threshold evaluation
 ```
 
 Some subtypes of `MeasureVector`
