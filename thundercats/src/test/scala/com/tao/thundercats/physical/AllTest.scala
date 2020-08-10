@@ -803,6 +803,18 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       scoreMap.get(1.5) shouldBe Some(0.5)
       scoreMap.get(1.6) shouldBe Some(1.0)
     }
+
+    it("Measure Recall"){
+
+      val spec = DummySpecimen(Feature("i"), outputCol="d", labelCol="i")
+      val scoreMap = spec.scoreMap(df, Recall).get
+      scoreMap shouldNot contain (Double.MinValue)
+      scoreMap.get(0.0) shouldBe Some(1.0)
+      scoreMap.get(0.1) shouldBe Some(1.0)
+      scoreMap.get(1.3) shouldBe Some(0.6666666666666666)
+      scoreMap.get(1.5) shouldBe Some(0.3333333333333333)
+      scoreMap.get(1.6) shouldBe Some(0.3333333333333333)
+    }
   }
 
   describe("Regression Model selector test"){
