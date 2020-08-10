@@ -143,7 +143,7 @@ case object Recall extends ClassificationMeasure {
   override def %% (df: DataFrame, specimen: Specimen) = 
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
-        .precisionByThreshold
+        .recallByThreshold
         .collectAsMap
         .toMap
     }
