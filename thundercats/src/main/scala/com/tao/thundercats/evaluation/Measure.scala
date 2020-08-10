@@ -153,24 +153,36 @@ case object Recall extends ClassificationMeasure {
 }
 
 case object FMeasure extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    ???
-  }
+  override def %% (df: DataFrame, specimen: Specimen) = 
+    pred(df, specimen).map{ rdd =>
+      new BinaryClassificationMetrics(rdd)
+        .fMeasureByThreshold
+        .collectAsMap
+        .toMap
+    }
+
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    Fail("F-Measure only returns a map of threshold -> score. Checkout %% method")
 }
 
 /**
  * Area under ROC curve
  */
 case object AUC extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    ???
-  }
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    pred(df, specimen).map{ rdd =>
+      new BinaryClassificationMetrics(rdd).areaUnderROC
+    }
 }
 
+/**
+ * Area under Precision-recall curve
+ */
 case object AUCPrecisionRecall extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = MayFail {
-    ???
-  }
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+    pred(df, specimen).map{ rdd =>
+      new BinaryClassificationMetrics(rdd).areaUnderPR
+    }
 }
 
 
