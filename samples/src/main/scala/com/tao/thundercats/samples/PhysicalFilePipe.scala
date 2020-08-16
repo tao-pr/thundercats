@@ -14,7 +14,7 @@ object PhysicalFilePipe extends SparkBase {
   def run(){
 
     Console.println(Console.GREEN + 
-      s"Reading sample csv : ${Data.pathSampleCSV}" +
+      s"Reading sample csv : ${Data.pathCityTempCSV}" +
       Console.RESET)
 
     // Define data pipeline
