@@ -230,6 +230,27 @@ yield ???
 
 ---
 
+## Samples
+
+Check out the project "samples" for example usage of Thundercats. Build and run the project with following commands
+
+```bash
+
+$ sbt compile
+$ sbt samples/run
+```
+
+The CLI program will prompt for your choice of sample to run.
+
+
+### Datasets used in samples
+
+All licences and copyrights belong to the original owners of those datasets.
+
+- [Daily Temperature of Major Cities (Kaggle)](https://twitter.com/Pumping_Hard/status/1041736341409587201)
+
+---
+
 ## Licence 
 
 Apache licence. Redistribution, modification, private use, sublicencing are permitted.
