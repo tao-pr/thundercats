@@ -232,15 +232,10 @@ yield ???
 
 ## Samples
 
-Check out the project "samples" for example usage of Thundercats. Build and run the project with following commands
+Check out the project "samples" for example usage of Thundercats. 
+Build and package as JAR, then submit to your spark cluster of choice.
 
-```bash
 
-$ sbt compile
-$ sbt samples/run
-```
-
-The CLI program will prompt for your choice of sample to run.
 
 
 ### Datasets used in samples

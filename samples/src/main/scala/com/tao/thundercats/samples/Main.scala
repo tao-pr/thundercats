@@ -7,19 +7,15 @@ import com.tao.thundercats.physical._
  * Main entry point
  */
 
-object Main extends App {
+object Main extends SparkBase {
+
+  override val name = "samples"
 
   Console.println("HELLO!")
-  Console.println("Choose what to run:")
-  Console.println(" (1) - Physical file pipe sample")
-  Console.println(" (0) - Exit")
-
-  val choice = scala.io.StdIn.readInt()
-
-  choice match {
-    case 0 => Console.println("BYE!")
-    case 1 => PhysicalFilePipe.run
-  }
+  val pipeInput = Read.csv(Data.pathCityTempCSV)
 
 
+
+  Console.println("SHUTTING DOWN!")
+  stop()
 }
