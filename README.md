@@ -235,7 +235,21 @@ yield ???
 Check out the project "samples" for example usage of Thundercats. 
 Build and package as JAR, then submit to your spark cluster of choice.
 
+## Run samples locally
 
+You can try samples on your local workstation too. Follow the instructions below
+
+1. Package JAR
+
+```bash
+$ sbt samples/assembly
+```
+
+2. Start spark shell with the packaged JAR
+
+```bash
+$ $SPARK_HOME/bin/spark-shell --jars samples/target/scala-2.12/samples_2.12-0.1.0-SNAPSHOT.jar
+```
 
 
 ### Datasets used in samples
@@ -243,6 +257,7 @@ Build and package as JAR, then submit to your spark cluster of choice.
 All licences and copyrights belong to the original owners of those datasets.
 
 - [Daily Temperature of Major Cities (Kaggle)](https://twitter.com/Pumping_Hard/status/1041736341409587201)
+
 
 ---
 
