@@ -21,10 +21,8 @@ object Main extends SparkBase {
   }
 
   Console.println(s"Running : ${app.getClass.getName}")
-  app.run()
+  app.runMe(spark)
 
   Console.println("Shutting down kernel!")
   end()
-
-  Console.println("Ending")
 }

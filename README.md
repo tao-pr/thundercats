@@ -251,6 +251,14 @@ $ sbt samples/assembly
 $ $SPARK_HOME/bin/spark-shell --jars samples/target/scala-2.12/samples_2.12-0.1.0-SNAPSHOT.jar
 ```
 
+3. You can choose to run any sample instances. See following samples.
+
+```bash
+scala> import com.tao.thundercats.samples.subapp._
+
+scala> DataPipeline.runMe(spark)
+```
+
 
 ### Datasets used in samples
 
