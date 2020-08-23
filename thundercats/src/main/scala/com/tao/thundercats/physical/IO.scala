@@ -46,6 +46,12 @@ object Read {
     df.select(cols.head, cols.tail:_*)
   }
 
+  def rename(df: DataFrame, map: Map[String, String]): MayFail[DataFrame] = MayFail {
+    map.foldLeft(df){ case (df_, pair) =>
+      df_.withColumnRenamed(pair._1, pair._2)
+    }
+  }
+
   def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._

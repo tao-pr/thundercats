@@ -17,6 +17,10 @@ object DataPipeline extends BaseApp {
       cnt      <- Read.csv(Data.pathCountryCSV(System.getProperty("user.home")))
       cityTemp <- Read.select(cityTemp, Seq("Country", "Month", "Day", "Year", "AvgTemperature"))
       cnt      <- Read.select(cnt, Seq("Country", "Population", "`Area (sq. mi.)`", "`Pop. Density (per sq. mi.)`"))
+      cnt      <- Read.rename(cnt, Map(
+        "`Area (sq. mi.)`" -> "area",
+        "`Pop. Density (per sq. mi.)`" -> "popdensity"
+      ))
       _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"))
       _        <- Screen.showDF(cnt, Some("Countries (CSV)"))
     } yield cityTemp
