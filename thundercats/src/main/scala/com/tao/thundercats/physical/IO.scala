@@ -41,6 +41,11 @@ object Screen {
 }
 
 object Read {
+
+  def select(df: DataFrame, cols: Seq[String]): MayFail[DataFrame] = MayFail {
+    df.select(cols.head, cols.tail:_*)
+  }
+
   def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
