@@ -65,7 +65,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   import spark.implicits._
 
-  //describe("Basic IO"){
+  // describe("Basic IO"){
   ignore("Basic IO"){
 
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
@@ -123,6 +123,19 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       dfReadOpt.getError.map(_.contains("Path does not exist: file:/Users/pataoengineer/code/thundercats/not-found.csv;")).getOrElse("") shouldBe true
       dfReadOpt.isFailing shouldBe true
+    }
+
+    it("rename columns"){
+      val dfRenamedOpt = for {
+        c <- Read.rename(df, Map(
+          "i" -> "iii"
+        ))
+      } yield c
+
+      dfRenamedOpt.isFailing shouldBe false
+      val dfRenamed = dfRenamedOpt.get
+
+      dfRenamed.columns shouldBe List("iii", "s")
     }
 
     it("write and read parquet"){
