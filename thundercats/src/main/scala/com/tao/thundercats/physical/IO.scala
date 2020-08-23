@@ -38,6 +38,11 @@ object Screen {
     Console.println(Console.RESET)
     df
   }
+
+  def showSchema(df: DataFrame): MayFail {
+    df.printSchema
+    df
+  }
 }
 
 object Read {
