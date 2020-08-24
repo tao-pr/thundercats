@@ -6,6 +6,7 @@ import com.tao.thundercats.functional.MayFail
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Dataset, DataFrame}
+import org.apache.spark.sql.functions._
 
 object DataPipeline extends BaseApp {
 
@@ -32,7 +33,9 @@ object DataPipeline extends BaseApp {
 
   private def aggregate(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
     for {
-      j <- Join.left(cityTemp, countries, Join.On("Country" :: Nil))
+      c <- Filter.where(cityTemp, col("year") >= 2000)
+      j <- Join.left(c, countries, Join.On("Country" :: Nil))
+      _ <- Screen.showSchema(j)
     } yield j
 
 }
