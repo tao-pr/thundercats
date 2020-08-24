@@ -3,6 +3,7 @@ package com.tao.thundercats.samples.subapp
 import com.tao.thundercats.samples.base._
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional.MayFail
+import com.tao.thundercats.preprocess.Text
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Dataset, DataFrame}
@@ -33,8 +34,10 @@ object DataPipeline extends BaseApp {
 
   private def aggregate(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
     for {
-      c <- Filter.where(cityTemp, col("year") >= 2000)
-      j <- Join.left(c, countries, Join.On("Country" :: Nil))
+      temp <- Filter.where(cityTemp, col("year") >= 2000)
+      temp <- Text.trim(temp, "Country")
+      cnt  <- Text.trim(countries, "Country")
+      j <- Join.inner(temp, cnt, Join.On("Country" :: Nil))
       _ <- Screen.showSchema(j)
     } yield j
 
