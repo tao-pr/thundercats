@@ -20,7 +20,7 @@ object ColumnEncoder {
 
 object Screen {
   def showDF(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
-    title.map(t => Console.println(Console.CYAN + title + Console.RESET))
+    title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
     df.show(5, false)
     Console.println(Console.RESET)
