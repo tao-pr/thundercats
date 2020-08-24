@@ -39,7 +39,7 @@ object Screen {
     df
   }
 
-  def showSchema(df: DataFrame): MayFail {
+  def showSchema(df: DataFrame): MayFail[DataFrame] =  MayFail {
     df.printSchema
     df
   }

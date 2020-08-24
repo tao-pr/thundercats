@@ -19,6 +19,8 @@ object DataPipeline extends BaseApp {
       cnt      <- Read.select(cnt, Seq("Country", "Population", "Area", "PopDensity"))
       _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"))
       _        <- Screen.showDF(cnt, Some("Countries (CSV)"))
+      agg      <- aggregate(cityTemp, cnt)
+      _        <- Screen.showDF(agg, Some("Aggregate"))
     } yield cityTemp
 
     if (pipeInput.isFailing){
@@ -28,9 +30,10 @@ object DataPipeline extends BaseApp {
 
   }
 
-  private def aggregate(cityTemp: DataFrame): MayFail[DataFrame] = MayFail {
-    ???
-  }
+  private def aggregate(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
+    for {
+      j <- Join.left(cityTemp, countries, Join.On("Country" :: Nil))
+    } yield j
 
 }
 
