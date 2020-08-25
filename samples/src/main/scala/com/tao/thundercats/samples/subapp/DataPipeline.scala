@@ -17,8 +17,8 @@ object DataPipeline extends BaseApp {
       // Columns : Region,Country,State,City,Month,Day,Year,AvgTemperature
       cityTemp <- Read.csv(Data.pathCityTempCSV(System.getProperty("user.home")))
       cnt      <- Read.csv(Data.pathCountryCSV(System.getProperty("user.home")))
-      cityTemp <- Read.select(cityTemp, Seq("Country", "Month", "Day", "Year", "AvgTemperature"))
-      cnt      <- Read.select(cnt, Seq("Country", "Population", "Area", "PopDensity"))
+      cityTemp <- Transform.select(cityTemp, Seq("Country", "Month", "Day", "Year", "AvgTemperature"))
+      cnt      <- Transform.select(cnt, Seq("Country", "Population", "Area", "PopDensity"))
       _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"))
       _        <- Screen.showDF(cnt, Some("Countries (CSV)"))
       agg      <- aggregate(cityTemp, cnt)
@@ -28,6 +28,19 @@ object DataPipeline extends BaseApp {
     if (pipeInput.isFailing){
       Console.println("[ERROR] reading inputs")
       Console.println(pipeInput.getError)
+    }
+
+    // Cook the output
+    val pipeOutput = for {
+      cityTemp   <- pipeInput
+      timeSeries <- Transform.apply(cityTemp, df => {
+        df // TAOTODO
+      })
+    } yield timeSeries
+
+    if (pipeOutput.isFailing){
+      Console.println("[ERROR] writing outputs")
+      Console.println(pipeOutput.getError)
     }
 
   }
