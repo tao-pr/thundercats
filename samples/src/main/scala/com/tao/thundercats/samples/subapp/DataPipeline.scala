@@ -36,11 +36,16 @@ object DataPipeline extends BaseApp {
       timeSeries <- Transform.apply(cityTemp, df => {
         df // TAOTODO
       })
+      _ <- Screen.showDF(timeSeries, Some("Output to be written to parquet"))
+      _ <- Write.parquet(timeSeries, Data.pathOutputParquet(System.getProperty("user.home")), Write.NoPartition)
     } yield timeSeries
 
     if (pipeOutput.isFailing){
       Console.println("[ERROR] writing outputs")
       Console.println(pipeOutput.getError)
+    }
+    else {
+      Console.println("Output written to parquet!")
     }
 
   }
