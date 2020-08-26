@@ -4,6 +4,7 @@ object Data {
 
   def pathCityTempCSV(rootPath: String) = getPath("/city_temperature.csv", rootPath)
   def pathCountryCSV(rootPath: String) = getPath("/countries-of-the-world.csv", rootPath)
+  def pathOutputParquet(rootPath: String) = getPath("/sample-thundercat-output.parquet", rootPath)
 
   private def getPath(file: String, rootPath: String = "") = 
     if (rootPath.isEmpty)
