@@ -325,7 +325,7 @@ object Write {
   }
 }
 
-object Transform { // TAOTODO Write help
+object Transform {
 
   def apply(df: DataFrame, f: DataFrame => DataFrame): MayFail[DataFrame] = MayFail {
     f(df)
