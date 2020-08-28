@@ -52,9 +52,7 @@ object DataPipeline extends BaseApp {
 
         monthly
       })
-      _ <- Screen.showDF(timeSeries, 
-        Some("Output to be written to parquet"), 
-        Show.HideComplex)
+      _ <- Screen.showDF(timeSeries, Some("Output to be written to parquet"), Show.HideComplex)
       _ <- Write.parquet(timeSeries, 
         Data.pathOutputParquet(System.getProperty("user.home")), 
         Write.NoPartition,
@@ -71,13 +69,26 @@ object DataPipeline extends BaseApp {
 
     // STEP #3 : Read parquet back as we wrote
     // ---------------------------------------
-    // TAOTODO
+    val pipeParquet = for {
+      timeSeries <- Read.parquet(Data.pathOutputParquet(System.getProperty("user.home")))
+      _          <- Screen.showSchema(timeSeries)
+      _          <- Screen.showDF(timeSeries, Some("Read parquet back"), Show.HideComplex)
+    } yield timeSeries
+
+    if (pipeParquet.isFailing){
+      Console.println("[ERROR] writing outputs")
+      Console.println(pipeParquet.getError)
+    }
+    else {
+      Console.println("[DONE]")
+    }
 
   }
 
   private def aggregate(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
     for {
       temp <- Filter.where(cityTemp, col("year") >= 2000)
+      temp <- Filter.where(cityTemp, col("AvgTemperature") > -30)
       temp <- Text.trim(temp, "Country")
       cnt  <- Text.trim(countries, "Country")
       j <- Join.inner(temp, cnt, Join.On("Country" :: Nil))
