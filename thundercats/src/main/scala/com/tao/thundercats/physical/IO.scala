@@ -44,7 +44,7 @@ object Screen {
           df.withColumn(colName, lit("<array<double>>"))
         case StructField(colName, ArrayType(_,_), _, _) =>
           df.withColumn(colName, lit("<array<_>>"))
-        case StructField(colName, colType, _, _) => 
+        case StructField(colName, StructType(_), _, _) => 
           df.withColumn(colName, lit("<struct>"))
         case _ =>
           df

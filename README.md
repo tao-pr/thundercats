@@ -33,10 +33,11 @@ val q = for {
 
 ## Prerequisites
 
-- Scala 2.13
+- Scala 2.12
 - sbt 1.3.3
 - JVM 8
 - Hadoop 3.2
+- Spark 3.0
 
 ## Workaround: Java 8 instead of Java 13, compatibility issue
 
