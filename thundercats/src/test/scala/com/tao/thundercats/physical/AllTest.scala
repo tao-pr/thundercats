@@ -65,7 +65,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   import spark.implicits._
 
-  // describe("Basic IO"){
+  //describe("Basic IO"){
   ignore("Basic IO"){
 
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
