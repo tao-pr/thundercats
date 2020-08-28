@@ -72,11 +72,11 @@ object DataPipeline extends BaseApp {
     val pipeParquet = for {
       timeSeries <- Read.parquet(Data.pathOutputParquet(System.getProperty("user.home")))
       _          <- Screen.showSchema(timeSeries)
-      _          <- Screen.showDF(timeSeries, Some("Read parquet back"), Show.HideComplex)
+      _          <- Screen.showDF(timeSeries, Some("Read parquet back"), Show.Default)
     } yield timeSeries
 
     if (pipeParquet.isFailing){
-      Console.println("[ERROR] writing outputs")
+      Console.println("[ERROR] reading parquet")
       Console.println(pipeParquet.getError)
     }
     else {
