@@ -33,10 +33,11 @@ val q = for {
 
 ## Prerequisites
 
-- Scala 2.13
+- Scala 2.12
 - sbt 1.3.3
 - JVM 8
 - Hadoop 3.2
+- Spark 3.0
 
 ## Workaround: Java 8 instead of Java 13, compatibility issue
 
@@ -227,6 +228,52 @@ for {
 }
 yield ???
 ```
+
+---
+
+## Samples
+
+Check out the project "samples" for example usage of Thundercats. 
+Build and package as JAR, then submit to your spark cluster of choice.
+
+## Run samples locally
+
+You can try samples on your local workstation too. Follow the instructions below
+
+1. Copy data files into `$HOME/data`
+
+```
+mkdir -p $HOME/data
+cp samples/src/main/resources/*.csv $HOME/data
+```
+
+2. Package JAR
+
+```bash
+$ sbt samples/assembly
+```
+
+3. Start spark shell with the packaged JAR
+
+```bash
+$ $SPARK_HOME/bin/spark-shell --jars samples/target/scala-2.12/samples-assembly-0.1.0-SNAPSHOT.jar
+```
+
+4. You can choose to run any sample instances. See following samples.
+
+```bash
+scala> import com.tao.thundercats.samples.subapp._
+
+scala> DataPipeline.runMe(spark)
+```
+
+
+### Datasets used in samples
+
+All licences and copyrights belong to the original owners of those datasets.
+
+- [Daily Temperature of Major Cities (Kaggle)](https://twitter.com/Pumping_Hard/status/1041736341409587201)
+- [Countries of the world (Kaggle)](https://www.kaggle.com/fernandol/countries-of-the-world)
 
 ---
 

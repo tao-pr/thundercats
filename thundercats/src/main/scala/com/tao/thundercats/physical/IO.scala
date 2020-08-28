@@ -7,6 +7,7 @@ import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import scala.util.Try
 
@@ -18,11 +19,47 @@ object ColumnEncoder {
   case class Avro(schema: String) extends Encoder
 }
 
+object Show {
+  private [physical] trait Opt
+  case object Default extends Opt // Spark default, no col trunc
+  case object Truncate extends Opt
+  case object HideComplex extends Opt
+}
+
 object Screen {
-  def showDF(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
-    title.map(t => Console.println(Console.CYAN + title + Console.RESET))
+  /**
+   * Disguise complex columns of a dataframe
+   */
+  private def simplify(df: DataFrame): DataFrame = {
+    df.schema.toList.foldLeft(df){ case(df,c) => c match {
+        case StructField(colName, ArrayType(StringType,_), _, _) =>
+          df.withColumn(colName, lit("<array<str>>"))
+        case StructField(colName, ArrayType(IntegerType,_), _, _) =>
+          df.withColumn(colName, lit("<array<int>>"))
+        case StructField(colName, ArrayType(LongType,_), _, _) =>
+          df.withColumn(colName, lit("<array<long>>"))
+        case StructField(colName, ArrayType(FloatType,_), _, _) =>
+          df.withColumn(colName, lit("<array<float>>"))
+        case StructField(colName, ArrayType(DoubleType,_), _, _) =>
+          df.withColumn(colName, lit("<array<double>>"))
+        case StructField(colName, ArrayType(_,_), _, _) =>
+          df.withColumn(colName, lit("<array<_>>"))
+        case StructField(colName, StructType(_), _, _) => 
+          df.withColumn(colName, lit("<struct>"))
+        case _ =>
+          df
+        }
+    }
+  }
+
+  def showDF(df: DataFrame, title: Option[String]=None, showOpt: Show.Opt=Show.Truncate): MayFail[DataFrame] = MayFail {
+    title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
-    df.show(5, false)
+    showOpt match {
+      case Show.Default => df.show(5, false)
+      case Show.Truncate => df.show(5, true)
+      case Show.HideComplex => simplify(df).show(5, false)
+    }
     Console.println(Console.RESET)
     df
   }
@@ -38,9 +75,15 @@ object Screen {
     Console.println(Console.RESET)
     df
   }
+
+  def showSchema(df: DataFrame): MayFail[DataFrame] =  MayFail {
+    df.printSchema
+    df
+  }
 }
 
 object Read {
+
   def csv(path: String, withHeader: Boolean = true, delimiter: String = ",")
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     import spark.implicits._
@@ -136,20 +179,27 @@ object Write {
     override def toString = s"ParitionCol(${cols.mkString(", ")})"
   }
 
-  protected def preprocess(df: DataFrame, partition: Partition) = partition match {
-    case NoPartition => df.coalesce(1).write
-    case PartitionCol(cols) => df.write.partitionBy(cols:_*)
+  protected def preprocess(df: DataFrame, partition: Partition, overwrite: Boolean = false) = {
+    val par = partition match {
+      case NoPartition => df.coalesce(1).write
+      case PartitionCol(cols) => df.write.partitionBy(cols:_*)
+    }
+    if (overwrite) 
+      par.mode("overwrite")
+    else 
+      par
   }
 
   def csv(
     df: DataFrame, 
     path: String,
     partition: Partition = NoPartition,
-    delimiter: String = ",")
+    delimiter: String = ",",
+    overwrite: Boolean = false)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     Log.info(s"[IO] Write CSV : ${path}, partitioned with ${partition}")
     import spark.implicits._
-    preprocess(df, partition)
+    preprocess(df, partition, overwrite)
       .option("header", "true")
       .option("inferSchema", "true")
       .option("delimiter", delimiter)
@@ -160,11 +210,12 @@ object Write {
   def parquet(
     df: DataFrame, 
     path: String,
-    partition: Partition = NoPartition)
+    partition: Partition = NoPartition,
+    overwrite: Boolean = false)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     Log.info(s"[IO] Write parquet : ${path}, partitioned with ${partition}")
     import spark.implicits._
-    preprocess(df, partition).parquet(path)
+    preprocess(df, partition, overwrite).parquet(path)
     df
   }
 
@@ -271,5 +322,22 @@ object Write {
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .save()
     df
+  }
+}
+
+object Transform {
+
+  def apply(df: DataFrame, f: DataFrame => DataFrame): MayFail[DataFrame] = MayFail {
+    f(df)
+  }
+
+  def select(df: DataFrame, cols: Seq[String]): MayFail[DataFrame] = MayFail {
+    df.select(cols.head, cols.tail:_*)
+  }
+
+  def rename(df: DataFrame, map: Map[String, String]): MayFail[DataFrame] = MayFail {
+    map.foldLeft(df){ case (df_, pair) =>
+      df_.withColumnRenamed(pair._1, pair._2)
+    }
   }
 }

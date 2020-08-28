@@ -54,3 +54,8 @@ val sparkDependencies = List(
 lazy val thundercats = project
   .settings(name := "thundercats")
   .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
+
+lazy val samples = project
+  .settings(name := "samples")
+  .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
+  .dependsOn(thundercats)
