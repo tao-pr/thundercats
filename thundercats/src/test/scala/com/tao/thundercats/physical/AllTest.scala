@@ -125,6 +125,19 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       dfReadOpt.isFailing shouldBe true
     }
 
+    it("rename columns"){
+      val dfRenamedOpt = for {
+        c <- Read.rename(df, Map(
+          "i" -> "iii"
+        ))
+      } yield c
+
+      dfRenamedOpt.isFailing shouldBe false
+      val dfRenamed = dfRenamedOpt.get
+
+      dfRenamed.columns shouldBe List("iii", "s")
+    }
+
     it("write and read parquet"){
       val dfReadOpt = for { 
         b <- Write.parquet(df, tempParquet)

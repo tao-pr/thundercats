@@ -15,8 +15,41 @@ Most functions inside the packages return `MayFail[_]` monad which may resolve i
 - Fail(message)
 - IgnoreableFail(message, data)
 - Ok(data)
+
+### 1.1 IO Module
+
+To interact with the in/output screen, you can do following
+
+```scala
+import com.tao.thundercats.physical._
+
+Screen.showDF(df, title=Some("My dataframe"), showOpt=Show.Default)
+Screen.showSchema(df)
+```
+
+So when you write it in Monadic syntax, it looks like
+
+```scala
+for {
+  a <- Read.csv(...)
+  _ <- Screen.showDF(a, Some("Raw data"), Show.Truncate)
+  _ <- Screen.showSchema(a)
+} yield a
+```
+
+Use `Transform` to execute a normal Spark syntax in a Monad block
+
+```scala
+for {
+  a <- Read.csv(...)
+  a <- Transform.apply(a, (df) => {
+    // Any transformation code here
+    df.withColumn("v", lit(0))
+  })
+} yield a
+```
  
-### 1.1 Physical Module
+### 1.2 Physical Module
 
 Abstract design of all operations which have to do with physical storage, files, etc.
 
@@ -59,7 +92,7 @@ if (result.isFailing){ ... }
 From above, an operation stops and captures error message as soon as 
 a failure occurs. 
 
-### 1.2 Model Module
+### 1.3 Model Module
 
 All machine learning and statistical methods go here in this module. 
 The abstraction of the model is shown below.
@@ -84,7 +117,7 @@ TBD
 ```
 
 
-### 1.3 Evaluation Module
+### 1.4 Evaluation Module
 
 To simplify the evaluation of machine learning models, the abstraction of 
 the process is designed as follows.
@@ -155,7 +188,7 @@ val scores = new RegressionFeatureCompare(PearsonCorr)
   .get
 ```
 
-### 1.4 Evaluate combinations of features
+### 1.5 Evaluate combinations of features
 
 Try combinations of feature columns by
 
@@ -181,7 +214,7 @@ val bestModel = new RegressionFeatureCompare(MAE)
 
 ```
 
-### 1.5 Cross validation
+### 1.6 Cross validation
 
 Thundercats supports model validation with train & test split and cross validation.
 
