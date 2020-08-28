@@ -7,6 +7,7 @@ import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
 
 import scala.util.Try
 
@@ -18,11 +19,47 @@ object ColumnEncoder {
   case class Avro(schema: String) extends Encoder
 }
 
+object Show {
+  private [physical] trait Opt
+  case object Default extends Opt // Spark default, no col trunc
+  case object Truncate extends Opt
+  case object HideComplex extends Opt
+}
+
 object Screen {
-  def showDF(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
+  /**
+   * Disguise complex columns of a dataframe
+   */
+  private def simplify(df: DataFrame): DataFrame = {
+    df.schema.toList.foldLeft(df){ case(df,c) => c match {
+        case StructField(colName, ArrayType(StringType,_), _, _) =>
+          df.withColumn(colName, lit("<array<str>>"))
+        case StructField(colName, ArrayType(IntegerType,_), _, _) =>
+          df.withColumn(colName, lit("<array<int>>"))
+        case StructField(colName, ArrayType(LongType,_), _, _) =>
+          df.withColumn(colName, lit("<array<long>>"))
+        case StructField(colName, ArrayType(FloatType,_), _, _) =>
+          df.withColumn(colName, lit("<array<float>>"))
+        case StructField(colName, ArrayType(DoubleType,_), _, _) =>
+          df.withColumn(colName, lit("<array<double>>"))
+        case StructField(colName, ArrayType(_,_), _, _) =>
+          df.withColumn(colName, lit("<array<_>>"))
+        case StructField(colName, colType, _, _) => 
+          df.withColumn(colName, lit("<struct>"))
+        case _ =>
+          df
+        }
+    }
+  }
+
+  def showDF(df: DataFrame, title: Option[String]=None, showOpt: Show.Opt=Show.Truncate): MayFail[DataFrame] = MayFail {
     title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
-    df.show(5, false)
+    showOpt match {
+      case Show.Default => df.show(5, false)
+      case Show.Truncate => df.show(5, true)
+      case Show.HideComplex => simplify(df).show(5, false)
+    }
     Console.println(Console.RESET)
     df
   }

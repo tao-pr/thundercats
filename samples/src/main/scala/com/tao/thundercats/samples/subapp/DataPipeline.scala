@@ -23,10 +23,10 @@ object DataPipeline extends BaseApp {
       cnt      <- Read.csv(Data.pathCountryCSV(System.getProperty("user.home")))
       cityTemp <- Transform.select(cityTemp, Seq("Country", "Month", "Day", "Year", "AvgTemperature"))
       cnt      <- Transform.select(cnt, Seq("Country", "Population", "Area", "PopDensity"))
-      _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"))
-      _        <- Screen.showDF(cnt, Some("Countries (CSV)"))
+      _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"), Show.HideComplex)
+      _        <- Screen.showDF(cnt, Some("Countries (CSV)"), Show.HideComplex)
       agg      <- aggregate(cityTemp, cnt)
-      _        <- Screen.showDF(agg, Some("Aggregate"))
+      _        <- Screen.showDF(agg, Some("Aggregate"), Show.HideComplex)
     } yield agg
 
     if (pipeInput.isFailing){
@@ -52,7 +52,9 @@ object DataPipeline extends BaseApp {
 
         monthly
       })
-      _ <- Screen.showDF(timeSeries, Some("Output to be written to parquet"))
+      _ <- Screen.showDF(timeSeries, 
+        Some("Output to be written to parquet"), 
+        Show.HideComplex)
       _ <- Write.parquet(timeSeries, 
         Data.pathOutputParquet(System.getProperty("user.home")), 
         Write.NoPartition,
