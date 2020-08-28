@@ -142,20 +142,27 @@ object Write {
     override def toString = s"ParitionCol(${cols.mkString(", ")})"
   }
 
-  protected def preprocess(df: DataFrame, partition: Partition) = partition match {
-    case NoPartition => df.coalesce(1).write
-    case PartitionCol(cols) => df.write.partitionBy(cols:_*)
+  protected def preprocess(df: DataFrame, partition: Partition, overwrite: Boolean = false) = {
+    val par = partition match {
+      case NoPartition => df.coalesce(1).write
+      case PartitionCol(cols) => df.write.partitionBy(cols:_*)
+    }
+    if (overwrite) 
+      par.mode("overwrite")
+    else 
+      par
   }
 
   def csv(
     df: DataFrame, 
     path: String,
     partition: Partition = NoPartition,
-    delimiter: String = ",")
+    delimiter: String = ",",
+    overwrite: Boolean = false)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     Log.info(s"[IO] Write CSV : ${path}, partitioned with ${partition}")
     import spark.implicits._
-    preprocess(df, partition)
+    preprocess(df, partition, overwrite)
       .option("header", "true")
       .option("inferSchema", "true")
       .option("delimiter", delimiter)
@@ -166,11 +173,12 @@ object Write {
   def parquet(
     df: DataFrame, 
     path: String,
-    partition: Partition = NoPartition)
+    partition: Partition = NoPartition,
+    overwrite: Boolean = false)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     Log.info(s"[IO] Write parquet : ${path}, partitioned with ${partition}")
     import spark.implicits._
-    preprocess(df, partition).parquet(path)
+    preprocess(df, partition, overwrite).parquet(path)
     df
   }
 
@@ -280,7 +288,7 @@ object Write {
   }
 }
 
-object Transform {
+object Transform { // TAOTODO Write help
 
   def apply(df: DataFrame, f: DataFrame => DataFrame): MayFail[DataFrame] = MayFail {
     f(df)
