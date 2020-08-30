@@ -271,3 +271,9 @@ val subfeatures = select.selectSubset(
   features)
 ```
 
+Then you get the list of `(score, feature)` you can use for the modeling.
+The return scores correpsond to the measure you use.
+For example, `ZScoreFeatureSelector` will return zscores.
+
+
+
