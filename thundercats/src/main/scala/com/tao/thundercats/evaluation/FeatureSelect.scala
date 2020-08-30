@@ -13,6 +13,7 @@ trait FeatureSelector {
 }
 
 private [evaluation] trait Significance { val zReject: Double }
+case object AllSignificance extends Significance { override val zReject = Double.MinValue }
 case object Significance50p extends Significance { override val zReject = 0.674 }
 case object Significance80p extends Significance { override val zReject = 1.282 }
 case object Significance90p extends Significance { override val zReject = 1.645 }
