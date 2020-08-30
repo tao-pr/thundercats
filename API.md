@@ -250,3 +250,24 @@ val design = FeatureModelDesign(
 val score = cv.run(dfPreset, design, feature)
 ```
 
+### 1.7 Feature Selection
+
+To choose a subset of features, Thundercats offers a few choices
+
+- FeatureSelector (Base)
+  - ZScoreFeatureSelector(significance)
+  - BestNFeaturesSelector(top, measure)
+
+The feature selection code looks like
+
+```scala
+val selector = ZScoreFeatureSelector(Significance90p) // 90% confidence
+val model: ModelDesign = ???
+val features: Iterable[FeatureColumn] = ???
+
+val subfeatures = select.selectSubset(
+  df,
+  model,
+  features)
+```
+
