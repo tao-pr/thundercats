@@ -127,7 +127,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("rename columns"){
       val dfRenamedOpt = for {
-        c <- Read.rename(df, Map(
+        c <- Transform.rename(df, Map(
           "i" -> "iii"
         ))
       } yield c
@@ -970,6 +970,63 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       score.isFailing shouldBe false
       (score.get) should be > 0.0
+    }
+  }
+
+  describe("Feature selection test"){
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.0, s="1.1", s2=""),
+      Train(i=2, d=2.0, v=0.1, w=0.0, s="1.6", s2=""),
+      Train(i=3, d=3.0, v=2.2, w=0.0, s="1.67", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.0, s="2.2", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.0, s="3.5", s2=""),
+      Train(i=6, d=6.0, v=0.0, w=0.0, s="7.5", s2="")
+    ).toDS.toDF
+
+    it("Calculate zscores of all features"){
+      val select = ZScoreFeatureSelector(AllSignificance)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"), 
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      subfeatures.size shouldBe (features.size)
+      subfeatures shouldBe (
+        Array((8.988842127107649E7,Feature("d")))
+      )
+    }
+
+    it("Select linear features at confidence level of 90%"){
+      val select = ZScoreFeatureSelector(Significance95p)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"), 
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      subfeatures.size shouldBe 1
+      subfeatures.filter(_._1 >= 1.645) shouldBe (
+        Array((8.988842127107649E7,Feature("d")))
+      )
     }
   }
 
