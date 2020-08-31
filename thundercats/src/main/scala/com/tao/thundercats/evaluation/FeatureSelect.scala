@@ -35,11 +35,11 @@ case class ZScoreFeatureSelector(sig: Significance) extends FeatureSelector {
     Log.info(s"[ZScoreFeatureSelector] rejecting features with zscore below ${sig.zReject}")
     val significantFeatures = scores.map{ case (z,c) =>
       if (z >= sig.zReject){
-        Log.info(s"[ZScoreFeatureSelector] accepting ${c} (zscore of ${z}%.3f)")
+        Log.info(f"[ZScoreFeatureSelector] accepting ${c} (zscore of ${z}%.3f)")
         Some((z, Feature(c)))
       }
       else {
-        Log.info(s"[ZScoreFeatureSelector] rejecting ${c} (zscore of ${z}%.3f)")
+        Log.info(f"[ZScoreFeatureSelector] rejecting ${c} (zscore of ${z}%.3f)")
         None
       }
     }.flatten
