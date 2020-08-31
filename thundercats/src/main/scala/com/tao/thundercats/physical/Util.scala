@@ -39,7 +39,9 @@ object Implicits {
 
     def sumOfSqrDiff(colA: String, colB: String): Double = {
       val tmpCol = s"${colA}-${colB}"
-      val dfDiff = df.withColumn(tmpCol, col(colA).cast(DoubleType) - col(colB).cast(DoubleType))
+      val dfDiff = df
+        .withColumn(tmpCol, col(colA).cast(DoubleType) - col(colB).cast(DoubleType))
+        .withColumn(tmpCol, col(tmpCol)*col(tmpCol))
       val diff = new DoubleRDDFunctions(dfDiff.rdd.map(_.getAs[Double](tmpCol)))
       diff.sum
     }

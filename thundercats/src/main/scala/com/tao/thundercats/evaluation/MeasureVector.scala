@@ -51,17 +51,30 @@ case object ZScore extends RegressionMeasureVector {
       val lg     = estimator.asInstanceOf[LinearRegressionModel]
       val betas  = lg.coefficients
       val N      = df.count.toFloat
-      val M      = specimen.featureCol.size
+      val M      = specimen.featureCol.size.toDouble
 
-      val sigma2 = (1/N-M-1) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
+      val sigma2 = (1.0/(N-M-1)) * df.sumOfSqrDiff(specimen.labelCol, specimen.outputCol)
       val sigma  = scala.math.sqrt(sigma2)
       val sumX2  = specimen.featureCol.asArray.map{ c =>
         df.sumOfSqr(c)
       }
 
-      betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
+      df.select(specimen.labelCol, specimen.outputCol).show(10, false) // TAODEBUG
+
+      Log.info(f"[ZScore] calculating")
+      Log.info(f"[ZScore] degree of freedom : ${N-M-1}")
+      Log.info(f"[ZScore] coef  : ${betas}")
+      Log.info(f"[ZScore] N     : ${N}")
+      Log.info(f"[ZScore] M     : ${M}")
+      Log.info(f"[ZScore] sigma : ${sigma}")
+
+      val zscores = betas.toArray.zip(sumX2).map{ case (beta, sumx2) => 
         beta / (sigma * scala.math.sqrt(1/sumx2))
       }
+
+      Log.info(f"[ZScore] zscore : ${zscores.mkString(", ")}")
+
+      zscores
     }
 
   override def findBest(zippedScore: Array[(Double, String)]) = {
