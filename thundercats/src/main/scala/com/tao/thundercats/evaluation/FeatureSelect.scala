@@ -61,7 +61,6 @@ case class BestNFeaturesSelector(top: Int, measure: BaseMeasure[_]) extends Feat
 
   private def selectSubsetFromScalar(df: DataFrame, model: ModelDesign, features: Iterable[FeatureColumn], m: Measure) = {
     val cvector = new DummyFeatureCompare(m)
-    // TAOTODO Is the following working?
     val scores = cvector.allOf(model, features, df)
 
     Log.info(s"[BestNFeaturesSelector] selecting ${top} features out of ${features.size}")
