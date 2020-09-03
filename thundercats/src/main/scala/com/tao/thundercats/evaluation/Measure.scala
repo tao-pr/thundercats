@@ -30,7 +30,7 @@ import com.tao.thundercats.physical.Implicits._
 import com.tao.thundercats.estimator._
 
 // Measure for the whole model
-trait Measure extends BaseMeasure[Double] {
+trait Measure extends BaseMeasure[Double]{
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double]
   override def isBetter(a: Double, b: Double) = a > b
 }

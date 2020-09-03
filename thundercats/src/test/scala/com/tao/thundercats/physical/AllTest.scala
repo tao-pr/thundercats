@@ -127,7 +127,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("rename columns"){
       val dfRenamedOpt = for {
-        c <- Read.rename(df, Map(
+        c <- Transform.rename(df, Map(
           "i" -> "iii"
         ))
       } yield c
@@ -970,6 +970,85 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       score.isFailing shouldBe false
       (score.get) should be > 0.0
+    }
+  }
+
+  describe("Feature selection test"){
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.1, s="1.1", s2=""),
+      Train(i=2, d=2.0, v=0.1, w=0.3, s="1.1", s2=""),
+      Train(i=3, d=3.2, v=2.2, w=0.5, s="1.3", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.8, s="0.6", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.9, s="0.4", s2=""),
+      Train(i=6, d=6.1, v=0.0, w=1.1, s="1.9", s2="")
+    ).toDS.toDF
+
+    it("Calculate zscores of all features"){
+      val select = ZScoreFeatureSelector(AllSignificance)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"), 
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      subfeatures.size shouldBe (features.size)
+      subfeatures shouldBe (Array(
+        (110.87751139732678, Feature("d")),
+        (-4.7566538028689775, Feature("v")),
+        (6.493176093426949, Feature("w")),
+        (-9.049261689285245,Feature("s"))
+      ))
+    }
+
+    it("Select linear features at confidence level of 90%"){
+      val select = ZScoreFeatureSelector(Significance95p)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"), 
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      // All selected features should pass minimum z score 
+      subfeatures.filter(_._1 >= 1.645) shouldBe subfeatures
+      subfeatures.map(_._2.colName) shouldBe Array("d","w")
+    }
+
+    it("Select best N linear features"){
+      val select = BestNFeaturesSelector(top=2, measure=PearsonCorr)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"),
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      subfeatures.size shouldBe 2
     }
   }
 

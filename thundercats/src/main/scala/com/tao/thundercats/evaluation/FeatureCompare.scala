@@ -45,7 +45,12 @@ trait FeatureColumn {
 }
 
 case class Feature(c: String) extends FeatureColumn {
-  override def %(estimator: Pipeline) = estimator
+  override def %(estimator: Pipeline) = {
+    val vecAsm = new VectorAssembler()
+      .setInputCols(Array(c))
+      .setOutputCol("features")
+    new Pipeline().setStages(Array(vecAsm, estimator))
+  }
   override def colName = c
   override def asArray = Array(c)
   override def size = 1
