@@ -1030,6 +1030,26 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       subfeatures.filter(_._1 >= 1.645) shouldBe subfeatures
       subfeatures.map(_._2.colName) shouldBe Array("d","w")
     }
+
+    it("Select best N linear features"){
+      val select = BestNFeaturesSelector(top=2, measure=PearsonCorr)
+      val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
+      val features = Seq("d", "v", "w", "s")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"),
+          labelCol="i",
+          outputCol="z"))
+      
+      val subfeatures = select.selectSubset(
+        df, 
+        design, 
+        features.map(Feature.apply))
+
+      subfeatures.size shouldBe 2
+    }
   }
 
 }
