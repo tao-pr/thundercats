@@ -12,6 +12,7 @@ trait SparkTestInstance extends FunSpec with BeforeAndAfterAll {
     val instance = SparkSession.builder
       .master("local")
       .appName(name)
+      .config("spark.driver.bindAddress", "127.0.0.1")
       .getOrCreate()
 
     instance.sparkContext.setLogLevel("ERROR")
