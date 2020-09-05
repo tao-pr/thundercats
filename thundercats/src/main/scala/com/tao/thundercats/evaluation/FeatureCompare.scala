@@ -141,3 +141,6 @@ extends FeatureCompare[Measure]
 class RegressionFeatureCompare(override val measure: RegressionMeasure)
 extends FeatureCompare[RegressionMeasure]
 
+class ClassificationFeatureCompare(override val measure: ClassificationMeasure)
+extends FeatureCompare[ClassificationMeasure]
+
