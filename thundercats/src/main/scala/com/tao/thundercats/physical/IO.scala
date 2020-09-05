@@ -22,9 +22,9 @@ object ColumnEncoder {
 object Show {
   private [physical] trait Opt
   case object Default extends Opt // Spark default, no col trunc
-  case object All extends Opt 
   case object Truncate extends Opt
   case object HideComplex extends Opt
+  case class Max(numRows: Int) extends Opt 
 }
 
 object Screen {
@@ -58,7 +58,7 @@ object Screen {
     Console.println(Console.CYAN)
     showOpt match {
       case Show.Default     => df.show(5, false)
-      case Show.All         => df.show(100, false)
+      case Show.Max(rows)   => df.show(rows, false)
       case Show.Truncate    => df.show(5, true)
       case Show.HideComplex => simplify(df).show(5, false)
     }
