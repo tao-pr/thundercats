@@ -26,12 +26,18 @@ object ClassificationPipeline extends BaseApp {
       _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"), Show.HideComplex)
       _        <- Screen.showDF(cnt, Some("Countries (CSV)"), Show.HideComplex)
       clean    <- cleanAgg(cityTemp, cnt)
-      _        <- Screen.showDF(clean, Some("Aggregate"), Show.HideComplex)
-      t        <- Group.agg(clean, by=col("year")::Nil, agg=Group.Map(
-                    "month" -> "collet_set",
-                    "Country" -> "count"
-                  ))
-      _        <- Screen.showDF(t, Some("Brief stats of data"), Show.Default)
+      _        <- Screen.showDF(clean, Some("Clean data (aggregate)"), Show.HideComplex)
+      t        <- Group.agg(
+        clean, by=col("year")::Nil, 
+        agg=Group.Agg(
+          collect_set("month").alias("months") ::
+          approx_count_distinct("Country").alias("numCountries") ::
+          min("AvgTemperature").alias("minTemp") ::
+          max("AvgTemperature").alias("maxTemp") ::
+          Nil
+        ))
+      t        <- Order.by(t, "year" :: Nil)
+      _        <- Screen.showDF(t, Some("Brief stats"), Show.All)
     } yield clean
 
 
@@ -42,7 +48,7 @@ object ClassificationPipeline extends BaseApp {
   private def cleanAgg(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
     for {
       temp <- Filter.where(cityTemp, col("year") >= 2000)
-      temp <- Filter.where(cityTemp, col("AvgTemperature") > -30)
+      temp <- Filter.where(temp, abs(col("AvgTemperature")) < 40)
       temp <- Text.trim(temp, "Country")
       cnt  <- Text.trim(countries, "Country")
       j <- Join.inner(temp, cnt, Join.On("Country" :: Nil))
