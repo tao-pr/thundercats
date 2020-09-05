@@ -2,6 +2,7 @@ package com.tao.thundercats.model
 
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.feature.VectorAssembler
 
 import com.tao.thundercats.evaluation._
@@ -30,4 +31,29 @@ object Preset {
         case Some(p) => lg.setElasticNetParam(p)
       }))
     }
+
+  def decisionTree(
+    features: FeatureColumn,
+    labelCol: String,
+    outputCol: String,
+    impurity: String="entropy",
+    maxDepth: Int = 5) = {
+    val tree = new DecisionTreeClassifier()
+      .setFeaturesCol(features.colName)
+      .setLabelCol(labelCol)
+      .setMaxDepth(maxDepth)
+      .setImpurity(impurity)
+    new Pipeline().setStages(Array(tree))
+  }
+
+  def randomForest(
+    features: FeatureColumn,
+    labelCol: String,
+    outputCol: String,
+    maxIters: Int = 10,
+    maxDepth: Int = 5,
+    elasticNetParam: Option[Double] = None) = {
+
+    ???
+  }
 }
