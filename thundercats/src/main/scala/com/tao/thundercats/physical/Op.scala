@@ -121,7 +121,7 @@ object Group {
 }
 
 object Filter {
-  def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.where(cond))
+  def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.filter(cond))
   
   /**
    * Remove nulls
