@@ -4,11 +4,15 @@ import com.tao.thundercats.samples.base._
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional.MayFail
 import com.tao.thundercats.preprocess.Text
+import com.tao.thundercats.model._
+import com.tao.thundercats.estimator._
+import com.tao.thundercats.evaluation._
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
+
 
 object ClassificationPipeline extends BaseApp {
 
@@ -22,7 +26,7 @@ object ClassificationPipeline extends BaseApp {
       cityTemp <- Read.csv(Data.pathCityTempCSV(System.getProperty("user.home")))
       cnt      <- Read.csv(Data.pathCountryCSV(System.getProperty("user.home")))
       cityTemp <- Transform.select(cityTemp, Seq("Country", "Month", "Day", "Year", "AvgTemperature"))
-      cnt      <- Transform.select(cnt, Seq("Country", "Population", "Area", "PopDensity"))
+      cnt      <- Transform.select(cnt, Seq("Country", "Region"))
       _        <- Screen.showDF(cityTemp, Some("cityTemp (CSV)"), Show.HideComplex)
       _        <- Screen.showDF(cnt, Some("Countries (CSV)"), Show.HideComplex)
       clean    <- cleanAgg(cityTemp, cnt)
@@ -41,7 +45,15 @@ object ClassificationPipeline extends BaseApp {
           max("AvgTemperature").alias("maxTemp") :: Nil
         ))
       t  <- Order.by(t, "year" :: Nil)
-      _  <- Screen.showDF(t, Some("Brief stats"), Show.All)
+      g  <- Group.agg(
+        clean,
+        by=col("isTempRising")::Nil,
+        agg=Group.Agg(
+          count("month").alias("numRecords") :: Nil
+        ))
+
+      _  <- Screen.showDF(t, Some("Brief stats"), Show.Max(10))
+      _  <- Screen.showDF(g, Some("Target stats"), Show.Max(10))
       
       // Inspect subset
       th <- Filter.where(clean, 
@@ -55,16 +67,57 @@ object ClassificationPipeline extends BaseApp {
       _  <- Screen.showDF(th, Some("Subset inspection"), Show.Max(10))
     } yield clean
 
+
+    // Modeling
+    // val model = trainClassifier(clean)
+
+
+
+
+
+
+    if (pipeInput.isFailing){
+      Console.println("[ERROR] reading inputs")
+      Console.println(pipeInput.getError)
+    }
+
+    if (pipeInspect.isFailing){
+      Console.println("[ERROR] inspecting data")
+      Console.println(pipeInspect.getError)
+    }
   }
 
   private def cleanAgg(cityTemp: DataFrame, countries: DataFrame): MayFail[DataFrame] = 
     for {
       temp <- Filter.where(cityTemp, col("year") >= 2000)
       temp <- MayFail{ temp.withColumn("AvgTemperature", (col("AvgTemperature") - 32.0) * 0.5556) }
-      //temp <- Filter.where(temp, abs(col("AvgTemperature")) < 40)
       temp <- Text.trim(temp, "Country")
       cnt  <- Text.trim(countries, "Country")
-      j <- Join.inner(temp, cnt, Join.On("Country" :: Nil))
-      _ <- Screen.showSchema(j)
-    } yield j
+      joined <- Join.inner(temp, cnt, Join.On("Country" :: Nil))
+      group  <- Group.agg(
+        joined, by=col("Country")::col("Year")::col("Month")::Nil, 
+        agg=Group.Agg(
+          mean("AvgTemperature").alias("AvgTemperature") :: 
+          first("Region").alias("Region") ::
+          Nil))
+      timeSeries <- Transform.apply( group, joined => {
+        val wnd = Window.partitionBy(col("Country")).orderBy("year", "month")
+        joined
+          .withColumn("prevTemperature", lag("AvgTemperature",1).over(wnd))
+          .filter(col("prevTemperature").isNotNull)
+          .withColumn("isTempRising", col("AvgTemperature") > col("prevTemperature"))
+      })
+      _ <- Screen.showSchema(timeSeries)
+    } yield timeSeries
+
+  private def trainClassifier(data: DataFrame): Specimen = {
+    // Classify if the temperature is gonna go up or not
+    val features = Seq("Year", "Month", "AvgTemperature")
+    val estimator = Preset.decisionTree(
+      features=AssemblyFeature(features, "features"),
+      labelCol="isTempRising",
+      outputCol="z")
+
+    ???
+  }
 }
