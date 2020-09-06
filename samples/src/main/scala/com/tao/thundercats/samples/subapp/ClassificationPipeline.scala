@@ -34,7 +34,7 @@ object ClassificationPipeline extends BaseApp {
     
     val pipeInspect = for { 
       clean <- pipeInput 
-      _     <- Screen.showDF(clean, Some("Clean data (aggregate)"), Show.HideComplex)
+      _     <- Screen.showDF(clean, Some("Clean training set"), Show.HideComplex)
       t     <- Group.agg(
         clean, 
         by=col("year")::Nil, 
@@ -112,12 +112,22 @@ object ClassificationPipeline extends BaseApp {
 
   private def trainClassifier(data: DataFrame): Specimen = {
     // Classify if the temperature is gonna go up or not
-    val features = Seq("Year", "Month", "AvgTemperature")
+    val features = Seq("Year", "Month", "AvgTemperature", "Region_encoded")
+    val encoder = Features.encodeStrings(
+      data, Murmur, suffix="_encoded"
+    )
     val estimator = Preset.decisionTree(
       features=AssemblyFeature(features, "features"),
       labelCol="isTempRising",
-      outputCol="z")
+      outputCol="predictedRising")
+    val design = FeatureModelDesign(
+      outputCol="predictedRising",
+      labelCol="isTempRising",
+      estimator=estimator,
+      featurePipe=Array(encoder))
 
-    ???
+    Console.println("Training decision tree ...")
+
+    design.toSpecimen(AssemblyFeature(features, "features"), data)
   }
 }
