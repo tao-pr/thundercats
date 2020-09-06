@@ -64,7 +64,7 @@ extends ModelDesign {
     val fullPipeline = if (featurePipe.size > 0)
       new Pipeline().setStages(featurePipe ++ Array(estimator))
       else estimator
-    var pipe = feature % estimator 
+    var pipe = feature % fullPipeline 
     val fitted = pipe.fit(df)
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
