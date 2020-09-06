@@ -58,13 +58,10 @@ case class FeatureModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
   estimator: Pipeline,
-  featurePipe: Array[PipelineStage] = Array.empty)
+  featurePipe: Option[PipelineStage] = None)
 extends ModelDesign {
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
-    val fullPipeline = if (featurePipe.size > 0)
-      new Pipeline().setStages(featurePipe ++ Array(estimator))
-      else estimator
-    var pipe = feature % fullPipeline 
+    var pipe = feature % (estimator, featurePipe)
     val fitted = pipe.fit(df)
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }

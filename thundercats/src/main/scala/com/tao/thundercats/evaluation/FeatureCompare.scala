@@ -38,18 +38,21 @@ trait FeatureColumn {
   /**
    * Create a pipeline for training
    */
-  def %(estimator: Pipeline): Pipeline
+  def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None): Pipeline
   def colName: String
   def asArray: Array[String]
   def size: Int
 }
 
 case class Feature(c: String) extends FeatureColumn {
-  override def %(estimator: Pipeline) = {
+  override def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(Array(c))
       .setOutputCol("features")
-    new Pipeline().setStages(Array(vecAsm, estimator))
+    if (featurePipeline.isDefined)
+      new Pipeline().setStages(Array(featurePipeline.get, vecAsm, estimator))
+    else
+      new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = c
   override def asArray = Array(c)
@@ -58,12 +61,14 @@ case class Feature(c: String) extends FeatureColumn {
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
 extends FeatureColumn {
-  override def %(estimator: Pipeline) = {
+  override def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
       .setOutputCol(asVectorCol)
-    // NOTE: Presume [[estimator]] takes a vector input [[asVectorCol]]
-    new Pipeline().setStages(Array(vecAsm, estimator))
+    if (featurePipeline.isDefined)
+      new Pipeline().setStages(Array(featurePipeline.get, vecAsm, estimator))
+    else
+      new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = asVectorCol
   override def asArray = cs.toArray

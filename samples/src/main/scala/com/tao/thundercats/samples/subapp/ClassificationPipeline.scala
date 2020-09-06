@@ -68,14 +68,6 @@ object ClassificationPipeline extends BaseApp {
     } yield clean
 
 
-    // Modeling
-    // val model = trainClassifier(clean)
-
-
-
-
-
-
     if (pipeInput.isFailing){
       Console.println("[ERROR] reading inputs")
       Console.println(pipeInput.getError)
@@ -84,6 +76,10 @@ object ClassificationPipeline extends BaseApp {
     if (pipeInspect.isFailing){
       Console.println("[ERROR] inspecting data")
       Console.println(pipeInspect.getError)
+    }
+    else {
+      // Modeling
+      val model = trainClassifier(pipeInspect.get)
     }
   }
 
@@ -124,7 +120,7 @@ object ClassificationPipeline extends BaseApp {
       outputCol="predictedRising",
       labelCol="isTempRising",
       estimator=estimator,
-      featurePipe=Array(encoder))
+      featurePipe=Some(encoder))
 
     Console.println("Training decision tree ...")
 
