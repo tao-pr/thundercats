@@ -130,6 +130,7 @@ case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
       // Convert to space vector
       hashSpace.map{ case (v,index) => hashArray.count(_ == v).toDouble }
     },
+    // TAOTODO: Should generate [[Vector]]
     ArrayType(DoubleType,false)
   )
 
