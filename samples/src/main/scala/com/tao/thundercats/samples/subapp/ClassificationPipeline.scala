@@ -101,7 +101,8 @@ object ClassificationPipeline extends BaseApp {
         joined
           .withColumn("prevTemperature", lag("AvgTemperature",1).over(wnd))
           .filter(col("prevTemperature").isNotNull)
-          .withColumn("isTempRising", col("AvgTemperature") > col("prevTemperature"))
+          .withColumn("isTempRising", 
+            when(col("AvgTemperature") > col("prevTemperature"), 1.0).otherwise(0.0))
       })
       _ <- Screen.showSchema(timeSeries)
     } yield timeSeries
