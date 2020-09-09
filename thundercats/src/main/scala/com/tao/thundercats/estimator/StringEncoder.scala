@@ -1,22 +1,22 @@
 package com.tao.thundercats.estimator
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Estimator, Model, Transformer}
 import org.apache.spark.ml.attribute.{Attribute, NominalAttribute}
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.param.shared.{HasHandleInvalid, HasInputCol, HasOutputCol}
+import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util._
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.{log => logNatural, _}
-import org.apache.spark.sql.types._
+import org.apache.spark.ml.linalg.{Vector, Vectors, VectorUDT}
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.util.MLWriter
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.functions.{log => logNatural, _}
 import org.apache.spark.SparkException
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import org.apache.hadoop.fs.Path
-
-import org.apache.spark.ml.param.shared._
 
 import java.io.File
 import sys.process._
@@ -81,7 +81,7 @@ with DefaultParamsWritable {
   override def copy(extra: ParamMap): this.type = defaultCopy(extra)
 
   override def transformSchema(schema: StructType) = 
-    schema.add($(outputCol), ArrayType(DoubleType,true), true)
+    schema.add($(outputCol), VectorType, true)
 
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
@@ -96,7 +96,7 @@ with DefaultParamsWritable {
         new StringEncoderModel(MurmurModel(hashSpace), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
-      case TFIDF(minFreq) =>
+      case TFIDF(minFreq) => // TAOTODO make this return Vector
         val TEMP_TF_COL = "$tf$"
         val tf = new HashingTF()
           .setInputCol($(inputCol))
@@ -128,10 +128,10 @@ case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
       // Encode string array into hash array
       val hashArray = seq.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED))
       // Convert to space vector
-      hashSpace.map{ case (v,index) => hashArray.count(_ == v).toDouble }
+      Vectors.dense(hashSpace.map{ case (v,index) => 
+        hashArray.count(_ == v).toDouble }.toArray)
     },
-    // TAOTODO: Should generate [[Vector]]
-    ArrayType(DoubleType,false)
+    VectorType
   )
 
   def transform(dataset: Dataset[_], column: String): DataFrame = {
@@ -186,14 +186,13 @@ with StringEncoderParams {
     val outputColumn = $(outputCol)
     val tempColumns = $(tempCols)
     require(schema.map(_.name) contains inputColumn, s"Dataset has to contain the input column : $inputColumn")
-    schema.add(StructField(outputColumn, DoubleType, false))
+    schema.add(StructField(outputColumn, VectorType, false))
   }
 
   def transformSchema(schema: StructType): StructType = transformAndValidate(schema)
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    // TAOTODO: Following output of tokenMethod should be a temp col
     val df = model.transform(tokenMethod(dataset, $(inputCol), $(inputCol)), $(outputCol))
     $(tempCols).foldLeft(df){ case(a,b) => a.drop(b) }
   }
