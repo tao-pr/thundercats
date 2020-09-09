@@ -123,16 +123,13 @@ case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
   // REVIEW: Space reduction by truncating lower frequency of words
   // REVIEW: output as sparse vector
   lazy val hashSpace = hashSet.toList.zipWithIndex.toMap
-
   lazy val hashUDF = udf((seq: Seq[String]) => {
-      // Encode string array into hash array
-      val hashArray = seq.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED))
-      // Convert to space vector
-      Vectors.dense(hashSpace.map{ case (v,index) => 
-        hashArray.count(_ == v).toDouble }.toArray)
-    },
-    VectorType
-  )
+    // Encode string array into hash array
+    val hashArray = seq.map(MurmurHash3.stringHash(_, PREDEF.HASH_SEED))
+    // Convert to space vector
+    Vectors.dense(hashSpace.map{ case (v,index) => 
+      hashArray.count(_ == v).toDouble }.toArray)
+  })
 
   def transform(dataset: Dataset[_], column: String): DataFrame = {
     // Encode string array into hash space vector
