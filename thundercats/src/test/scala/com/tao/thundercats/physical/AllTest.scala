@@ -6,12 +6,14 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.regression._
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Transformer, PipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator}
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.linalg.VectorUDT
+import org.apache.spark.ml.linalg.DenseVector
 
 import java.io.File
 import sys.process._
@@ -680,12 +682,12 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         "d" -> DoubleType,
         "v" -> DoubleType,
         "w" -> DoubleType,
-        "s" -> ArrayType(DoubleType,false),
-        "s2" -> ArrayType(DoubleType,false)
+        "s" -> VectorType,
+        "s2" -> VectorType
       )
 
       // All arrays should have the desired fixed length
-      out.rdd.map(_.getAs[Seq[Integer]]("s")).collect.exists(_.length != NUM_DISTINCT_VALUES) shouldBe false
+      out.rdd.map(_.getAs[DenseVector]("s")).collect.exists(_.size != NUM_DISTINCT_VALUES) shouldBe false
     }
 
     it("encode strings with StringEncoder (TFIDF)"){
