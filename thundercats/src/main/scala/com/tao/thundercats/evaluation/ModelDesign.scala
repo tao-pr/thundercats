@@ -62,6 +62,7 @@ case class FeatureModelDesign(
 extends ModelDesign {
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
     var pipe = feature % (estimator, featurePipe)
+    Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
