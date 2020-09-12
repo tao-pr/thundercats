@@ -672,7 +672,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     it("encode strings with StringEncoder (Murmur Hashing)"){
       val NUM_DISTINCT_VALUES = 4
       val pipe = new Pipeline().setStages(
-        Array(Features.encodeStrings(dfTrain, encoder=Murmur))
+        Array(Features.encodeStrings(dfTrain, encoder=Murmur, suffix="_1"))
       ).fit(dfTrain)
 
       val out = pipe.transform(dfTrain)
@@ -682,12 +682,14 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         "d" -> DoubleType,
         "v" -> DoubleType,
         "w" -> DoubleType,
-        "s" -> VectorType,
-        "s2" -> VectorType
+        "s" -> StringType,
+        "s2" -> StringType,
+        "s_1" -> VectorType,
+        "s2_1" -> VectorType
       )
 
       // All arrays should have the desired fixed length
-      out.rdd.map(_.getAs[DenseVector]("s")).collect.exists(_.size != NUM_DISTINCT_VALUES) shouldBe false
+      out.rdd.map(_.getAs[DenseVector]("s_1")).collect.exists(_.size != NUM_DISTINCT_VALUES) shouldBe false
     }
 
     it("encode strings with StringEncoder (TFIDF)"){

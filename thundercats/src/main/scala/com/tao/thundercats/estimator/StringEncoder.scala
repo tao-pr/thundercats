@@ -91,9 +91,10 @@ with DefaultParamsWritable {
 
     method match {
       case Murmur => 
+        Log.info(s"Murmur string encoder : input col = ${$(inputCol)}, output col = ${$(outputCol)}")
         val dfTokenised = tokeniser.splitDF(dataset.toDF, $(inputCol), $(inputCol))
         val hashSpace = MurmurModel.toSortedSet(dfTokenised, $(inputCol))
-        new StringEncoderModel(MurmurModel(hashSpace), tokeniser)
+        new StringEncoderModel(MurmurModel(hashSpace, $(outputCol)), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
       case TFIDF(minFreq) => // TAOTODO make this return Vector
@@ -118,7 +119,7 @@ private [estimator] trait FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame 
 }
 
-case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
+case class MurmurModel(hashSet: SortedSet[Int], outputCol: String) extends FittedEncoderModel {
 
   // REVIEW: Space reduction by truncating lower frequency of words
   // REVIEW: output as sparse vector
@@ -132,8 +133,9 @@ case class MurmurModel(hashSet: SortedSet[Int]) extends FittedEncoderModel {
   })
 
   def transform(dataset: Dataset[_], column: String): DataFrame = {
+    Log.info(s"MurmurModel : Transforming input col = ${column}, output col = ${outputCol}")
     // Encode string array into hash space vector
-    dataset.withColumn(column, hashUDF(col(column)))
+    dataset.withColumn(outputCol, hashUDF(col(column)))
   }
 }
 
@@ -190,7 +192,7 @@ with StringEncoderParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    val df = model.transform(tokenMethod(dataset, $(inputCol), $(inputCol)), $(outputCol))
+    val df = model.transform(tokenMethod(dataset, $(inputCol), $(outputCol)), $(outputCol))
     $(tempCols).foldLeft(df){ case(a,b) => a.drop(b) }
   }
 
