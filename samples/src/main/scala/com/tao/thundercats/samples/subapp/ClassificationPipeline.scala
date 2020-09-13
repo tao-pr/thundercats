@@ -79,7 +79,10 @@ object ClassificationPipeline extends BaseApp {
     }
     else {
       // Modeling
+      Log.info("Evaluating & Training classifier ...")
       val model = trainClassifier(pipeInspect.get)
+
+      Log.info("DONE")
     }
   }
 
@@ -113,6 +116,7 @@ object ClassificationPipeline extends BaseApp {
     val encoder = Features.encodeStrings(
       data, Murmur, suffix="_encoded"
     )
+    // Model design for "real training"
     val estimator = Preset.decisionTree(
       features=AssemblyFeature(features, "features"),
       labelCol="isTempRising",
@@ -122,9 +126,38 @@ object ClassificationPipeline extends BaseApp {
       labelCol="isTempRising",
       estimator=estimator,
       featurePipe=Some(encoder))
+    
+    // Model design for "feature evaluation"
+    val estimatorForEval = Preset.decisionTree(
+      features=Feature("features"), // <--- use output from [FeatureCompare].allOf
+      labelCol="isTempRising",
+      outputCol="predictedRising")
+    val designForEval = FeatureModelDesign(
+      outputCol="predictedRising",
+      labelCol="isTempRising",
+      estimator=estimatorForEval,
+      featurePipe=Some(encoder))
+    val selector = new FeatureAssemblyGenerator(
+        minFeatureCombination=1,
+        maxFeatureCombination=4,
+        ignoreCols=Nil)
+    // Mock "Region_encoded" column which does not exist here in [data]
+    val combinations = selector.genCombinations(
+      estimatorForEval, 
+      data.withColumn("Region_encoded", lit(0)).select(features.head, features.tail:_*))
 
+    // Feature evaluation
+    Console.println("Evaluating features")
+    combinations.foreach(comb => Console.println(s"... feature : ${comb.colName}"))
+    new ClassificationFeatureCompare(MAE)
+      .allOf(designForEval, combinations, data)
+      .foreach{ case (score,specimen) =>
+        val feature = specimen.featureCol.colName
+        Log.info(f"... Feature : ${feature}, score = $score%.3f")
+      }
+    
+    // Real training
     Console.println("Training decision tree ...")
-
     design.toSpecimen(AssemblyFeature(features, "features"), data)
   }
 }
