@@ -97,19 +97,26 @@ with DefaultParamsWritable {
         new StringEncoderModel(MurmurModel(hashSpace, $(outputCol)), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
-      case TFIDF(minFreq) => // TAOTODO make this return Vector
+      case TFIDF(minFreq) =>
         val TEMP_TF_COL = "$tf$"
+        val TEMP_TOKEN_COL = "$token$"
         val tf = new HashingTF()
-          .setInputCol($(inputCol))
+          .setInputCol(TEMP_TOKEN_COL)
           .setOutputCol(TEMP_TF_COL)
+        Log.info(s"TFIDFModel : Tokenising, col = ${$(inputCol)}")
+        val splitDf = tokeniser.splitDF(dataset.toDF, $(inputCol), TEMP_TOKEN_COL)
+        Log.info(s"TFIDFModel : Fitting TF component")
+        val tfDf = tf.transform(splitDf)
+        Log.info(s"TFIDFModel : Fitting IDF component, output col = ${$(outputCol)}")
         val idf = new IDF()
           .setInputCol(TEMP_TF_COL)
           .setOutputCol($(outputCol))
-          .fit(tf.transform(tokeniser.splitDF(dataset.toDF, $(inputCol), $(inputCol))))
+          .fit(tfDf)
+        Log.info(s"TFIDFModel : Composing the model")
         new StringEncoderModel(TFIDFModel(tf, idf), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
-          .setTempCols(TEMP_TF_COL :: Nil)
+          .setTempCols(TEMP_TF_COL :: TEMP_TOKEN_COL :: Nil)
       case _ => throw new java.util.InvalidPropertiesFormatException(s"Unsupported encoder method : ${method}")
     }
   }
@@ -157,6 +164,7 @@ object MurmurModel {
 
 case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
   def transform(dataset: Dataset[_], column: String): DataFrame = {
+    Log.info(s"TFIDFModel : Transforming input col = ${column}")
     idf.transform(tf.transform(dataset))
   }
 }
