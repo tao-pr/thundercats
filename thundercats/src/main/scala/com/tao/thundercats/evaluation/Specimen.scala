@@ -44,12 +44,13 @@ trait Specimen {
    * Ensure the dataframe is transformed before use
    */
   protected def ensure(df: DataFrame): DataFrame = {
-    if (df.columns contains outputCol)
-      df
-    else{
-      // REVIEW: Log that the transformation is triggered
-      model.transform(df)
+    // Remove existing output / features columns
+    val dfFree = Seq("features", outputCol).foldLeft(df){ case(df_,c) =>
+      if (df_.columns contains c) 
+        df_.drop(c)
+      else df_
     }
+    model.transform(dfFree)
   }
 
   /**
