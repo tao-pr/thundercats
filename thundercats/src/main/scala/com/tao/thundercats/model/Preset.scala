@@ -43,6 +43,8 @@ object Preset {
       .setLabelCol(labelCol)
       .setMaxDepth(maxDepth)
       .setImpurity(impurity)
+      .setPredictionCol(outputCol)
+      .setRawPredictionCol(s"${outputCol}_raw")
     new Pipeline().setStages(Array(tree))
   }
 

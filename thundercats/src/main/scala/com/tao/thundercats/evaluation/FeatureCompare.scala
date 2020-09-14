@@ -40,6 +40,7 @@ trait FeatureColumn {
    */
   def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None): Pipeline
   def colName: String
+  def sourceColName: String
   def asArray: Array[String]
   def size: Int
 }
@@ -55,6 +56,7 @@ case class Feature(c: String) extends FeatureColumn {
       new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = c
+  override def sourceColName = c
   override def asArray = Array(c)
   override def size = 1
 }
@@ -71,6 +73,7 @@ extends FeatureColumn {
       new Pipeline().setStages(Array(vecAsm, estimator))
   }
   override def colName = asVectorCol
+  override def sourceColName = asArray.mkString(", ")
   override def asArray = cs.toArray
   override def size = cs.size
 }
@@ -115,6 +118,7 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
       val specimen = design.toSpecimen(c, df)
+      Console.println(s"Scoring!") // TAODEBUG
       val scoreOpt = specimen.score(df, measure)
 
       scoreOpt.mapOpt{ score => 

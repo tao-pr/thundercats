@@ -18,6 +18,9 @@ object ClassificationPipeline extends BaseApp {
 
   override def runMe(implicit spark: SparkSession) = {
 
+    // Override Log level (if needed)
+    //spark.sparkContext.setLogLevel("INFO")
+
     // STEP #1 : Read CSVs 
     // ----------------------------------------
     Console.println("Reading input sources ...")
@@ -148,16 +151,20 @@ object ClassificationPipeline extends BaseApp {
 
     // Feature evaluation
     Console.println("Evaluating features")
-    combinations.foreach(comb => Console.println(s"... feature : ${comb.colName}"))
+    combinations.foreach(comb => Console.println(s"... feature : ${comb.sourceColName}"))
     new ClassificationFeatureCompare(MAE)
       .allOf(designForEval, combinations, data)
       .foreach{ case (score,specimen) =>
-        val feature = specimen.featureCol.colName
+        val feature = specimen.featureCol.sourceColName
         Log.info(f"... Feature : ${feature}, score = $score%.3f")
       }
     
     // Real training
     Console.println("Training decision tree ...")
     design.toSpecimen(AssemblyFeature(features, "features"), data)
+
+    // TAOTODO: Try scoring
+
+
   }
 }

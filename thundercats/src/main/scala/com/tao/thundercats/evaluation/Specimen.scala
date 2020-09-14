@@ -50,7 +50,19 @@ trait Specimen {
         df_.drop(c)
       else df_
     }
+    // TAODEBUG
+    printStages(model)
+
     model.transform(dfFree)
+  }
+
+  private def printStages(model: PipelineModel): Unit = {
+    model.stages.foreach{ trans =>
+      if (trans.isInstanceOf[PipelineModel])
+        printStages(trans.asInstanceOf[PipelineModel])
+      else 
+        Console.println(s"... ${trans.getClass.getName}")
+    }
   }
 
   /**
@@ -96,6 +108,7 @@ case class TrainedSpecimen(
   override def score(df: DataFrame, measure: Measure) = 
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
+      case _:ClassificationMeasure => super.score(ensure(df), measure)
       case _                   => Fail(
         s"Unsupported measure type : ${measure.className}")
     }
