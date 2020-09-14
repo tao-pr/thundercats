@@ -10,6 +10,8 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.ml.{Transformer, PipelineModel}
+import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 
 import org.apache.log4j.Logger
 
@@ -57,6 +59,27 @@ object Implicits {
     def sqrt = scala.math.sqrt(d)
   }
 
+}
+
+object Debugger {
+
+  def printPipeline(pipeline: Pipeline): Unit = {
+    pipeline.getStages.foreach{stage =>
+      if (stage.isInstanceOf[Pipeline]){
+        printPipeline(stage.asInstanceOf[Pipeline])
+      }
+      else Console.println(s"... ${stage.getClass.getName}")
+    }
+  }
+
+  def printModel(model: PipelineModel): Unit = {
+    model.stages.foreach{ trans =>
+      if (trans.isInstanceOf[PipelineModel])
+        printModel(trans.asInstanceOf[PipelineModel])
+      else 
+        Console.println(s"... ${trans.getClass.getName}")
+    }
+  }
 }
 
 object Log extends Serializable {
