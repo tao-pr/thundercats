@@ -28,6 +28,7 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.physical.Debugger
 import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
 
@@ -51,18 +52,9 @@ trait Specimen {
       else df_
     }
     // TAODEBUG
-    printStages(model)
+    Debugger.printModel(model)
 
     model.transform(dfFree)
-  }
-
-  private def printStages(model: PipelineModel): Unit = {
-    model.stages.foreach{ trans =>
-      if (trans.isInstanceOf[PipelineModel])
-        printStages(trans.asInstanceOf[PipelineModel])
-      else 
-        Console.println(s"... ${trans.getClass.getName}")
-    }
   }
 
   /**

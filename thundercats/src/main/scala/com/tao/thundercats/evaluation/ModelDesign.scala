@@ -28,6 +28,7 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.physical.Debugger
 import com.tao.thundercats.estimator._
 
 /**
@@ -60,25 +61,16 @@ case class FeatureModelDesign(
   estimator: Pipeline,
   featurePipe: Option[PipelineStage] = None)
 extends ModelDesign {
-  
-  private def printStages(pipeline: Pipeline): Unit = {
-    pipeline.getStages.foreach{stage =>
-      if (stage.isInstanceOf[Pipeline]){
-        printStages(stage.asInstanceOf[Pipeline])
-      }
-      else Console.println(s"... ${stage.getClass.getName}")
-    }
-  }
 
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
     var pipe = feature % (estimator, featurePipe)
     Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
+    val fitted = pipe.fit(df)
 
     // TAODEBUG
-    Console.println("PIPELINE STRUCRTURE")
-    printStages(pipe)
+    Console.println("FITTED MODEL:")
+    Debugger.printModel(fitted)
 
-    val fitted = pipe.fit(df)
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
 }
