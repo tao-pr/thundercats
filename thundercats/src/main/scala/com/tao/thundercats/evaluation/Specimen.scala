@@ -28,6 +28,7 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.physical.Debugger
 import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
 
@@ -44,10 +45,14 @@ trait Specimen {
    * Ensure the dataframe is transformed before use
    */
   protected def ensure(df: DataFrame): DataFrame = {
-    if (df.columns contains outputCol)
+
+    if (df.columns.contains("features") || 
+      df.columns.contains(outputCol)){
+      Log.debug(s"Specimen : Skipping transformation (${this.getClass.getName})")
       df
-    else{
-      // REVIEW: Log that the transformation is triggered
+    }
+    else {
+      Log.debug(s"Specimen : Pipeline transformation is operating (${this.getClass.getName})")
       model.transform(df)
     }
   }
@@ -95,6 +100,7 @@ case class TrainedSpecimen(
   override def score(df: DataFrame, measure: Measure) = 
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
+      case _:ClassificationMeasure => super.score(ensure(df), measure)
       case _                   => Fail(
         s"Unsupported measure type : ${measure.className}")
     }

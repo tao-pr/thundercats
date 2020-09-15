@@ -28,6 +28,7 @@ import scala.util.Try
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.physical.Debugger
 import com.tao.thundercats.estimator._
 
 /**
@@ -57,11 +58,17 @@ extends ModelDesign {
 case class FeatureModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
-  estimator: Pipeline)
+  estimator: Pipeline,
+  featurePipe: Option[PipelineStage] = None)
 extends ModelDesign {
+
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
-    var pipe = feature % estimator 
+    var pipe = feature % (estimator, featurePipe)
+    Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
+
+    // Debugger.printModel(fitted)
+
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
 }

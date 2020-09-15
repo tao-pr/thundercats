@@ -62,7 +62,7 @@ object Features {
     df: DataFrame,
     suffix: String = "",
     ignoreColumns: Set[String]=Set.empty
-  ): PipelineStage = {
+  ): Pipeline = {
     val blocks = df
       .schema
       .toList.collect{

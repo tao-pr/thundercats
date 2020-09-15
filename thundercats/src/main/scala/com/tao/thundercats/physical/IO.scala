@@ -24,6 +24,7 @@ object Show {
   case object Default extends Opt // Spark default, no col trunc
   case object Truncate extends Opt
   case object HideComplex extends Opt
+  case class Max(numRows: Int) extends Opt 
 }
 
 object Screen {
@@ -56,8 +57,9 @@ object Screen {
     title.map(t => Console.println(Console.CYAN + t + Console.RESET))
     Console.println(Console.CYAN)
     showOpt match {
-      case Show.Default => df.show(5, false)
-      case Show.Truncate => df.show(5, true)
+      case Show.Default     => df.show(5, false)
+      case Show.Max(rows)   => df.show(rows, false)
+      case Show.Truncate    => df.show(5, true)
       case Show.HideComplex => simplify(df).show(5, false)
     }
     Console.println(Console.RESET)
