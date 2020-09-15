@@ -99,7 +99,9 @@ object Join {
 object Group {
 
   private [physical] trait Strategy
+  // [[Map]] needs Hive metastore
   case class Map(m: scala.collection.immutable.Map[String, String]) extends Strategy
+  // [[Agg]] works without Hive metastore
   case class Agg(f: Seq[Column]) extends Strategy
 
   object Map {
@@ -119,7 +121,7 @@ object Group {
 }
 
 object Filter {
-  def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.where(cond))
+  def where(df: DataFrame, cond: Column): MayFail[DataFrame] = MayFail(df.filter(cond))
   
   /**
    * Remove nulls
@@ -135,6 +137,12 @@ object Filter {
   def byRange[T](df: DataFrame, column: String, bound: Tuple2[T,T]): MayFail[DataFrame] = MayFail {
     val (lb, ub) = bound
     df.where(col(column) >= lb && col(column) <= ub)
+  }
+}
+
+object Order {
+  def by(df: DataFrame, cols: Seq[String]): MayFail[DataFrame] = MayFail {
+    df.orderBy(cols.head, cols.tail:_*)
   }
 }
 

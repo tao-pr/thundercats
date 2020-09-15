@@ -65,3 +65,8 @@ class RegressionModelCompare[A <: RegressionMeasure](
   override val measure: A,
   override val feature: FeatureColumn) 
 extends ModelCompare[A]
+
+class ClassificationModelCompare[A <: ClassificationMeasure](
+  override val measure: A,
+  override val feature: FeatureColumn)
+extends ModelCompare[A]
