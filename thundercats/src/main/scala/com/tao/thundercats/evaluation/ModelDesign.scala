@@ -67,9 +67,7 @@ extends ModelDesign {
     Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
 
-    // TAODEBUG
-    Console.println("FITTED MODEL:")
-    Debugger.printModel(fitted)
+    // Debugger.printModel(fitted)
 
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }

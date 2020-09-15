@@ -118,7 +118,6 @@ trait FeatureCompare[A <: Measure] extends BaseCompare[A] {
     val measures: Iterable[(Double,Specimen)] = comb.map{ c => 
       // Train the model (specimen) by given column(s)
       val specimen = design.toSpecimen(c, df)
-      Console.println(s"Scoring!") // TAODEBUG
       val scoreOpt = specimen.score(df, measure)
 
       scoreOpt.mapOpt{ score => 

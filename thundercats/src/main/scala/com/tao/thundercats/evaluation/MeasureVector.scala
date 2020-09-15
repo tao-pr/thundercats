@@ -59,8 +59,6 @@ case object ZScore extends RegressionMeasureVector {
         df.sumOfSqr(c)
       }
 
-      df.select(specimen.labelCol, specimen.outputCol).show(10, false) // TAODEBUG
-
       Log.info(f"[ZScore] calculating")
       Log.info(f"[ZScore] degree of freedom : ${N-M-1}")
       Log.info(f"[ZScore] coef  : ${betas}")
