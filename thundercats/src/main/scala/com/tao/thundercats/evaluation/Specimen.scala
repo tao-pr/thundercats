@@ -45,16 +45,16 @@ trait Specimen {
    * Ensure the dataframe is transformed before use
    */
   protected def ensure(df: DataFrame): DataFrame = {
-    // Remove existing output / features columns
-    val dfFree = Seq("features", outputCol).foldLeft(df){ case(df_,c) =>
-      if (df_.columns contains c) 
-        df_.drop(c)
-      else df_
-    }
-    // TAODEBUG
-    Debugger.printModel(model)
 
-    model.transform(dfFree)
+    if (df.columns.contains("features") || 
+      df.columns.contains(outputCol)){
+      Log.debug(s"Specimen : Skipping transformation (${this.getClass.getName})")
+      df
+    }
+    else {
+      Log.debug(s"Specimen : Pipeline transformation is operating (${this.getClass.getName})")
+      model.transform(df)
+    }
   }
 
   /**
