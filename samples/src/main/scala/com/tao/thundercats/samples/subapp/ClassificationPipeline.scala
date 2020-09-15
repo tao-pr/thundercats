@@ -149,11 +149,14 @@ object ClassificationPipeline extends BaseApp {
       estimatorForEval, 
       data.withColumn("Region_encoded", lit(0)).select(features.head, features.tail:_*))
 
+    // Only select combinations of features (length=1, 4)
+    val subCombinations = combinations.filter(_.size % 4 <= 1)
+
     // Feature evaluation
     Console.println("Evaluating features")
     combinations.foreach(comb => Console.println(s"... feature : ${comb.sourceColName}"))
     new ClassificationFeatureCompare(MAE)
-      .allOf(designForEval, combinations, data)
+      .allOf(designForEval, subCombinations, data)
       .foreach{ case (score,specimen) =>
         val feature = specimen.featureCol.sourceColName
         Log.info(f"... Feature : ${feature}, score = $score%.3f")
