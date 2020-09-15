@@ -149,25 +149,20 @@ object ClassificationPipeline extends BaseApp {
       estimatorForEval, 
       data.withColumn("Region_encoded", lit(0)).select(features.head, features.tail:_*))
 
-    // Only select combinations of features (length=1, 4)
-    val subCombinations = combinations.filter(_.size % 4 <= 1)
+    // Only select combinations of features (length=1,3,4)
+    val subCombinations = combinations.filter(_.size != 2)
 
     // Feature evaluation
-    Console.println("Evaluating features")
-    combinations.foreach(comb => Console.println(s"... feature : ${comb.sourceColName}"))
+    Console.println("Evaluating features (with MAE)")
     new ClassificationFeatureCompare(MAE)
       .allOf(designForEval, subCombinations, data)
       .foreach{ case (score,specimen) =>
         val feature = specimen.featureCol.sourceColName
-        Log.info(f"... Feature : ${feature}, score = $score%.3f")
+        Console.println(f"... Feature : ${feature}, MAE = $score%.3f")
       }
     
     // Real training
     Console.println("Training decision tree ...")
     design.toSpecimen(AssemblyFeature(features, "features"), data)
-
-    // TAOTODO: Try scoring
-
-
   }
 }
