@@ -127,13 +127,15 @@ case object PearsonCorr extends RegressionMeasure {
 }
 
 case object Precision extends ClassificationMeasure {
-  override def %% (df: DataFrame, specimen: Specimen) = 
+  override def %% (df: DataFrame, specimen: Specimen) = {
+    val threshold = specimen
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
         .precisionByThreshold
         .collectAsMap
         .toMap
     }
+  }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
     Fail("Precision only returns a map of threshold -> score. Checkout %% method")
