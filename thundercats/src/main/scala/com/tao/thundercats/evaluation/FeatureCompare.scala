@@ -37,8 +37,14 @@ import com.tao.thundercats.estimator._
 trait FeatureColumn {
   /**
    * Create a pipeline for training
+   * @param estimator Estimator to fit
+   * @param featurePipeline (optional) pipeline to run prior to vector assembly
+   * @param vecTransformer (optional) pipeline to run post vector assembly   
    */
-  def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None): Pipeline
+  def %(
+    estimator: Pipeline, 
+    featurePipeline: Option[PipelineStage]=None,
+    vecTransformer: Option[PipelineStage]=None): Pipeline
   def colName: String
   def sourceColName: String
   def asArray: Array[String]
@@ -46,14 +52,23 @@ trait FeatureColumn {
 }
 
 case class Feature(c: String) extends FeatureColumn {
-  override def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None) = {
+  override def %(
+    estimator: Pipeline, 
+    featurePipeline: Option[PipelineStage]=None, 
+    vecTransformer: Option[PipelineStage]=None) = {
+
     val vecAsm = new VectorAssembler()
       .setInputCols(Array(c))
       .setOutputCol("features")
-    if (featurePipeline.isDefined)
-      new Pipeline().setStages(Array(featurePipeline.get, vecAsm, estimator))
-    else
-      new Pipeline().setStages(Array(vecAsm, estimator))
+
+    val stages = Array(
+      featurePipeline,
+      Some(vecAsm),
+      vecTransformer,
+      Some(estimator)
+    ).flatten
+
+    new Pipeline().setStages(stages)
   }
   override def colName = c
   override def sourceColName = c
@@ -63,14 +78,21 @@ case class Feature(c: String) extends FeatureColumn {
 
 case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features") 
 extends FeatureColumn {
-  override def %(estimator: Pipeline, featurePipeline: Option[PipelineStage]=None) = {
+  override def %(
+    estimator: Pipeline, 
+    featurePipeline: Option[PipelineStage]=None,
+    vecTransformer: Option[PipelineStage]=None) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
       .setOutputCol(asVectorCol)
-    if (featurePipeline.isDefined)
-      new Pipeline().setStages(Array(featurePipeline.get, vecAsm, estimator))
-    else
-      new Pipeline().setStages(Array(vecAsm, estimator))
+    val stages = Array(
+      featurePipeline,
+      Some(vecAsm),
+      vecTransformer,
+      Some(estimator)
+    ).flatten
+
+    new Pipeline().setStages(stages)
   }
   override def colName = asVectorCol
   override def sourceColName = asArray.mkString(", ")
