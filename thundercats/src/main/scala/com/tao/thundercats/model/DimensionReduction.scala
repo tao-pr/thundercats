@@ -19,14 +19,23 @@ import com.tao.thundercats.evaluation._
 
 object DimReduc {
 
+  private val TEMP_INPUT_COL = "--temp--"
+
   sealed trait DimensionReduction {
     def asPipelineStage: PipelineStage
   }
 
-  // TAOTODO: Need a transformer which renames "features" -> "temp"
-  // before feeding into DimReduc
-
-  case class PCA(nComponents: Int) extends DimensionReduction
-  case class LDA(nComponents: Int) extends DimensionReduction
+  case class PCA(nComponents: Int) extends DimensionReduction {
+    override def asPipelineStage = new Pipeline().setStages(
+      Array(
+        new ColumnRename()
+          .setInputCol("features")
+          .setOutputCol(TEMP_INPUT_COL),
+        new SparkPCA()
+          .setInputCol(TEMP_INPUT_COL)
+          .setOutputCol("features")
+          .setK(nComponents),
+        ))
+  }
 
 }

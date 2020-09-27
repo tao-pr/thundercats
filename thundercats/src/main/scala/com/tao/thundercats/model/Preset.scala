@@ -6,7 +6,6 @@ import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.feature.VectorAssembler
 
 import com.tao.thundercats.evaluation._
-import com.tao.thundercats.model.DimReduc
 
 /**
  * Preset of simple estimators
