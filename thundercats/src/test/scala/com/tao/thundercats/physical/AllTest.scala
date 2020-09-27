@@ -1056,4 +1056,33 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
   }
 
+  describe("Dimensionality Reduction test"){
+
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.1, s="1.1", s2=""),
+      Train(i=2, d=2.0, v=0.1, w=0.3, s="1.1", s2=""),
+      Train(i=3, d=3.2, v=2.2, w=0.5, s="1.3", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.8, s="0.6", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.9, s="0.4", s2=""),
+      Train(i=6, d=6.1, v=0.0, w=1.1, s="1.9", s2="")
+    ).toDS.toDF
+
+    it("uses PCA to reduce dimensionality"){
+      val df = dfPreset
+        .withColumn("s", col("s").cast(DoubleType))
+        .withColumn("s2", col("s")*-1.0)
+      val features = Seq("d", "v", "w", "s", "s2")
+      val design = FeatureModelDesign(
+        outputCol="z",
+        labelCol="i",
+        estimator=Preset.linearReg(
+          features=AssemblyFeature(features, "features"), 
+          labelCol="i",
+          outputCol="z"))
+
+      // TAOTODO
+
+    }
+  }
+
 }

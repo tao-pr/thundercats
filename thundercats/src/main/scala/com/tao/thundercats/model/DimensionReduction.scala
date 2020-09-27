@@ -34,8 +34,10 @@ object DimReduc {
         new SparkPCA()
           .setInputCol(TEMP_INPUT_COL)
           .setOutputCol("features")
-          .setK(nComponents),
+          .setK(nComponents)
         ))
   }
+
+  // TAOTODO add other dim reductions
 
 }

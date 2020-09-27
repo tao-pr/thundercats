@@ -12,8 +12,6 @@ import com.tao.thundercats.evaluation._
  */
 object Preset {
 
-  // TAOTODO add dim reduction arg
-
   // Simple linear regression
   // elasticNetParam = 0 -> ridge
   // elasticNetParam = 1 -> lasso
