@@ -29,7 +29,7 @@ object DimReduc {
     override def asPipelineStage = new Pipeline().setStages(
       Array(
         new ColumnRename()
-          .setInputCol("features")
+          .setInputCol("features1") // TAODEBUG expecting failure
           .setOutputCol(TEMP_INPUT_COL),
         new SparkPCA()
           .setInputCol(TEMP_INPUT_COL)
