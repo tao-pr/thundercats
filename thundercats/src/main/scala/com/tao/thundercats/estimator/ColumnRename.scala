@@ -83,6 +83,6 @@ with ColumnRenameParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    dataset.withColumnRenamed(getOutputCol, getInputCol)
+    dataset.withColumnRenamed(getInputCol, getOutputCol)
   }
 }

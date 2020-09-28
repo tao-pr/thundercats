@@ -211,6 +211,25 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
   }
 
+  describe("Basic estimators"){
+
+    import spark.implicits._
+
+    lazy val dfK1 = List(
+      K("a", "111"),
+      K("b", "222"),
+      K("c", "333"),
+      K("d", "444")
+    ).toDS.toDF
+
+    it("rename column"){
+      val t = new ColumnRename().setInputCol("key").setOutputCol("k")
+      val d = t.fit(dfK1).transform(dfK1)
+
+      d.columns shouldBe Seq("k","value")
+    }
+  }
+
   describe("Basic operations"){
 
     import spark.implicits._
