@@ -1070,15 +1070,20 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     it("uses PCA to reduce dimensionality"){
       val df = dfPreset
         .withColumn("s", col("s").cast(DoubleType))
-        .withColumn("s2", col("s")*-1.0)
+        .withColumn("s2", col("s")*(-1.0))
       val features = Seq("d", "v", "w", "s", "s2")
-      val design = FeatureModelDesign(
-        outputCol="z",
-        labelCol="i",
-        estimator=Preset.linearReg(
+      val estimator = Preset.linearReg(
           features=AssemblyFeature(features, "features"), 
           labelCol="i",
-          outputCol="z"))
+          outputCol="z")
+
+      // Reduce dim: 5 -> 3
+      val pipe = AssemblyFeature(features) % (
+        estimator, 
+        featurePipeline=None,
+        vecPipeline=Some(DimReduc.PCA(3).asPipelineStage))
+
+      pipe.fit(df)
 
       // TAOTODO
 

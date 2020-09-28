@@ -39,12 +39,12 @@ trait FeatureColumn {
    * Create a pipeline for training
    * @param estimator Estimator to fit
    * @param featurePipeline (optional) pipeline to run prior to vector assembly
-   * @param vecTransformer (optional) pipeline to run post vector assembly   
+   * @param vecPipeline (optional) pipeline to run post vector assembly   
    */
   def %(
     estimator: Pipeline, 
     featurePipeline: Option[PipelineStage]=None,
-    vecTransformer: Option[PipelineStage]=None): Pipeline
+    vecPipeline: Option[PipelineStage]=None): Pipeline
   def colName: String
   def sourceColName: String
   def asArray: Array[String]
@@ -55,7 +55,7 @@ case class Feature(c: String) extends FeatureColumn {
   override def %(
     estimator: Pipeline, 
     featurePipeline: Option[PipelineStage]=None, 
-    vecTransformer: Option[PipelineStage]=None) = {
+    vecPipeline: Option[PipelineStage]=None) = {
 
     val vecAsm = new VectorAssembler()
       .setInputCols(Array(c))
@@ -64,7 +64,7 @@ case class Feature(c: String) extends FeatureColumn {
     val stages = Array(
       featurePipeline,
       Some(vecAsm),
-      vecTransformer,
+      vecPipeline,
       Some(estimator)
     ).flatten
 
@@ -81,14 +81,14 @@ extends FeatureColumn {
   override def %(
     estimator: Pipeline, 
     featurePipeline: Option[PipelineStage]=None,
-    vecTransformer: Option[PipelineStage]=None) = {
+    vecPipeline: Option[PipelineStage]=None) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
       .setOutputCol(asVectorCol)
     val stages = Array(
       featurePipeline,
       Some(vecAsm),
-      vecTransformer,
+      vecPipeline,
       Some(estimator)
     ).flatten
 
