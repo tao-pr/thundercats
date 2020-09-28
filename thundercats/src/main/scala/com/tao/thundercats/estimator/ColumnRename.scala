@@ -73,7 +73,9 @@ with ColumnRenameParams {
   def transformAndValidate(schema: StructType): StructType = {
     require(schema.map(_.name) contains getInputCol, s"Dataset has to contain the input feature column : $getInputCol")
     val (originalDataType, originalNullable) = schema.toList.collect {
-      case StructField(getInputCol, ct, b, _) => (ct, b) 
+      case StructField(c, ct, b, _) if c == getInputCol => 
+        Console.println(s"Renaming ${getInputCol} of type ${ct} => ${getOutputCol}") // TAODEBUG
+        (ct, b) 
     }.head
 
     schema.add(StructField(getOutputCol, originalDataType, originalNullable))

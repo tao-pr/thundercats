@@ -1090,19 +1090,21 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val df = dfPreset
         .withColumn("s", col("s").cast(DoubleType))
         .withColumn("s2", col("s")*(-1.0))
-      val features = Seq("d", "v", "w", "s", "s2")
+      val features = AssemblyFeature(Seq("d", "v", "w", "s", "s2"))
       val estimator = Preset.linearReg(
-          features=AssemblyFeature(features, "features"), 
+          features=Feature("features"), 
           labelCol="i",
           outputCol="z")
 
       // Reduce dim: 5 -> 3
-      val pipe = AssemblyFeature(features) % (
+      val pipe = features % (
         estimator, 
-        featurePipeline=None,
+        featurePipeline=None, // TAOTODO should rename to preVecAsm, postVecAsm
         vecPipeline=Some(DimReduc.PCA(3).asPipelineStage))
 
-      pipe.fit(df)
+      val dfOut = pipe.fit(df).transform(df)
+
+      dfOut.columns should contain ("features")
 
       // TAOTODO
 
