@@ -38,13 +38,13 @@ trait FeatureColumn {
   /**
    * Create a pipeline for training
    * @param estimator Estimator to fit
-   * @param featurePipeline (optional) pipeline to run prior to vector assembly
-   * @param vecPipeline (optional) pipeline to run post vector assembly   
+   * @param preVectorAsmStep (optional) pipeline to run prior to vector assembly
+   * @param postVectorAsmStep (optional) pipeline to run post vector assembly   
    */
   def %(
     estimator: Pipeline, 
-    featurePipeline: Option[PipelineStage]=None,
-    vecPipeline: Option[PipelineStage]=None): Pipeline
+    preVectorAsmStep: Option[PipelineStage]=None,
+    postVectorAsmStep: Option[PipelineStage]=None): Pipeline
   def colName: String
   def sourceColName: String
   def asArray: Array[String]
@@ -54,17 +54,17 @@ trait FeatureColumn {
 case class Feature(c: String) extends FeatureColumn {
   override def %(
     estimator: Pipeline, 
-    featurePipeline: Option[PipelineStage]=None, 
-    vecPipeline: Option[PipelineStage]=None) = {
+    preVectorAsmStep: Option[PipelineStage]=None, 
+    postVectorAsmStep: Option[PipelineStage]=None) = {
 
     val vecAsm = new VectorAssembler()
       .setInputCols(Array(c))
       .setOutputCol("features")
 
     val stages = Array(
-      featurePipeline,
+      preVectorAsmStep,
       Some(vecAsm),
-      vecPipeline,
+      postVectorAsmStep,
       Some(estimator)
     ).flatten
 
@@ -80,15 +80,15 @@ case class AssemblyFeature(cs: Seq[String], asVectorCol: String="features")
 extends FeatureColumn {
   override def %(
     estimator: Pipeline, 
-    featurePipeline: Option[PipelineStage]=None,
-    vecPipeline: Option[PipelineStage]=None) = {
+    preVectorAsmStep: Option[PipelineStage]=None,
+    postVectorAsmStep: Option[PipelineStage]=None) = {
     val vecAsm = new VectorAssembler()
       .setInputCols(cs.toArray)
       .setOutputCol(asVectorCol)
     val stages = Array(
-      featurePipeline,
+      preVectorAsmStep,
       Some(vecAsm),
-      vecPipeline,
+      postVectorAsmStep,
       Some(estimator)
     ).flatten
 
