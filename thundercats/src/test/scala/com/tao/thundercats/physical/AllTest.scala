@@ -1099,8 +1099,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // Reduce dim: 5 -> 3
       val pipe = features % (
         estimator, 
-        featurePipeline=None, // TAOTODO should rename to preVecAsm, postVecAsm
-        vecPipeline=Some(DimReduc.PCA(3).asPipelineStage))
+        preVectorAsmStep=None, // TAOTODO should rename to preVecAsm, postVecAsm
+        postVectorAsmStep=Some(DimReduc.PCA(3).asPipelineStage))
 
       val dfOut = pipe.fit(df).transform(df)
 

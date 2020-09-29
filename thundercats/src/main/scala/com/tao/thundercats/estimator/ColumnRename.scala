@@ -78,6 +78,9 @@ with ColumnRenameParams {
         (ct, b) 
     }.head
 
+    // TAODEBUG
+    Console.println(s"To rename : col ${getInputCol}, type ${originalDataType}")
+
     schema.add(StructField(getOutputCol, originalDataType, originalNullable))
   }
 
