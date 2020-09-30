@@ -27,6 +27,7 @@ import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
 
 import org.scalatest.{Filter => _, _}
+import org.scalatest.Inspectors._
 import Matchers._
 
 object IO {
@@ -1099,15 +1100,15 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       // Reduce dim: 5 -> 3
       val pipe = features % (
         estimator, 
-        preVectorAsmStep=None, // TAOTODO should rename to preVecAsm, postVecAsm
+        preVectorAsmStep=None,
         postVectorAsmStep=Some(DimReduc.PCA(3).asPipelineStage))
 
       val dfOut = pipe.fit(df).transform(df)
 
       dfOut.columns should contain ("features")
-
-      // TAOTODO
-
+      val vec = dfOut.rdd.map(_.getAs[DenseVector]("features_reduced").toArray).collect
+      vec.size shouldBe (df.count)
+      forAll (vec) { v => (v.size == 3) shouldBe true }
     }
   }
 

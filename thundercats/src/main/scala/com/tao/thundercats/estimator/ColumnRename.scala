@@ -7,13 +7,8 @@ import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.{HasHandleInvalid, HasInputCol, HasOutputCol}
 import org.apache.spark.ml.util._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import org.apache.spark.sql.functions.{log => logNatural, _}
 import org.apache.spark.sql.types._
-import org.apache.spark.ml.util.MLWriter
 import org.apache.spark.SparkException
-import scala.reflect.runtime.universe._
-import scala.reflect.ClassTag
-import org.apache.hadoop.fs.Path
 
 import org.apache.spark.ml.param.shared._
 
@@ -23,9 +18,7 @@ import scala.reflect.io.Directory
 import scala.util.Try
 
 import com.tao.thundercats.physical._
-import com.tao.thundercats.functional._
-import com.tao.thundercats.physical.Implicits._
-import com.tao.thundercats.model._
+
 
 class ColumnRename(override val uid: String = Identifiable.randomUID("ColumnRename"))
 extends Estimator[ColumnRenameModel]
@@ -73,13 +66,9 @@ with ColumnRenameParams {
   def transformAndValidate(schema: StructType): StructType = {
     require(schema.map(_.name) contains getInputCol, s"Dataset has to contain the input feature column : $getInputCol")
     val (originalDataType, originalNullable) = schema.toList.collect {
-      case StructField(c, ct, b, _) if c == getInputCol => 
-        Console.println(s"Renaming ${getInputCol} of type ${ct} => ${getOutputCol}") // TAODEBUG
-        (ct, b) 
+      case StructField(c, ct, b, _) if c == getInputCol =>
+        (ct, b)
     }.head
-
-    // TAODEBUG
-    Console.println(s"To rename : col ${getInputCol}, type ${originalDataType}")
 
     schema.add(StructField(getOutputCol, originalDataType, originalNullable))
   }
@@ -88,6 +77,14 @@ with ColumnRenameParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    dataset.withColumnRenamed(getInputCol, getOutputCol)
+
+    // TAODEBUG
+    val typ = dataset.schema.collect{
+      case StructField(c, ct, _, _) if c == getInputCol =>
+        ct
+    }.head
+    Log.info(s"Renaming column ${getInputCol} ($typ) => ${getOutputCol}")
+
+    dataset.withColumnRenamed(getInputCol, getOutputCol).cache
   }
 }
