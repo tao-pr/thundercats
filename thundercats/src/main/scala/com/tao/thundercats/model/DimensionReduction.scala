@@ -19,7 +19,7 @@ import com.tao.thundercats.evaluation._
 
 object DimReduc {
 
-  private val TEMP_INPUT_COL = "--temp--"
+  private val TEMP_INPUT_COL = "--temp--dim-reduc--"
 
   sealed trait DimensionReduction {
     def asPipelineStage: PipelineStage
@@ -28,14 +28,13 @@ object DimReduc {
   case class PCA(nComponents: Int) extends DimensionReduction {
     override def asPipelineStage = new Pipeline().setStages(
       Array(
-        new ColumnRename()
-          .setInputCol("features")
-          .setOutputCol(TEMP_INPUT_COL),
         new SparkPCA()
-          .setInputCol(TEMP_INPUT_COL)
-          .setOutputCol("features")
-          .setK(nComponents)
-        ))
+          .setInputCol("features")
+          .setOutputCol("features_reduced")
+          .setK(nComponents),
+        new DebugStep()
+      )
+    )
   }
 
   // TAOTODO add other dim reductions
