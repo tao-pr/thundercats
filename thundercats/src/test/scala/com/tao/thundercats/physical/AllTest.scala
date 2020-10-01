@@ -1105,7 +1105,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       val dfOut = pipe.fit(df).transform(df)
 
-      dfOut.columns should contain ("features")
+      dfOut.columns should contain ("features_reduced")
       val vec = dfOut.rdd.map(_.getAs[DenseVector]("features_reduced").toArray).collect
       vec.size shouldBe (df.count)
       forAll (vec) { v => (v.size == 3) shouldBe true }
