@@ -36,7 +36,4 @@ object DimReduc {
       )
     )
   }
-
-  // TAOTODO add other dim reductions
-
 }
