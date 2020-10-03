@@ -77,14 +77,6 @@ with ColumnRenameParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-
-    // TAODEBUG
-    val typ = dataset.schema.collect{
-      case StructField(c, ct, _, _) if c == getInputCol =>
-        ct
-    }.head
-    Log.info(s"Renaming column ${getInputCol} ($typ) => ${getOutputCol}")
-
     dataset.withColumnRenamed(getInputCol, getOutputCol).cache
   }
 }
