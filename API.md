@@ -275,5 +275,22 @@ Then you get the list of `(score, feature)` you can use for the modeling.
 The return scores correpsond to the measure you use.
 For example, `ZScoreFeatureSelector` will return zscores.
 
+### 1.8 Dimensionality Reduction
 
+When creating a machine learning pipeline, you can also easily add
+a dimensionality reduction step like so.
 
+```scala
+val features = AssemblyFeature(Seq(....))
+val estimator = Preset.linearReg(
+    features=Feature("features"), 
+    labelCol="label",
+    outputCol="pred")
+val pipe = features % (
+    estimator, 
+    preVectorAsmStep=None,
+    postVectorAsmStep=Some(DimReduc.PCA(3).asPipelineStage))
+val model = pipe.fit(df).transform(df)
+```
+
+The dimensionality step has to be placed as "postVectorAsmStep"
