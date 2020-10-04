@@ -163,6 +163,16 @@ object ClassificationPipeline extends BaseApp {
     
     // Real training
     Console.println("Training decision tree ...")
-    design.toSpecimen(AssemblyFeature(features, "features"), data)
+    val Array(trainData, testData) = data.randomSplit(Array(0.8, 0.2))
+    val spec = design.toSpecimen(AssemblyFeature(features, "features"), trainData)
+
+    // Evaluate the model (precision-recall)
+    val precisionScoreMap = spec.scoreMap(testData, Precision).get
+    for ((k,v) <- precisionScoreMap){
+      Console.println(f"... threshold : $k%.1f, score = $v%.3f")
+    }
+
+    spec
   }
+
 }
