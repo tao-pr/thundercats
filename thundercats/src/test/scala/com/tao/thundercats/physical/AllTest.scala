@@ -27,6 +27,7 @@ import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
 
 import org.scalatest.{Filter => _, _}
+import org.scalatest.Inspectors._
 import Matchers._
 
 object IO {
@@ -208,6 +209,25 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("POST: cleanup checkpoint directories"){
       IO.cleanupCheckpointDirs()
+    }
+  }
+
+  describe("Basic estimators"){
+
+    import spark.implicits._
+
+    lazy val dfK1 = List(
+      K("a", "111"),
+      K("b", "222"),
+      K("c", "333"),
+      K("d", "444")
+    ).toDS.toDF
+
+    it("rename column"){
+      val t = new ColumnRename().setInputCol("key").setOutputCol("k")
+      val d = t.fit(dfK1).transform(dfK1)
+
+      d.columns shouldBe Seq("k","value")
     }
   }
 
@@ -1053,6 +1073,48 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         features.map(Feature.apply))
 
       subfeatures.size shouldBe 2
+    }
+  }
+
+  describe("Dimensionality Reduction test"){
+
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1.2, w=0.1, s="1.1", s2=""),
+      Train(i=2, d=2.0, v=0.1, w=0.3, s="1.1", s2=""),
+      Train(i=3, d=3.2, v=2.2, w=0.5, s="1.3", s2=""),
+      Train(i=4, d=4.0, v=3.2, w=0.8, s="0.6", s2=""),
+      Train(i=5, d=5.0, v=4.2, w=0.9, s="0.4", s2=""),
+      Train(i=6, d=6.1, v=0.0, w=1.1, s="1.9", s2=""),
+      Train(i=7, d=7.2, v=5.0, w=1.3, s="0.0", s2=""),
+      Train(i=8, d=7.5, v=7.0, w=1.5, s="9.1", s2=""),
+      Train(i=9, d=9.4, v=7.7, w=1.8, s="0.0", s2=""),
+      Train(i=10, d=9.9, v=8.9, w=2.1, s="0.0", s2="")
+    ).toDS.toDF
+
+    it("uses PCA to reduce dimensionality"){
+      val df = dfPreset
+        .withColumn("s", col("s").cast(DoubleType))
+        .withColumn("s2", col("s")*(-1.0))
+      val features = AssemblyFeature(Seq("d", "v", "w", "s", "s2"))
+      val estimator = Preset.linearReg(
+          features=Feature("features"), 
+          labelCol="i",
+          outputCol="z")
+
+      // Reduce dim: 5 -> 3
+      val pipe = features % (
+        estimator, 
+        preVectorAsmStep=None,
+        postVectorAsmStep=Some(DimReduc.PCA(3).asPipelineStage))
+
+      val dfOut = pipe.fit(df).transform(df)
+
+      dfOut.columns should contain ("features")
+      dfOut.columns shouldNot contain ("features_reduced")
+
+      val vec = dfOut.rdd.map(_.getAs[DenseVector]("features").toArray).collect
+      vec.size shouldBe (df.count)
+      forAll (vec) { v => (v.size == 3) shouldBe true }
     }
   }
 
