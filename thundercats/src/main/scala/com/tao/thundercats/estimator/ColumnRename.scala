@@ -47,8 +47,7 @@ with HasOutputColExposed {
   setDefault(outputCol -> "input2")
 }
 
-class ColumnRenameModel(
-  override val uid: String = Identifiable.randomUID("ColumnRenameModel"))
+class ColumnRenameModel(override val uid: String = Identifiable.randomUID("ColumnRenameModel"))
 extends Model[ColumnRenameModel] 
 with ColumnRenameParams {
 
