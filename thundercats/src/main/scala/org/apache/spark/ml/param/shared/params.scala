@@ -15,3 +15,5 @@ trait HasFeaturesColExposed extends HasFeaturesColExposed
 
 trait HasLabelColExposed extends HasLabelCol
 
+trait HasPredictionColExposed extends HasPredictionCol
+
