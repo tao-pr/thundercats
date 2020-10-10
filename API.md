@@ -146,6 +146,8 @@ Some subtypes of `Measure`
     - Precision     <-- with %% for threshold evaluation
     - Recall        <-- with %% for threshold evaluation
     - FMeasure      <-- with %% for threshold evaluation
+  - ClusterMeasure
+    - TAOTODO
 ```
 
 Some subtypes of `MeasureVector`

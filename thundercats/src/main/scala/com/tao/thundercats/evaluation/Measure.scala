@@ -59,6 +59,8 @@ trait ClassificationMeasure extends Measure {
     }
 }
 
+trait ClusterMeasure extends Measure 
+
 /**
  * Calculate fitting error between real label and predicted output.
  * Metric: Root mean square error

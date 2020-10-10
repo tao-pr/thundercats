@@ -10,3 +10,8 @@ trait HasInputColExposed extends HasInputCol
 trait HasOutputColExposed extends HasOutputCol 
 
 trait HasInOutColExposed extends HasInputCol with HasOutputCol
+
+trait HasFeaturesColExposed extends HasFeaturesColExposed
+
+trait HasLabelColExposed extends HasLabelCol
+
