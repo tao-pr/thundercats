@@ -3,6 +3,7 @@ package com.tao.thundercats.model
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.classification.DecisionTreeClassifier
+import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.ml.feature.VectorAssembler
 
 import com.tao.thundercats.evaluation._
@@ -56,7 +57,15 @@ object Preset {
     maxDepth: Int = 5,
     elasticNetParam: Option[Double] = None) = {
 
-    // TAOTODO
-    ???
+    throw new NotImplementedError("TAOTODO - randomForest")
+  }
+
+  def svm(
+    features: FeatureColumn,
+    labelCol: String,
+    outputCol: String,
+    intercept: Boolean = False) = {
+    val m = new SVMWithSGD()
+      .setIntercept(intercept)
   }
 }
