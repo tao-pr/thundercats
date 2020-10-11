@@ -4,14 +4,14 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Estimator, Model, Transformer}
 import org.apache.spark.ml.attribute.{Attribute, NominalAttribute}
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.param.shared.{HasHandleInvalid, HasInputCol, HaspredictionCol}
 import org.apache.spark.ml.util._
-import org.apache.spark.ml.feature.LabeledPoint
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.mllib.regression._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.types._
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.SparkException
+import org.apache.spark.mllib.regression.LabeledPoint
 
 import java.io.File
 import sys.process._
@@ -24,7 +24,7 @@ import com.tao.thundercats.physical._
  * Wrap a [[GeneralizedLinearAlgorithm]] into a [[Transformer]]
  */
 case class WrappedEstimator(
-  estimator: GeneralizedLinearAlgorithm,
+  estimator: GeneralizedLinearAlgorithm[GeneralizedLinearModel],
   override val uid: String = Identifiable.randomUID("linalg"))
 extends Estimator[WrappedEstimatorModel]
 with WrappedEstimatorParams
@@ -39,9 +39,9 @@ with DefaultParamsWritable {
 
   override def fit(dataset: Dataset[_]): WrappedEstimatorModel = {
     // Make RDD[LabeledPoint]
-    val trainData = dataset.rdd.map{ row => LabeledPoint(
-      row.getAs[](getLabelCol),
-      row.getAs[](getFeaturesCol)
+    val trainData = dataset.toDF.rdd.map{ row => LabeledPoint(
+      row.getAs[Double](getLabelCol),
+      row.getAs[Vector](getFeaturesCol)
     )}
 
     // Train the model
@@ -55,10 +55,10 @@ with DefaultParamsWritable {
 trait WrappedEstimatorParams extends Params
 with HasFeaturesColExposed
 with HasLabelColExposed
-with HaspredictionColExposed {
+with HasPredictionColExposed {
   setDefault(featuresCol -> "features")
   setDefault(predictionCol -> "prediction")
-  setLabelCol(labelCol -> "label")
+  setDefault(labelCol -> "label")
 }
 
 class WrappedEstimatorModel(
@@ -71,12 +71,11 @@ with WrappedEstimatorParams {
   final def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
   override def copy(extra: ParamMap): WrappedEstimatorModel = {
-    val copied = new WrappedEstimatorModel()
+    val copied = new WrappedEstimatorModel(model)
         .setFeaturesCol(getFeaturesCol)
-        .setPredictionCol(getpredictionCol)
+        .setPredictionCol(getPredictionCol)
     copyValues(copied, extra).setParent(parent)
   }
-
 
   def transformAndValidate(schema: StructType): StructType = {
     require(schema.map(_.name) contains getFeaturesCol, s"Dataset has to contain the input feature column : $getFeaturesCol")
@@ -88,10 +87,16 @@ with WrappedEstimatorParams {
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
 
-    // Make RDD[LabeledPoint]
+    import dataset.sparkSession.implicits._
 
-    // Feed to model
-    ???
+    // Make RDD[Vector]
+    val predData = dataset.toDF.rdd.map{ row =>
+      val pred = model.predict(row.getAs[Vector](getFeaturesCol))
+      val old = row.toSeq.toList
+      Row.fromSeq(old :+ pred)
+    }
+
+    predData.toDF
   }
 }
 
