@@ -64,7 +64,7 @@ object Preset {
     features: FeatureColumn,
     labelCol: String,
     outputCol: String,
-    intercept: Boolean = False) = {
+    intercept: Boolean = false) = {
     val m = new SVMWithSGD()
       .setIntercept(intercept)
   }
