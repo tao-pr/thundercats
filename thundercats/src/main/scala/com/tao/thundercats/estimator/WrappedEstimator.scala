@@ -1,5 +1,6 @@
 package com.tao.thundercats.estimator
 
+import org.apache.spark.rdd.RDD
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Estimator, Model, Transformer}
 import org.apache.spark.ml.attribute.{Attribute, NominalAttribute}
@@ -87,16 +88,15 @@ with WrappedEstimatorParams {
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
 
-    import dataset.sparkSession.implicits._
-
-    // Make RDD[Vector]
+    // Predict each row 
     val predData = dataset.toDF.rdd.map{ row =>
       val pred = model.predict(row.getAs[Vector](getFeaturesCol))
       val old = row.toSeq.toList
-      Row.fromSeq(old :+ pred)
+      old :+ pred
     }
-
-    predData.toDF
+    import dataset.sparkSession.implicits._
+    val cols = dataset.toDF.columns :+ getPredictionCol
+    predData.toDF(cols:_*)
   }
 }
 
