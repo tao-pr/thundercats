@@ -7,6 +7,7 @@ import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.ml.feature.VectorAssembler
 
 import com.tao.thundercats.evaluation._
+import com.tao.thundercats.estimator._
 
 /**
  * Preset of simple estimators
@@ -65,7 +66,9 @@ object Preset {
     labelCol: String,
     outputCol: String,
     intercept: Boolean = false) = {
-    val m = new SVMWithSGD()
-      .setIntercept(intercept)
+    val m = new SVMWithSGD().setIntercept(intercept)
+    val w = new WrappedEstimator(m)
+
+    ???
   }
 }
