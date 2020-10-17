@@ -24,10 +24,10 @@ import com.tao.thundercats.physical._
 /**
  * Wrap a [[GeneralizedLinearAlgorithm]] into a [[Transformer]]
  */
-case class WrappedEstimator(
-  estimator: GeneralizedLinearAlgorithm[GeneralizedLinearModel],
+case class WrappedEstimator[M <: GeneralizedLinearModel](
+  estimator: GeneralizedLinearAlgorithm[M],
   override val uid: String = Identifiable.randomUID("linalg"))
-extends Estimator[WrappedEstimatorModel]
+extends Estimator[WrappedEstimatorModel[M]]
 with WrappedEstimatorParams
 with DefaultParamsWritable {
   override def copy(extra: ParamMap): this.type = defaultCopy(extra)
@@ -38,7 +38,7 @@ with DefaultParamsWritable {
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
   def setLabelCol(value: String): this.type = set(labelCol, value)
 
-  override def fit(dataset: Dataset[_]): WrappedEstimatorModel = {
+  override def fit(dataset: Dataset[_]): WrappedEstimatorModel[M] = {
     // Make RDD[LabeledPoint]
     val trainData = dataset.toDF.rdd.map{ row => LabeledPoint(
       row.getAs[Double](getLabelCol),
@@ -62,16 +62,15 @@ with HasPredictionColExposed {
   setDefault(labelCol -> "label")
 }
 
-class WrappedEstimatorModel(
-  model: GeneralizedLinearModel,
-  override val uid: String = Identifiable.randomUID("linalg"))
-extends Model[WrappedEstimatorModel] 
+class WrappedEstimatorModel[M <: GeneralizedLinearModel](
+  model: M, override val uid: String = Identifiable.randomUID("linalg"))
+extends Model[WrappedEstimatorModel[M]] 
 with WrappedEstimatorParams {
 
   final def setFeaturesCol(value: String): this.type = set(featuresCol, value)
   final def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
-  override def copy(extra: ParamMap): WrappedEstimatorModel = {
+  override def copy(extra: ParamMap): WrappedEstimatorModel[M] = {
     val copied = new WrappedEstimatorModel(model)
         .setFeaturesCol(getFeaturesCol)
         .setPredictionCol(getPredictionCol)
