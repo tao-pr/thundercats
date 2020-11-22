@@ -92,31 +92,36 @@ with DefaultParamsWritable {
     method match {
       case Murmur => 
         Log.info(s"Murmur string encoder : input col = ${$(inputCol)}, output col = ${$(outputCol)}")
-        val dfTokenised = tokeniser.splitDF(dataset.toDF, $(inputCol), $(inputCol))
-        val hashSpace = MurmurModel.toSortedSet(dfTokenised, $(inputCol))
-        new StringEncoderModel(MurmurModel(hashSpace, $(outputCol)), tokeniser)
+        val dfTokenised = tokeniser.splitDF(
+          dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
+        val hashSpace = MurmurModel.toSortedSet(
+          dfTokenised, $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
+        new StringEncoderModel(MurmurModel(hashSpace, 
+          $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
       case TFIDF(minFreq) =>
-        val TEMP_TF_COL = "$tf$"
-        val TEMP_TOKEN_COL = "$token$"
+        val TEMP_TF_SUFFIX = "___tf"
         val tf = new HashingTF()
-          .setInputCol(TEMP_TOKEN_COL)
-          .setOutputCol(TEMP_TF_COL)
+          .setInputCol($(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
+          .setOutputCol($(inputCol) + TEMP_TF_SUFFIX)
         Log.info(s"TFIDFModel : Tokenising, col = ${$(inputCol)}")
-        val splitDf = tokeniser.splitDF(dataset.toDF, $(inputCol), TEMP_TOKEN_COL)
+        val splitDf = tokeniser.splitDF(
+          dataset.toDF, 
+          $(inputCol), 
+          $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
         Log.info(s"TFIDFModel : Fitting TF component")
         val tfDf = tf.transform(splitDf)
         Log.info(s"TFIDFModel : Fitting IDF component, output col = ${$(outputCol)}")
         val idf = new IDF()
-          .setInputCol(TEMP_TF_COL)
+          .setInputCol($(inputCol) + TEMP_TF_SUFFIX)
           .setOutputCol($(outputCol))
           .fit(tfDf)
         Log.info(s"TFIDFModel : Composing the model")
         new StringEncoderModel(TFIDFModel(tf, idf), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
-          .setTempCols(TEMP_TF_COL :: TEMP_TOKEN_COL :: Nil)
+          .setTempCols(($(inputCol) + TEMP_TF_SUFFIX) :: StringEncoderModel.TOKEN_SUFFIX :: Nil)
       case _ => throw new java.util.InvalidPropertiesFormatException(s"Unsupported encoder method : ${method}")
     }
   }
@@ -169,6 +174,10 @@ case class TFIDFModel(tf: HashingTF, idf: IDFModel) extends FittedEncoderModel {
   }
 }
 
+object StringEncoderModel {
+  val TOKEN_SUFFIX = "__token"
+}
+
 
 class StringEncoderModel(
   model: FittedEncoderModel,
@@ -186,6 +195,8 @@ with StringEncoderParams {
 
   def setInputCol(value: String): this.type = set(inputCol, value)
   def setOutputCol(value: String): this.type = set(outputCol, value)
+
+  // Temp cols will be removed after transformation
   def setTempCols(value: List[String]): this.type = set(tempCols, value)
 
   def transformAndValidate(schema: StructType): StructType = {
@@ -200,7 +211,10 @@ with StringEncoderParams {
 
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
-    val df = model.transform(tokenMethod(dataset, $(inputCol), $(outputCol)), $(outputCol))
+    Log.info(s"Transforming StringEncoderModel, method : ${tokenMethod}")
+    val df = model.transform(
+      tokenMethod(dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), 
+      $(outputCol))
     $(tempCols).foldLeft(df){ case(a,b) => a.drop(b) }
   }
 
