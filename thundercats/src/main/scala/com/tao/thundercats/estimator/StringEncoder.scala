@@ -96,8 +96,7 @@ with DefaultParamsWritable {
           dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
         val hashSpace = MurmurModel.toSortedSet(
           dfTokenised, $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
-        new StringEncoderModel(MurmurModel(hashSpace, 
-          $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), tokeniser)
+        new StringEncoderModel(MurmurModel(hashSpace, $(outputCol)), tokeniser)
           .setInputCol($(inputCol))
           .setOutputCol($(outputCol))
       case TFIDF(minFreq) =>
@@ -212,10 +211,15 @@ with StringEncoderParams {
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
     Log.info(s"Transforming StringEncoderModel, method : ${tokenMethod}")
+    tokenMethod(dataset.toDF, $(inputCol), 
+      $(inputCol) + StringEncoderModel.TOKEN_SUFFIX).show(5) // TAODEBUG
     val df = model.transform(
       tokenMethod(dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), 
-      $(outputCol))
-    $(tempCols).foldLeft(df){ case(a,b) => a.drop(b) }
+      $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
+    
+    $(tempCols)
+      .foldLeft(df){ case(a,b) => a.drop(b) }
+      .drop($(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
   }
 
 }
