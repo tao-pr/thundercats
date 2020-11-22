@@ -859,6 +859,21 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val score = spec.score(df, AUC).get
       score shouldBe 0.6666666666666666
     }
+
+    // TAOTODO
+    ignore("Run SVM in wrapped estimator"){
+      val features = AssemblyFeature("i" :: "d" :: Nil)
+      val labelCol = "label"
+      val outputCol = "pred"
+      val svm = Preset.svm(features, labelCol, outputCol)
+      val design = FeatureModelDesign(
+        outputCol,
+        labelCol,
+        svm)
+
+      val m = design.toSpecimen(features, df)
+      // TAOTODO
+    }
   }
 
   describe("Regression Model selector test"){

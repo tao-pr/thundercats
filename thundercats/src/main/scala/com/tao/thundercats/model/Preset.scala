@@ -68,7 +68,9 @@ object Preset {
     intercept: Boolean = false) = {
     val m = new SVMWithSGD().setIntercept(intercept)
     val w = new WrappedEstimator(m)
-
-    ???
+      .setFeaturesCol(features.colName)
+      .setPredictionCol(outputCol)
+      .setLabelCol(labelCol)
+    new Pipeline().setStages(Array(w))
   }
 }

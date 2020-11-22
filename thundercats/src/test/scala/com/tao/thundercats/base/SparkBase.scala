@@ -13,6 +13,7 @@ trait SparkTestInstance extends FunSpec with BeforeAndAfterAll {
       .master("local")
       .appName(name)
       .config("spark.driver.bindAddress", "127.0.0.1")
+      .config("spark.executor.instances", "1")
       .getOrCreate()
 
     instance.sparkContext.setLogLevel("ERROR")
