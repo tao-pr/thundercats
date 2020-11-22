@@ -104,14 +104,15 @@ with DefaultParamsWritable {
         val tf = new HashingTF()
           .setInputCol($(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
           .setOutputCol($(inputCol) + TEMP_TF_SUFFIX)
-        Log.info(s"TFIDFModel : Tokenising, col = ${$(inputCol)}")
+        Log.info(s"TFIDFModel : Tokenising col = ${$(inputCol)}")
         val splitDf = tokeniser.splitDF(
-          dataset.toDF, 
+          dataset.toDF,
           $(inputCol), 
           $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
-        Log.info(s"TFIDFModel : Fitting TF component")
+        Log.debug(s"TFIDFModel : Fitting TF component")
         val tfDf = tf.transform(splitDf)
-        Log.info(s"TFIDFModel : Fitting IDF component, output col = ${$(outputCol)}")
+        Log.debug(s"TFIDFModel : Fitting IDF component, output col = ${$(outputCol)}")
+        tfDf.show(10) // TAODEBUG
         val idf = new IDF()
           .setInputCol($(inputCol) + TEMP_TF_SUFFIX)
           .setOutputCol($(outputCol))
