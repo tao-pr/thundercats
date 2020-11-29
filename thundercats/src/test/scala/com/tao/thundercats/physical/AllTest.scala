@@ -862,7 +862,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
 
     // TAOTODO
-    ignore("Run SVM in wrapped estimator"){
+    it("Run SVM in wrapped estimator"){
       val features = AssemblyFeature("i" :: "d" :: Nil)
       val labelCol = "label"
       val outputCol = "pred"
