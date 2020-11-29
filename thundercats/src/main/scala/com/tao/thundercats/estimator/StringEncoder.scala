@@ -112,7 +112,6 @@ with DefaultParamsWritable {
         Log.debug(s"TFIDFModel : Fitting TF component")
         val tfDf = tf.transform(splitDf)
         Log.debug(s"TFIDFModel : Fitting IDF component, output col = ${$(outputCol)}")
-        tfDf.show(10) // TAODEBUG
         val idf = new IDF()
           .setInputCol($(inputCol) + TEMP_TF_SUFFIX)
           .setOutputCol($(outputCol))
@@ -213,7 +212,6 @@ with StringEncoderParams {
     transformAndValidate(dataset.schema)
     Log.info(s"Transforming StringEncoderModel, method : ${tokenMethod}")
     tokenMethod(dataset.toDF, $(inputCol), 
-      $(inputCol) + StringEncoderModel.TOKEN_SUFFIX).show(5) // TAODEBUG
     val df = model.transform(
       tokenMethod(dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), 
       $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)
