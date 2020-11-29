@@ -7,12 +7,15 @@ import org.apache.spark.ml.attribute.{Attribute, NominalAttribute}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.ml.param.shared._
-import org.apache.spark.mllib.regression._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.types._
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.SparkException
+import org.apache.spark.ml.linalg.VectorUDT
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+
 import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.regression._
+import org.apache.spark.mllib.linalg.Vector
 
 import java.io.File
 import sys.process._
@@ -39,10 +42,21 @@ with DefaultParamsWritable {
   def setLabelCol(value: String): this.type = set(labelCol, value)
 
   override def fit(dataset: Dataset[_]): WrappedEstimatorModel[M] = {
+
+    // Ensure vectors are MLLib's
+    val featureType = dataset.schema.find(_.name==getFeaturesCol).get.dataType
+
     // Make RDD[LabeledPoint]
     val trainData = dataset.toDF.rdd.map{ row => LabeledPoint(
       row.getAs[Double](getLabelCol),
-      row.getAs[Vector](getFeaturesCol)
+      featureType match {
+        // NOTE: [[VectorType]] is just a public exposure of private [[VectorUDT]]
+        case VectorType => 
+          // Convert ML vector => MLLIB vector
+          org.apache.spark.mllib.linalg.Vectors.fromML(
+            row.getAs[org.apache.spark.ml.linalg.Vector](getFeaturesCol))
+        case _ => row.getAs[Vector](getFeaturesCol)
+      }
     )}
 
     // Train the model
