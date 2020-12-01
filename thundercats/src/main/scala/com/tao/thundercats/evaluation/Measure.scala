@@ -173,20 +173,25 @@ case object FMeasure extends ClassificationMeasure {
  * Area under ROC curve
  */
 case object AUC extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd).areaUnderROC
     }
+  }
 }
 
 /**
  * Area under Precision-recall curve
  */
 case object AUCPrecisionRecall extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
+    // TAODEBUG -- It deosn't reach here?? for SVM
+    Log.info(s"AUCPrecisionRecall : col = ${specimen.featureCol.asArray.mkString(", ")}")
+
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd).areaUnderPR
     }
+  }
 }
 
 

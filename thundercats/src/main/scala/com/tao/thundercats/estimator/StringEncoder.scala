@@ -211,7 +211,6 @@ with StringEncoderParams {
   def transform(dataset: Dataset[_]): DataFrame = {
     transformAndValidate(dataset.schema)
     Log.info(s"Transforming StringEncoderModel, method : ${tokenMethod}")
-    tokenMethod(dataset.toDF, $(inputCol), 
     val df = model.transform(
       tokenMethod(dataset.toDF, $(inputCol), $(inputCol) + StringEncoderModel.TOKEN_SUFFIX), 
       $(inputCol) + StringEncoderModel.TOKEN_SUFFIX)

@@ -66,9 +66,6 @@ extends ModelDesign {
     var pipe = feature % (estimator, featurePipe)
     Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
-
-    // Debugger.printModel(fitted)
-
     TrainedSpecimen(fitted, feature, outputCol, labelCol)
   }
 }

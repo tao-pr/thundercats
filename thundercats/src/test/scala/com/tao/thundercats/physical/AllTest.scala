@@ -861,7 +861,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       score shouldBe 0.6666666666666666
     }
 
-    // TAOTODO
     it("Run SVM in wrapped estimator"){
       val features = AssemblyFeature("i" :: "d" :: Nil)
       val labelCol = "label"
@@ -871,9 +870,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         outputCol,
         labelCol,
         svm)
-
-      val m = design.toSpecimen(features, df)
-      // TAOTODO
+      val spec = design.toSpecimen(features, df)
+      val score = spec.score(df, AUCPrecisionRecall).get
+      //score should be > 0.5 TAODEBUG
     }
   }
 
@@ -889,6 +888,9 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     ).toDS.toDF
 
     it("generate model specimens from feature combinations"){
+      // TAODEBUG
+      Log.info("BBBBBBBBB")
+
       val df = dfPreset.withColumn("u", lit(-1)*col("i"))
       val selector = new FeatureAssemblyGenerator(
         minFeatureCombination=1,
