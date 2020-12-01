@@ -103,13 +103,20 @@ with WrappedEstimatorParams {
 
     // Predict each row 
     val predData = dataset.toDF.rdd.map{ row =>
+      // TAODEBUG 
+      // java.lang.ClassCastException: org.apache.spark.ml.linalg.SparseVector 
+      // cannot be cast to org.apache.spark.mllib.linalg.Vector
       val pred = model.predict(row.getAs[Vector](getFeaturesCol))
       val old = row.toSeq.toList
-      old :+ pred
+      Row.fromSeq(old :+ pred)
     }
-    import dataset.sparkSession.implicits._
+
+    val schema = dataset.schema.add(
+      StructField(getPredictionCol, DoubleType, true))
+
+    // import dataset.sparkSession.implicits._ TAODEBUG
     val cols = dataset.toDF.columns :+ getPredictionCol
-    predData.toDF(cols:_*)
+    dataset.sparkSession.createDataFrame(predData, schema)
   }
 }
 
