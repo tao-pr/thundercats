@@ -102,11 +102,17 @@ with WrappedEstimatorParams {
     transformAndValidate(dataset.schema)
 
     // Predict each row 
+    val featureType = dataset.schema.find(_.name==getFeaturesCol).get.dataType
     val predData = dataset.toDF.rdd.map{ row =>
-      // TAODEBUG 
-      // java.lang.ClassCastException: org.apache.spark.ml.linalg.SparseVector 
-      // cannot be cast to org.apache.spark.mllib.linalg.Vector
-      val pred = model.predict(row.getAs[Vector](getFeaturesCol))
+
+      val featureVec = featureType match {
+        case VectorType => 
+          // Convert ML vector => MLLIB vector
+          org.apache.spark.mllib.linalg.Vectors.fromML(
+            row.getAs[org.apache.spark.ml.linalg.Vector](getFeaturesCol))
+        case _ => row.getAs[Vector](getFeaturesCol)
+      }
+      val pred = model.predict(featureVec)
       val old = row.toSeq.toList
       Row.fromSeq(old :+ pred)
     }

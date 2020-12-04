@@ -185,9 +185,6 @@ case object AUC extends ClassificationMeasure {
  */
 case object AUCPrecisionRecall extends ClassificationMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
-    // TAODEBUG -- It deosn't reach here?? for SVM
-    Log.info(s"AUCPrecisionRecall : col = ${specimen.featureCol.asArray.mkString(", ")}")
-
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd).areaUnderPR
     }
