@@ -124,9 +124,9 @@ the process is designed as follows.
 
 ```
 - Measure          <-- Measurement of an individual feature
-  - %              <-- Measure as scalar 
-  - %%             <-- Measure as map (threshold -> scalar)
-                       For classification evaluation
+  - %              <-- Measure score as scalar value
+  - %%             <-- Measure score as map (threshold -> scalar value)
+                       For evaluation of classification
 - MeasureVector    <-- Measurement of multiple feature at a time
 ```
 
