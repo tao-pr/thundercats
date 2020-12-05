@@ -102,20 +102,6 @@ The abstraction of the model is shown below.
 - Specimen         <-- Trained model of [[ModelDesign]]
 ```
 
-To train a model
-
-```scala
-val design: ModelDesign = ???
-val feature: FeatureColumn = AssemblyFeature(Array("f1","f2","f3"))
-val model: Specimen = design.toSpecimen(feature, df)
-```
-
-To use trained model for prediction
-
-```scala
-TBD
-```
-
 #### 1.3.1 Making a ModelDesign
 
 Some presets of model are also available 
@@ -130,6 +116,17 @@ val design = FeatureModelDesign(
   labelCol="isTempRising",
   estimator=estimator,
   featurePipe=Some(encoder))
+```
+
+#### 1.3.2 Training model (Making Specimen)
+
+Use `.toSpecimen()` to train.
+The function expects `FeatureColumn` and Training dataframe.
+
+```scala
+val design: ModelDesign = ???
+val feature: FeatureColumn = AssemblyFeature(Array("f1","f2","f3"))
+val model: Specimen = design.toSpecimen(feature, df)
 ```
 
 
