@@ -872,7 +872,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         svm)
       val spec = design.toSpecimen(features, df)
       val score = spec.score(df, AUCPrecisionRecall).get
-      //score should be > 0.5 TAODEBUG
+      score should be > 0.5
     }
   }
 
