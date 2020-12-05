@@ -98,8 +98,8 @@ All machine learning and statistical methods go here in this module.
 The abstraction of the model is shown below.
 
 ```
-- ModelDesign      <-- Defines structure of model for training
-- Specimen         <-- Trained model from [[ModelDesign]]
+- ModelDesign      <-- Defines model blueprint for training
+- Specimen         <-- Trained model of [[ModelDesign]]
 ```
 
 To train a model
@@ -114,6 +114,22 @@ To use trained model for prediction
 
 ```scala
 TBD
+```
+
+#### 1.3.1 Making a ModelDesign
+
+Some presets of model are also available 
+
+```scala
+val estimator = Preset.decisionTree(
+  features=AssemblyFeature(features, "features"),
+  labelCol="isTempRising",
+  outputCol="predictedRising")
+val design = FeatureModelDesign(
+  outputCol="predictedRising",
+  labelCol="isTempRising",
+  estimator=estimator,
+  featurePipe=Some(encoder))
 ```
 
 
@@ -137,10 +153,12 @@ Some subtypes of `Measure`
   - RegressionMeasure
     - RMSE
     - MAE
+    - MPE
     - PearsonCorr
   - ClassificationMeasure
     - RMSE
     - MAE
+    - MPE
     - AUC
     - AUCPrecisionRecall
     - Precision     <-- with %% for threshold evaluation
