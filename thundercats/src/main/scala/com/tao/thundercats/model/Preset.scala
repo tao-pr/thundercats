@@ -86,4 +86,6 @@ object Preset {
       .setDistanceMeasure(distance)
     new Pipeline().setStages(Array(kmeans))
   }
+
+  // TAOTODO: Wrap LDA for dataframe
 }
