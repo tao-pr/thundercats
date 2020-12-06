@@ -207,7 +207,7 @@ val scores = new RegressionFeatureCompare(PearsonCorr)
 
 ### 1.5 Evaluate combinations of features
 
-Try combinations of feature columns by
+Try combinations of feature columns with `.genCombinations()`
 
 ```scala
 val selector = new FeatureAssemblyGenerator(

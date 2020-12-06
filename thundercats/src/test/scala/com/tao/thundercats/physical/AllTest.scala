@@ -965,7 +965,18 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         "com.tao.thundercats.evaluation.TrainedSpecimen")
       allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
     }
+  }
 
+  describe("Clustering model test"){
+    // TAOTODO: Dataset here
+    it("evaluate different clustering models"){
+      val numClusters = 3
+      val featureCol = ???
+      val modelLDA = Preset.lda(featureCol, numClusters, "group")
+      val modelKMeans = Preset.kmeans(featureCol, numClusters, "group")
+
+      // TAOTODO
+    }
   }
 
   describe("Crossvalidation test"){
