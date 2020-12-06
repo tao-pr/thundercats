@@ -888,8 +888,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     ).toDS.toDF
 
     it("generate model specimens from feature combinations"){
-      // TAODEBUG
-      Log.info("BBBBBBBBB")
 
       val df = dfPreset.withColumn("u", lit(-1)*col("i"))
       val selector = new FeatureAssemblyGenerator(

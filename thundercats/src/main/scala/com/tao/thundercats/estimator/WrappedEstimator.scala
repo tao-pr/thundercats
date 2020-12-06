@@ -120,7 +120,6 @@ with WrappedEstimatorParams {
     val schema = dataset.schema.add(
       StructField(getPredictionCol, DoubleType, true))
 
-    // import dataset.sparkSession.implicits._ TAODEBUG
     val cols = dataset.toDF.columns :+ getPredictionCol
     dataset.sparkSession.createDataFrame(predData, schema)
   }

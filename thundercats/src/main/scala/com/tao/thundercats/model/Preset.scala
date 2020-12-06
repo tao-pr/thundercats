@@ -5,6 +5,7 @@ import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.clustering._
 
 import com.tao.thundercats.evaluation._
 import com.tao.thundercats.estimator._
@@ -72,5 +73,17 @@ object Preset {
       .setPredictionCol(outputCol)
       .setLabelCol(labelCol)
     new Pipeline().setStages(Array(w))
+  }
+
+  def kmeans(
+    features: FeatureColumn,
+    numK: Int,
+    outputCol: String,
+    distance: String = "euclidean") = {
+    val kmeans = new KMeans()
+      .setFeaturesCol(features.colName)
+      .setPredictionCol(outputCol)
+      .setDistanceMeasure(distance)
+    new Pipeline().setStages(Array(kmeans))
   }
 }
