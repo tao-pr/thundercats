@@ -969,13 +969,29 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Clustering model test"){
     // TAOTODO: Dataset here
+    val dfPreset = ???
+
     it("evaluate different clustering models"){
-      val numClusters = 3
-      val featureCol = ???
-      val modelLDA = Preset.lda(featureCol, numClusters, "group")
-      val modelKMeans = Preset.kmeans(featureCol, numClusters, "group")
+      val measure = ???
+      val feat = AssemblyFeature(Seq("a","b","c"), "features")
 
       // TAOTODO
+      val allModels = List(
+        FeatureModelDesign(
+          outputCol="group",
+          estimator=Preset.kmeans(features=feat, numK=2, outputCol="group")),
+        FeatureModelDesign(
+          outputCol="group",
+          estimator=Preset.kmeans(features=feat, numK=3, outputCol="group"))
+      )
+      val allScores = new ClusterModelCompare(measure, feat)
+        .allOf(df, allModels)
+
+      allScores.size shouldBe (allModels.size)
+      allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
+        "com.tao.thundercats.evaluation.TrainedSpecimen",
+        "com.tao.thundercats.evaluation.TrainedSpecimen")
+      //allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
     }
   }
 
