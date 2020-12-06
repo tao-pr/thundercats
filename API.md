@@ -111,7 +111,7 @@ val estimator = Preset.decisionTree(
   features=AssemblyFeature(features, "features"),
   labelCol="isTempRising",
   outputCol="predictedRising")
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="predictedRising",
   labelCol="isTempRising",
   estimator=estimator,
@@ -219,7 +219,7 @@ val selector = new FeatureAssemblyGenerator(
 // NOTE: Always use "features" column
 val estimator = Preset.linearReg(Feature("features"), "i", "z")
 val combinations = selector.genCombinations(estimator, df)
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=estimator)
@@ -244,7 +244,7 @@ val cv = SplitValidation(
 )
 
 val feature = AssemblyFeature("v"::Nil, "features")
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
@@ -260,7 +260,7 @@ val cv = CrossValidation(
 )
 
 val feature = AssemblyFeature("v"::Nil, "features")
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))

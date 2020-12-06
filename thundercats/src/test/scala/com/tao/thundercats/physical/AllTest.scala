@@ -788,7 +788,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val df_ = df.withColumn("label-lg", 'label + lit(0.01)*'i)
       val candidates = Array("i","d")
       val features = AssemblyFeature(candidates, "features")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="label-lg",
         estimator=Preset.linearReg(features, "label-lg", "z"))
@@ -798,11 +798,11 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         .get
 
       bestCol shouldBe Feature("i")
-      bestSpec.isInstanceOf[TrainedSpecimen] shouldBe true
+      bestSpec.isInstanceOf[SupervisedSpecimen] shouldBe true
 
       // When measuring vector of features, 
       // the feature cols of specimen will not be the best one, but all in feature vector
-      bestSpec.asInstanceOf[TrainedSpecimen].featureCol.colName shouldBe "features"
+      bestSpec.asInstanceOf[SupervisedSpecimen].featureCol.colName shouldBe "features"
     }
   }
 
@@ -866,7 +866,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val labelCol = "label"
       val outputCol = "pred"
       val svm = Preset.svm(features, labelCol, outputCol)
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol,
         labelCol,
         svm)
@@ -920,7 +920,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       val estimator = Preset.linearReg(Feature("features"), "i", "z")
       val combinations = selector.genCombinations(estimator, df)
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=estimator)
@@ -947,11 +947,11 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val df = dfPreset.withColumn("i2", col("i")+col("d"))
 
       val allModels = List(
-        FeatureModelDesign(
+        SupervisedModelDesign(
           outputCol="z",
           labelCol="i",
           estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z")),
-        FeatureModelDesign(
+        SupervisedModelDesign(
           outputCol="z",
           labelCol="i2",
           estimator=Preset.linearReg(features=feat, labelCol="i", outputCol="z", elasticNetParam=Some(0.01)))
@@ -961,36 +961,36 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
       allScores.size shouldBe (allModels.size)
       allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
-        "com.tao.thundercats.evaluation.TrainedSpecimen",
-        "com.tao.thundercats.evaluation.TrainedSpecimen")
+        "com.tao.thundercats.evaluation.SupervisedSpecimen",
+        "com.tao.thundercats.evaluation.SupervisedSpecimen")
       allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
     }
   }
 
   describe("Clustering model test"){
     // TAOTODO: Dataset here
-    val dfPreset = ???
+    // lazy val dfPreset = ???
 
-    it("evaluate different clustering models"){
+    ignore("evaluate different clustering models"){
       val measure = ???
       val feat = AssemblyFeature(Seq("a","b","c"), "features")
 
       // TAOTODO
       val allModels = List(
-        FeatureModelDesign(
+        UnsupervisedModelDesign(
           outputCol="group",
           estimator=Preset.kmeans(features=feat, numK=2, outputCol="group")),
-        FeatureModelDesign(
+        UnsupervisedModelDesign(
           outputCol="group",
           estimator=Preset.kmeans(features=feat, numK=3, outputCol="group"))
       )
-      val allScores = new ClusterModelCompare(measure, feat)
-        .allOf(df, allModels)
+      // val allScores = new ClusterModelCompare(measure, feat)
+      //   .allOf(df, allModels)
 
-      allScores.size shouldBe (allModels.size)
-      allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
-        "com.tao.thundercats.evaluation.TrainedSpecimen",
-        "com.tao.thundercats.evaluation.TrainedSpecimen")
+      // allScores.size shouldBe (allModels.size)
+      // allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
+      //   "com.tao.thundercats.evaluation.SupervisedSpecimen",
+      //   "com.tao.thundercats.evaluation.SupervisedSpecimen")
       //allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
     }
   }
@@ -1012,7 +1012,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       )
 
       val feature = AssemblyFeature("v"::Nil, "features")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
@@ -1029,7 +1029,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       )
 
       val feature = AssemblyFeature("v"::Nil, "features")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
@@ -1054,7 +1054,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val select = ZScoreFeatureSelector(AllSignificance)
       val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
       val features = Seq("d", "v", "w", "s")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=Preset.linearReg(
@@ -1080,7 +1080,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val select = ZScoreFeatureSelector(Significance95p)
       val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
       val features = Seq("d", "v", "w", "s")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=Preset.linearReg(
@@ -1102,7 +1102,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val select = BestNFeaturesSelector(top=2, measure=PearsonCorr)
       val df = dfPreset.withColumn("s", col("s").cast(DoubleType))
       val features = Seq("d", "v", "w", "s")
-      val design = FeatureModelDesign(
+      val design = SupervisedModelDesign(
         outputCol="z",
         labelCol="i",
         estimator=Preset.linearReg(
