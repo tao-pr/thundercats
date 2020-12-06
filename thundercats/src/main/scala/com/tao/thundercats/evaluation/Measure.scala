@@ -61,6 +61,8 @@ trait ClassificationMeasure extends Measure {
 
 trait ClusterMeasure extends Measure 
 
+// TAOTODO implement some [[ClusterMeasure]]
+
 /**
  * Calculate fitting error between real label and predicted output.
  * Metric: Root mean square error

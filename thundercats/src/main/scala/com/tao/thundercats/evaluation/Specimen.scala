@@ -102,7 +102,7 @@ case class SupervisedSpecimen(
       case _:RegressionMeasure => super.score(ensure(df), measure)
       case _:ClassificationMeasure => super.score(ensure(df), measure)
       case _                   => Fail(
-        s"Unsupported measure type : ${measure.className}")
+        s"Unsupported measure type for Supervised specimen: ${measure.className}")
     }
   }
 }
@@ -114,6 +114,9 @@ case class UnsupervisedSpecimen(
 ) extends Specimen {
   override val labelCol = ""
   override def score(df: DataFrame, measure: Measure) = {
-    ??? // TAOTODO
+    measure match {
+      case _: ClusterMeasure => super.score(ensure(df), measure)
+      case _ => Fail(s"Unsupported measure type for Unsupervised specimen : ${measure.className}")
+    }
   }
 }
