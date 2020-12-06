@@ -91,7 +91,7 @@ case class DummySpecimen(
   override protected def ensure(df: DataFrame): DataFrame = df // No transformation, no pipeline model
 }
 
-case class TrainedSpecimen(
+case class SupervisedSpecimen(
   override val model: PipelineModel,
   override val featureCol: FeatureColumn,
   override val outputCol: String,
@@ -104,5 +104,16 @@ case class TrainedSpecimen(
       case _                   => Fail(
         s"Unsupported measure type : ${measure.className}")
     }
+  }
+}
+
+case class UnsupervisedSpecimen(
+  override val model: PipelineModel,
+  override val featureCol: FeatureColumn,
+  override val outputCol: String
+) extends Specimen {
+  override val labelCol = ""
+  override def score(df: DataFrame, measure: Measure) = {
+    ??? // TAOTODO
   }
 }

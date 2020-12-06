@@ -124,7 +124,7 @@ object ClassificationPipeline extends BaseApp {
       features=AssemblyFeature(features, "features"),
       labelCol="isTempRising",
       outputCol="predictedRising")
-    val design = FeatureModelDesign(
+    val design = SupervisedModelDesign(
       outputCol="predictedRising",
       labelCol="isTempRising",
       estimator=estimator,
@@ -135,7 +135,7 @@ object ClassificationPipeline extends BaseApp {
       features=Feature("features"), // <--- use output from [FeatureCompare].allOf
       labelCol="isTempRising",
       outputCol="predictedRising")
-    val designForEval = FeatureModelDesign(
+    val designForEval = SupervisedModelDesign(
       outputCol="predictedRising",
       labelCol="isTempRising",
       estimator=estimatorForEval,

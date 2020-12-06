@@ -54,10 +54,7 @@ extends ModelDesign {
 
 // TAOTODO should separate supervised [v] unsupervised models
 
-/**
- * Model prototype of any kind
- */
-case class FeatureModelDesign(
+case class SupervisedModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
   estimator: Pipeline,
@@ -66,8 +63,24 @@ extends ModelDesign {
 
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
     var pipe = feature % (estimator, featurePipe)
-    Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
+    Log.info(s"Fitting Supervised Model: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
-    TrainedSpecimen(fitted, feature, outputCol, labelCol)
+    SupervisedSpecimen(fitted, feature, outputCol, labelCol)
+  }
+}
+
+case class UnsupervisedModelDesign(
+  override val outputCol: String,
+  estimator: Pipeline,
+  featurePipe: Option[PipelineStage] = None)
+extends ModelDesign {
+
+  override val labelCol = ""
+
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
+    var pipe = feature % (estimator, featurePipe)
+    Log.info(s"Fitting Unsupervised Model: outputCol=${outputCol}")
+    val fitted = pipe.fit(df)
+    UnsupervisedSpecimen(fitted, feature, outputCol)
   }
 }
