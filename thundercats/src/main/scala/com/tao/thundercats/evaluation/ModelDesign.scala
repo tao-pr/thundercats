@@ -52,6 +52,8 @@ extends ModelDesign {
     DummySpecimen(feature, labelCol, feature.colName)
 }
 
+// TAOTODO should separate supervised [v] unsupervised models
+
 /**
  * Model prototype of any kind
  */
