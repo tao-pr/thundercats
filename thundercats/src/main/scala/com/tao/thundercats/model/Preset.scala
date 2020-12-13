@@ -87,5 +87,19 @@ object Preset {
     new Pipeline().setStages(Array(kmeans))
   }
 
+  def gmm(
+    features: FeatureColumn,
+    numK: Int,
+    outputCol: String,
+    probCol: String,
+    maxIters: Int = 10) = {
+    val g = GaussianMixture()
+      .setK(numK)
+      .setPredictionCol(outputCol)
+      .setProbabilityCol(probCol)
+      .setMaxIter(maxIters)
+    new Pipeline().setStages(Array(g))
+  }
+
   // TAOTODO: Wrap LDA for dataframe
 }

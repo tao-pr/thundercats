@@ -70,11 +70,24 @@ trait Specimen {
   /**
    * Score the specimen, as a map (threshold -> score)
    */
-  def scoreMap(df: DataFrame, measure: Measure): MayFail[Map[Double,Double]] = 
-    measure match {
-      case m:ClassificationMeasure => m %% (ensure(df), this)
-      case _ => Fail(f"${measure.className} does not support scoreMap")
-    }
+  def scoreMap(df: DataFrame, measure: ClassificationMeasure): MayFail[Map[Double,Double]] = 
+    m %% (ensure(df), this)
+
+  /**
+   * Generate a cluster from data
+   */
+  def scoreCluster(df: DataFrame, measure: ClusterMeasure): MayFail[Double] = {
+    measure % (ensure(df), this)
+  }
+
+  /**
+   * Transform the dataframe into feature vectors
+   * without running prediction
+   */
+  def toFeatureVectorRDD(df: DataFrame): RDD[Vector] = {
+    val pipeWithoutPredictor = ???
+    // TAOTODO
+  }
 }
 
 /**

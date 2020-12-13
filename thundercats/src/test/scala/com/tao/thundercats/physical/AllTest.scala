@@ -968,12 +968,20 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
   }
 
   describe("Clustering model test"){
-    // TAOTODO: Dataset here
-    // lazy val dfPreset = ???
+    lazy val dfPreset = List(
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.1, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1001, w=0, s="", s2=""),
+      Train(i=5, d=2.0, v=3000, w=0, s="", s2=""),
+      Train(i=4, d=2.0, v=2400, w=0, s="", s2=""),
+      Train(i=5, d=3.0, v=3300, w=0, s="", s2=""),
+      Train(i=4, d=1.0, v=1000, w=600, s="", s2=""),
+      Train(i=5, d=1.0, v=1000, w=750, s="", s2=""),
+    )
 
     ignore("evaluate different clustering models"){
-      val measure = ???
-      val feat = AssemblyFeature(Seq("a","b","c"), "features")
+      val measure = SSE
+      val feat = AssemblyFeature(Seq("i","d","v","w"), "features")
 
       // TAOTODO
       val allModels = List(
@@ -982,7 +990,10 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
           estimator=Preset.kmeans(features=feat, numK=2, outputCol="group")),
         UnsupervisedModelDesign(
           outputCol="group",
-          estimator=Preset.kmeans(features=feat, numK=3, outputCol="group"))
+          estimator=Preset.kmeans(features=feat, numK=3, outputCol="group")),
+        UnsupervisedModelDesign(
+          outputCol="group",
+          estimator=Preset.gmm(features=feat, numK=3, outputCol="group"))
       )
       // val allScores = new ClusterModelCompare(measure, feat)
       //   .allOf(df, allModels)

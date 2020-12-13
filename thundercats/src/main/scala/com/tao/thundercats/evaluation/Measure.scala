@@ -43,6 +43,9 @@ trait ClassificationMeasure extends Measure {
     %(df, specimen).map{ v => Map(Double.MinValue -> v) }
   }
 
+  /**
+   * Produce RDD of (prediction, label) from "predicted" dataframe
+   */
   def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
     if (!df.columns.contains(specimen.labelCol)){
       Fail(s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})")
@@ -59,7 +62,21 @@ trait ClassificationMeasure extends Measure {
     }
 }
 
-trait ClusterMeasure extends Measure 
+trait ClusterMeasure extends Measure {
+
+  /**
+   * Cluster the dataframe into groups
+   * @returns [[RDD[Double,Double]]], tuples of 
+   */
+  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double)]] = MayFail {
+    df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(IntegerType))
+      .rdd.map{ row =>
+        val cl = row.getAs[Int](specimen.outputCol)
+        val feat = row.getAs[Vector]("features") // TAOTODO read feature col from model
+        (feat, cl)
+      }.cache
+  }
+}
 
 // TAOTODO implement some [[ClusterMeasure]]
 
@@ -193,4 +210,22 @@ case object AUCPrecisionRecall extends ClassificationMeasure {
   }
 }
 
+/**
+ * Sum of square error to mean of cluster
+ */
+case object SSE extends ClusterMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
+    cluster(df, specimen).map{ rdd => // RDD[(featvec, cluster)]
+      val clusterMean = rdd.mapPartition{ iter => 
+        if (iter.nonEmpty){
+          iter.map{ case(feat, cluster) => makeMean }.reduce{ aggregateMean }
+          val v = ???
+          Iterator.single(v)
+        }
+        else Iterator.empty
+      }.collect
+      ??? // TAOTODO
+    }
+  }
+}
 
