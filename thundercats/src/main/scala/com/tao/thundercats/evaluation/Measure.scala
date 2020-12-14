@@ -9,6 +9,7 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.DoubleRDDFunctions
 
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
@@ -16,11 +17,11 @@ import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.regression.LinearRegression
-import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
-import org.apache.spark.rdd.DoubleRDDFunctions
 import org.apache.spark.ml.regression._
+
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.linalg.Vector
 
 import breeze.linalg.DenseVector
 
@@ -64,21 +65,15 @@ trait ClassificationMeasure extends Measure {
 
 trait ClusterMeasure extends Measure {
 
-  /**
-   * Cluster the dataframe into groups
-   * @returns [[RDD[Double,Double]]], tuples of 
-   */
-  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double)]] = MayFail {
+  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(Vector,Int)]] = MayFail {
     df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(IntegerType))
       .rdd.map{ row =>
         val cl = row.getAs[Int](specimen.outputCol)
-        val feat = row.getAs[Vector]("features") // TAOTODO read feature col from model
+        val feat = row.getAs[Vector](specimen.featureCol.colName)
         (feat, cl)
       }.cache
   }
 }
-
-// TAOTODO implement some [[ClusterMeasure]]
 
 /**
  * Calculate fitting error between real label and predicted output.
@@ -215,17 +210,8 @@ case object AUCPrecisionRecall extends ClassificationMeasure {
  */
 case object SSE extends ClusterMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
-    cluster(df, specimen).map{ rdd => // RDD[(featvec, cluster)]
-      val clusterMean = rdd.mapPartition{ iter => 
-        if (iter.nonEmpty){
-          iter.map{ case(feat, cluster) => makeMean }.reduce{ aggregateMean }
-          val v = ???
-          Iterator.single(v)
-        }
-        else Iterator.empty
-      }.collect
-      ??? // TAOTODO
-    }
+    cluster(df, specimen).map{ rdd => 0 }
+    // TAOTODO
   }
 }
 
