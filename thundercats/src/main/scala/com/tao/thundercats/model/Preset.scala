@@ -93,7 +93,7 @@ object Preset {
     outputCol: String,
     probCol: String,
     maxIters: Int = 10) = {
-    val g = GaussianMixture()
+    val g = new GaussianMixture()
       .setK(numK)
       .setPredictionCol(outputCol)
       .setProbabilityCol(probCol)

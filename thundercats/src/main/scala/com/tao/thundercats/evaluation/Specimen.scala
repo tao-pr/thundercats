@@ -8,16 +8,21 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
 
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
-import org.apache.spark.ml.{Transformer, PipelineModel}
+import org.apache.spark.ml.{Transformer, PipelineModel, CustomPipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
-import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
+import org.apache.spark.ml.linalg.{VectorUDT, Vector}
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.rdd.DoubleRDDFunctions
+
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
+import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
 
 import java.io.File
 import java.lang.IllegalArgumentException
@@ -71,7 +76,7 @@ trait Specimen {
    * Score the specimen, as a map (threshold -> score)
    */
   def scoreMap(df: DataFrame, measure: ClassificationMeasure): MayFail[Map[Double,Double]] = 
-    m %% (ensure(df), this)
+    measure %% (ensure(df), this)
 
   /**
    * Generate a cluster from data
@@ -84,9 +89,20 @@ trait Specimen {
    * Transform the dataframe into feature vectors
    * without running prediction
    */
-  def toFeatureVectorRDD(df: DataFrame): RDD[Vector] = {
-    val pipeWithoutPredictor = ???
-    // TAOTODO
+  def toFeatureVectorRDD(df: DataFrame): RDD[MLLibVector] = {
+    val pipeWithoutPredictor = new CustomPipelineModel(model.uid, model.stages.toArray.dropRight(1))
+    val featDf = pipeWithoutPredictor.transform(df)
+    val featureType = featDf.schema.find(_.name==featureCol).get.dataType
+    featDf.rdd.map{ row =>
+      featureType match {
+        // NOTE: [[VectorType]] is just a public exposure of private [[VectorUDT]]
+        case VectorType => 
+          // Convert ML vector => MLLIB vector
+          val v = row.getAs[org.apache.spark.ml.linalg.Vector](featureCol.colName)
+          org.apache.spark.mllib.linalg.Vectors.fromML(v)
+        case _ => row.getAs[MLLibVector](featureCol.colName)
+      }
+    }
   }
 }
 

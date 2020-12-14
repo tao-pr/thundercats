@@ -15,7 +15,7 @@ import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.regression._
-import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
 
 import java.io.File
 import sys.process._
@@ -53,9 +53,9 @@ with DefaultParamsWritable {
         // NOTE: [[VectorType]] is just a public exposure of private [[VectorUDT]]
         case VectorType => 
           // Convert ML vector => MLLIB vector
-          org.apache.spark.mllib.linalg.Vectors.fromML(
-            row.getAs[org.apache.spark.ml.linalg.Vector](getFeaturesCol))
-        case _ => row.getAs[Vector](getFeaturesCol)
+          val v = row.getAs[org.apache.spark.ml.linalg.Vector](getFeaturesCol)
+          org.apache.spark.mllib.linalg.Vectors.fromML(v)
+        case _ => row.getAs[MLLibVector](getFeaturesCol)
       }
     )}
 
@@ -110,7 +110,7 @@ with WrappedEstimatorParams {
           // Convert ML vector => MLLIB vector
           org.apache.spark.mllib.linalg.Vectors.fromML(
             row.getAs[org.apache.spark.ml.linalg.Vector](getFeaturesCol))
-        case _ => row.getAs[Vector](getFeaturesCol)
+        case _ => row.getAs[MLLibVector](getFeaturesCol)
       }
       val pred = model.predict(featureVec)
       val old = row.toSeq.toList
