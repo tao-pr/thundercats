@@ -21,7 +21,9 @@ import org.apache.spark.ml.regression._
 
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
+import org.apache.spark.mllib.linalg.{SparseVector => MLLibSparseV}
+import org.apache.spark.mllib.linalg.{DenseVector => MLLibDenseV}
 
 import breeze.linalg.DenseVector
 
@@ -65,11 +67,11 @@ trait ClassificationMeasure extends Measure {
 
 trait ClusterMeasure extends Measure {
 
-  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(Vector,Int)]] = MayFail {
+  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(MLLibVector,Int)]] = MayFail {
     df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(IntegerType))
       .rdd.map{ row =>
         val cl = row.getAs[Int](specimen.outputCol)
-        val feat = row.getAs[Vector](specimen.featureCol.colName)
+        val feat = row.getAs[MLLibVector](specimen.featureCol.colName)
         (feat, cl)
       }.cache
   }
@@ -210,7 +212,16 @@ case object AUCPrecisionRecall extends ClassificationMeasure {
  */
 case object SSE extends ClusterMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
-    cluster(df, specimen).map{ rdd => 0 }
+    cluster(df, specimen).map{ rdd =>
+      val rddDense = rdd.map{ 
+        case (MLLibDenseV(vs), c) => (vs,c)
+        case (MLLibSparseV(n, ids, vs), c) => (vs,c)
+        case (w,_) => throw new IllegalArgumentException("Do not support vector type " + w.getClass)
+      }
+      val clusterMeanVector = rddDense.groupBy(_._2)
+
+      ???
+    }
     // TAOTODO
   }
 }
