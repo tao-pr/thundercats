@@ -213,12 +213,23 @@ case object AUCPrecisionRecall extends ClassificationMeasure {
 case object SSE extends ClusterMeasure {
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
     cluster(df, specimen).map{ rdd =>
-      val rddDense = rdd.map{ 
-        case (MLLibDenseV(vs), c) => (vs,c)
-        case (MLLibSparseV(n, ids, vs), c) => (vs,c)
+      val rddArrayVectors = rdd.map{ 
+        case (MLLibDenseV(vs), c) => (c,vs,1) // Also add count number
+        case (MLLibSparseV(n, ids, vs), c) => (c,vs,1)
         case (w,_) => throw new IllegalArgumentException("Do not support vector type " + w.getClass)
       }
-      val clusterMeanVector = rddDense.groupBy(_._2)
+      val clusterMeanVectorMap = rddArrayVectors
+        .keyBy(_._1)
+        .reduceByKey{
+          case (a,b) => 
+            val cl = a._1
+            val v1 = a._2
+            val v2 = b._2
+            val vsum = v1.zip(v2).map{ case (i,j) => i+j } // sum vector
+            (cl, vsum, a._3+b._3)
+        }
+        .mapValues{ case (c,vsum,count) => (c,vsum.map(_ / count.toDouble))} // avg
+        .collectAsMap // cluster => mean_vector
 
       ???
     }
