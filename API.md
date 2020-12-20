@@ -162,7 +162,7 @@ Some subtypes of `Measure`
     - Recall        <-- with %% for threshold evaluation
     - FMeasure      <-- with %% for threshold evaluation
   - ClusterMeasure
-    - TAOTODO
+    - SSE
 ```
 
 Some subtypes of `MeasureVector`
