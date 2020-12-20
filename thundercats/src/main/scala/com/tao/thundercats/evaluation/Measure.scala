@@ -239,12 +239,6 @@ case object SSE extends ClusterMeasure {
         .mapValues{ case (c,vsum,count) => vsum.map(_ / count.toDouble)} // avg
         .collectAsMap // [[cluster => mean_vector]]
 
-      // TAODEBUG
-      val a = clusterMeanVectorMap.map{ case(k,v) => 
-        k.toString + " => [" + v.map(_.toString).mkString(", ") + "]" 
-      }.mkString(", ")
-      Log.info(f"SSE mean vec : ${a}")
-
       // Calculate SSE to means
       val sse: RDD[Double] = rddArrayVectors.map{ case (c,vs,n) =>
         val meanVec: Array[Double] = clusterMeanVectorMap(c)
@@ -254,9 +248,7 @@ case object SSE extends ClusterMeasure {
         dv
       }
 
-      val e = sse.reduce(_ + _) / rddArrayVectors.count.toDouble
-      Log.info(s"SSE = ${e}") // TAODEBUG
-      e
+      sse.reduce(_ + _) / rddArrayVectors.count.toDouble
     }
   }
 }
