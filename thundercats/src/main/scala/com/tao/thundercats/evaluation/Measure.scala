@@ -9,6 +9,7 @@ import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.DoubleRDDFunctions
 
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
 import org.apache.spark.ml.{Transformer, PipelineModel}
@@ -16,11 +17,14 @@ import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
-import org.apache.spark.ml.regression.LinearRegression
-import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
-import org.apache.spark.rdd.DoubleRDDFunctions
 import org.apache.spark.ml.regression._
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
+import org.apache.spark.mllib.linalg.{SparseVector => MLLibSparseV}
+import org.apache.spark.mllib.linalg.{DenseVector => MLLibDenseV}
 
 import breeze.linalg.DenseVector
 
@@ -43,6 +47,9 @@ trait ClassificationMeasure extends Measure {
     %(df, specimen).map{ v => Map(Double.MinValue -> v) }
   }
 
+  /**
+   * Produce RDD of (prediction, label) from "predicted" dataframe
+   */
   def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
     if (!df.columns.contains(specimen.labelCol)){
       Fail(s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})")
@@ -57,6 +64,25 @@ trait ClassificationMeasure extends Measure {
           (pre, lbl)
         }.cache
     }
+}
+
+trait ClusterMeasure extends Measure {
+
+  def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(MLLibVector,Int)]] = MayFail {
+    val featureType = df.schema.find(_.name==specimen.featureCol.colName).get.dataType
+    df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(IntegerType))
+      .rdd.map{ row =>
+        val cl = row.getAs[Int](specimen.outputCol)
+        val feat = featureType match {
+          case VectorType => 
+            // Convert ML vector => MLLIB vector
+            org.apache.spark.mllib.linalg.Vectors.fromML(
+              row.getAs[org.apache.spark.ml.linalg.Vector](specimen.featureCol.colName))
+          case _ => row.getAs[MLLibVector](specimen.featureCol.colName)
+        }
+        (feat, cl)
+      }.cache
+  }
 }
 
 /**
@@ -171,20 +197,59 @@ case object FMeasure extends ClassificationMeasure {
  * Area under ROC curve
  */
 case object AUC extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd).areaUnderROC
     }
+  }
 }
 
 /**
  * Area under Precision-recall curve
  */
 case object AUCPrecisionRecall extends ClassificationMeasure {
-  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd).areaUnderPR
     }
+  }
 }
 
+/**
+ * Sum of square error to mean of cluster
+ */
+case object SSE extends ClusterMeasure {
+  override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = {
+    cluster(df, specimen).map{ rdd =>
+      val rddArrayVectors = rdd.map{ 
+        case (MLLibDenseV(vs), c) => (c,vs,1) // Also add count number
+        case (MLLibSparseV(n, ids, vs), c) => (c,vs,1)
+        case (w,_) => throw new IllegalArgumentException("Do not support vector type " + w.getClass)
+      }
+      val clusterMeanVectorMap = rddArrayVectors
+        .keyBy(_._1)
+        .reduceByKey{
+          case (a,b) => 
+            val cl = a._1
+            val v1 = a._2
+            val v2 = b._2
+            val vsum = v1.zip(v2).map{ case (i,j) => i+j } // sum vector
+            (cl, vsum, a._3+b._3)
+        }
+        .mapValues{ case (c,vsum,count) => vsum.map(_ / count.toDouble)} // avg
+        .collectAsMap // [[cluster => mean_vector]]
+
+      // Calculate SSE to means
+      val sse: RDD[Double] = rddArrayVectors.map{ case (c,vs,n) =>
+        val meanVec: Array[Double] = clusterMeanVectorMap(c)
+        val dv = vs.zip(meanVec)
+          .map{ case (a,b) => (a-b)*(a-b) }
+          .reduce(_ + _) / meanVec.size.toDouble
+        dv
+      }
+
+      sse.reduce(_ + _) / rddArrayVectors.count.toDouble
+    }
+  }
+}
 

@@ -3,9 +3,12 @@ package com.tao.thundercats.model
 import org.apache.spark.ml.{Pipeline, PipelineStage}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.classification.DecisionTreeClassifier
+import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.clustering._
 
 import com.tao.thundercats.evaluation._
+import com.tao.thundercats.estimator._
 
 /**
  * Preset of simple estimators
@@ -56,7 +59,48 @@ object Preset {
     maxDepth: Int = 5,
     elasticNetParam: Option[Double] = None) = {
 
-    // TAOTODO
-    ???
+    throw new NotImplementedError("TAOTODO - randomForest")
   }
+
+  def svm(
+    features: FeatureColumn,
+    labelCol: String,
+    outputCol: String,
+    intercept: Boolean = false) = {
+    val m = new SVMWithSGD().setIntercept(intercept)
+    val w = new WrappedEstimator(m)
+      .setFeaturesCol(features.colName)
+      .setPredictionCol(outputCol)
+      .setLabelCol(labelCol)
+    new Pipeline().setStages(Array(w))
+  }
+
+  def kmeans(
+    features: FeatureColumn,
+    numK: Int,
+    outputCol: String,
+    distance: String = "euclidean") = {
+    val kmeans = new KMeans()
+      .setFeaturesCol(features.colName)
+      .setPredictionCol(outputCol)
+      .setDistanceMeasure(distance)
+      .setK(numK)
+    new Pipeline().setStages(Array(kmeans))
+  }
+
+  def gmm(
+    features: FeatureColumn,
+    numK: Int,
+    outputCol: String,
+    probCol: String,
+    maxIters: Int = 10) = {
+    val g = new GaussianMixture()
+      .setK(numK)
+      .setPredictionCol(outputCol)
+      .setProbabilityCol(probCol)
+      .setMaxIter(maxIters)
+    new Pipeline().setStages(Array(g))
+  }
+
+  // TAOTODO: Wrap LDA for dataframe
 }

@@ -70,3 +70,8 @@ class ClassificationModelCompare[A <: ClassificationMeasure](
   override val measure: A,
   override val feature: FeatureColumn)
 extends ModelCompare[A]
+
+class ClusterModelCompare[A <: ClusterMeasure](
+  override val measure: A,
+  override val feature: FeatureColumn)
+extends ModelCompare[A]
