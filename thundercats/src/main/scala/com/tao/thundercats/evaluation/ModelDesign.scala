@@ -65,6 +65,8 @@ extends ModelDesign {
     var pipe = feature % (estimator, featurePipe)
     Log.info(s"Fitting Supervised Model: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
+    val modelClass = Debugger.modelToString(fitted)
+    Log.info(s"Fitted Supervised Model: ${modelClass}")
     SupervisedSpecimen(fitted, feature, outputCol, labelCol)
   }
 }
@@ -81,6 +83,8 @@ extends ModelDesign {
     var pipe = feature % (estimator, featurePipe)
     Log.info(s"Fitting Unsupervised Model: outputCol=${outputCol}")
     val fitted = pipe.fit(df)
+    val modelClass = Debugger.modelToString(fitted)
+    Log.info(s"Fitted Unsupervised Model: ${modelClass}")
     UnsupervisedSpecimen(fitted, feature, outputCol)
   }
 }

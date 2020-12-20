@@ -969,21 +969,44 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Clustering model test"){
     lazy val dfPreset = List(
-      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
-      Train(i=1, d=1.1, v=1000, w=0, s="", s2=""),
+      // Group1
       Train(i=1, d=1.0, v=1001, w=0, s="", s2=""),
-      Train(i=5, d=2.0, v=3000, w=0, s="", s2=""),
-      Train(i=4, d=2.0, v=2400, w=0, s="", s2=""),
-      Train(i=5, d=3.0, v=3300, w=0, s="", s2=""),
-      Train(i=4, d=1.0, v=1000, w=600, s="", s2=""),
-      Train(i=5, d=1.0, v=1000, w=750, s="", s2=""),
-    )
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.1, v=1001, w=0, s="", s2=""),
+      Train(i=1, d=1.1, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1001, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.0, v=1000, w=0, s="", s2=""),
+      Train(i=1, d=1.1, v=1001, w=0, s="", s2=""),
+      // Group2
+      Train(i=5, d=5.0, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=100, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160103, w=125, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=100, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=100, s="", s2=""),
+      Train(i=5, d=5.0, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=109, s="", s2=""),
+      Train(i=5, d=5.0, v=160103, w=110, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=106, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=121, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=100, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=110, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=130, s="", s2=""),
+      Train(i=5, d=5.1, v=160113, w=110, s="", s2=""),
+    ).toDS.toDF
 
-    ignore("evaluate different clustering models"){
+    it("evaluate different clustering models"){
       val measure = SSE
       val feat = AssemblyFeature(Seq("i","d","v","w"), "features")
 
-      // TAOTODO
       val allModels = List(
         UnsupervisedModelDesign(
           outputCol="group",
@@ -993,16 +1016,18 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
           estimator=Preset.kmeans(features=feat, numK=3, outputCol="group")),
         UnsupervisedModelDesign(
           outputCol="group",
-          estimator=Preset.gmm(features=feat, numK=3, outputCol="group"))
+          estimator=Preset.gmm(features=feat, numK=3, outputCol="group", probCol="group_prob"))
       )
-      // val allScores = new ClusterModelCompare(measure, feat)
-      //   .allOf(df, allModels)
+      val allScores = new ClusterModelCompare(measure, feat)
+        .allOf(dfPreset, allModels)
 
-      // allScores.size shouldBe (allModels.size)
-      // allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
-      //   "com.tao.thundercats.evaluation.SupervisedSpecimen",
-      //   "com.tao.thundercats.evaluation.SupervisedSpecimen")
-      //allScores.map{ case(score, m) => score } shouldBe List(0.21092959375451714, 3.4999999999999996)
+      allScores.size shouldBe (allModels.size)
+      allScores.map{ case(score, m) => m.getClass.getName } shouldBe List(
+        "com.tao.thundercats.evaluation.UnsupervisedSpecimen",
+        "com.tao.thundercats.evaluation.UnsupervisedSpecimen",
+        "com.tao.thundercats.evaluation.UnsupervisedSpecimen")
+      allScores.map{ case(score, m) => score } shouldBe List(
+        17.142832535885173, 6.4614842171717175, 17.142832535885173)
     }
   }
 
