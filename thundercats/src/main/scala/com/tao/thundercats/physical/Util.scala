@@ -80,6 +80,17 @@ object Debugger {
         Console.println(s"... ${trans.getClass.getName}")
     }
   }
+
+  def modelToString(model: PipelineModel, prev: String = ""): String = {
+    var str = prev
+    model.stages.foreach{ trans =>
+      if (trans.isInstanceOf[PipelineModel])
+        str = modelToString(trans.asInstanceOf[PipelineModel], str)
+      else 
+        str += s" => ${trans.getClass.getName}"
+    }
+    str
+  }
 }
 
 object Log extends Serializable {

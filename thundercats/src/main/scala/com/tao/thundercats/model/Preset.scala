@@ -84,6 +84,7 @@ object Preset {
       .setFeaturesCol(features.colName)
       .setPredictionCol(outputCol)
       .setDistanceMeasure(distance)
+      .setK(numK)
     new Pipeline().setStages(Array(kmeans))
   }
 

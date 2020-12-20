@@ -18,6 +18,7 @@ import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression._
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 
 import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
@@ -68,10 +69,17 @@ trait ClassificationMeasure extends Measure {
 trait ClusterMeasure extends Measure {
 
   def cluster(df: DataFrame, specimen: Specimen): MayFail[RDD[(MLLibVector,Int)]] = MayFail {
+    val featureType = df.schema.find(_.name==specimen.featureCol.colName).get.dataType
     df.withColumn(specimen.outputCol, col(specimen.outputCol).cast(IntegerType))
       .rdd.map{ row =>
         val cl = row.getAs[Int](specimen.outputCol)
-        val feat = row.getAs[MLLibVector](specimen.featureCol.colName)
+        val feat = featureType match {
+          case VectorType => 
+            // Convert ML vector => MLLIB vector
+            org.apache.spark.mllib.linalg.Vectors.fromML(
+              row.getAs[org.apache.spark.ml.linalg.Vector](specimen.featureCol.colName))
+          case _ => row.getAs[MLLibVector](specimen.featureCol.colName)
+        }
         (feat, cl)
       }.cache
   }
@@ -231,6 +239,12 @@ case object SSE extends ClusterMeasure {
         .mapValues{ case (c,vsum,count) => vsum.map(_ / count.toDouble)} // avg
         .collectAsMap // [[cluster => mean_vector]]
 
+      // TAODEBUG
+      val a = clusterMeanVectorMap.map{ case(k,v) => 
+        k.toString + " => [" + v.map(_.toString).mkString(", ") + "]" 
+      }.mkString(", ")
+      Log.info(f"SSE mean vec : ${a}")
+
       // Calculate SSE to means
       val sse: RDD[Double] = rddArrayVectors.map{ case (c,vs,n) =>
         val meanVec: Array[Double] = clusterMeanVectorMap(c)
@@ -240,7 +254,9 @@ case object SSE extends ClusterMeasure {
         dv
       }
 
-      sse.reduce(_ + _)
+      val e = sse.reduce(_ + _) / rddArrayVectors.count.toDouble
+      Log.info(s"SSE = ${e}") // TAODEBUG
+      e
     }
   }
 }
