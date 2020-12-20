@@ -8,16 +8,21 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
 
 import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
-import org.apache.spark.ml.{Transformer, PipelineModel}
+import org.apache.spark.ml.{Transformer, PipelineModel, CustomPipelineModel}
 import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
 import org.apache.spark.ml.{Predictor}
 import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.regression.LinearRegression
-import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
+import org.apache.spark.ml.linalg.{VectorUDT, Vector}
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.rdd.DoubleRDDFunctions
+
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
+import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
 
 import java.io.File
 import java.lang.IllegalArgumentException
@@ -70,11 +75,35 @@ trait Specimen {
   /**
    * Score the specimen, as a map (threshold -> score)
    */
-  def scoreMap(df: DataFrame, measure: Measure): MayFail[Map[Double,Double]] = 
-    measure match {
-      case m:ClassificationMeasure => m %% (ensure(df), this)
-      case _ => Fail(f"${measure.className} does not support scoreMap")
+  def scoreMap(df: DataFrame, measure: ClassificationMeasure): MayFail[Map[Double,Double]] = 
+    measure %% (ensure(df), this)
+
+  /**
+   * Generate a cluster from data
+   */
+  def scoreCluster(df: DataFrame, measure: ClusterMeasure): MayFail[Double] = {
+    measure % (ensure(df), this)
+  }
+
+  /**
+   * Transform the dataframe into feature vectors
+   * without running prediction
+   */
+  def toFeatureVectorRDD(df: DataFrame): RDD[MLLibVector] = {
+    val pipeWithoutPredictor = new CustomPipelineModel(model.uid, model.stages.toArray.dropRight(1))
+    val featDf = pipeWithoutPredictor.transform(df)
+    val featureType = featDf.schema.find(_.name==featureCol).get.dataType
+    featDf.rdd.map{ row =>
+      featureType match {
+        // NOTE: [[VectorType]] is just a public exposure of private [[VectorUDT]]
+        case VectorType => 
+          // Convert ML vector => MLLIB vector
+          val v = row.getAs[org.apache.spark.ml.linalg.Vector](featureCol.colName)
+          org.apache.spark.mllib.linalg.Vectors.fromML(v)
+        case _ => row.getAs[MLLibVector](featureCol.colName)
+      }
     }
+  }
 }
 
 /**
@@ -91,17 +120,32 @@ case class DummySpecimen(
   override protected def ensure(df: DataFrame): DataFrame = df // No transformation, no pipeline model
 }
 
-case class TrainedSpecimen(
+case class SupervisedSpecimen(
   override val model: PipelineModel,
   override val featureCol: FeatureColumn,
   override val outputCol: String,
   override val labelCol: String
 ) extends Specimen {
-  override def score(df: DataFrame, measure: Measure) = 
+  override def score(df: DataFrame, measure: Measure) = {
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
       case _:ClassificationMeasure => super.score(ensure(df), measure)
       case _                   => Fail(
-        s"Unsupported measure type : ${measure.className}")
+        s"Unsupported measure type for Supervised specimen: ${measure.className}")
     }
+  }
+}
+
+case class UnsupervisedSpecimen(
+  override val model: PipelineModel,
+  override val featureCol: FeatureColumn,
+  override val outputCol: String
+) extends Specimen {
+  override val labelCol = ""
+  override def score(df: DataFrame, measure: Measure) = {
+    measure match {
+      case _: ClusterMeasure => super.score(ensure(df), measure)
+      case _ => Fail(s"Unsupported measure type for Unsupervised specimen : ${measure.className}")
+    }
+  }
 }

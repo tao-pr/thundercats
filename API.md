@@ -98,22 +98,35 @@ All machine learning and statistical methods go here in this module.
 The abstraction of the model is shown below.
 
 ```
-- ModelDesign      <-- Defines structure of model for training
-- Specimen         <-- Trained model from [[ModelDesign]]
+- ModelDesign      <-- Defines model blueprint for training
+- Specimen         <-- Trained model of [[ModelDesign]]
 ```
 
-To train a model
+#### 1.3.1 Making a ModelDesign
+
+Some presets of model are also available 
+
+```scala
+val estimator = Preset.decisionTree(
+  features=AssemblyFeature(features, "features"),
+  labelCol="isTempRising",
+  outputCol="predictedRising")
+val design = SupervisedModelDesign(
+  outputCol="predictedRising",
+  labelCol="isTempRising",
+  estimator=estimator,
+  featurePipe=Some(encoder))
+```
+
+#### 1.3.2 Training model (Making Specimen)
+
+Use `.toSpecimen()` to train.
+The function expects `FeatureColumn` and Training dataframe.
 
 ```scala
 val design: ModelDesign = ???
 val feature: FeatureColumn = AssemblyFeature(Array("f1","f2","f3"))
 val model: Specimen = design.toSpecimen(feature, df)
-```
-
-To use trained model for prediction
-
-```scala
-TBD
 ```
 
 
@@ -124,9 +137,9 @@ the process is designed as follows.
 
 ```
 - Measure          <-- Measurement of an individual feature
-  - %              <-- Measure as scalar 
-  - %%             <-- Measure as map (threshold -> scalar)
-                       For classification evaluation
+  - %              <-- Measure score as scalar value
+  - %%             <-- Measure score as map (threshold -> scalar value)
+                       For evaluation of classification
 - MeasureVector    <-- Measurement of multiple feature at a time
 ```
 
@@ -137,15 +150,19 @@ Some subtypes of `Measure`
   - RegressionMeasure
     - RMSE
     - MAE
+    - MPE
     - PearsonCorr
   - ClassificationMeasure
     - RMSE
     - MAE
+    - MPE
     - AUC
     - AUCPrecisionRecall
     - Precision     <-- with %% for threshold evaluation
     - Recall        <-- with %% for threshold evaluation
     - FMeasure      <-- with %% for threshold evaluation
+  - ClusterMeasure
+    - TAOTODO
 ```
 
 Some subtypes of `MeasureVector`
@@ -190,7 +207,7 @@ val scores = new RegressionFeatureCompare(PearsonCorr)
 
 ### 1.5 Evaluate combinations of features
 
-Try combinations of feature columns by
+Try combinations of feature columns with `.genCombinations()`
 
 ```scala
 val selector = new FeatureAssemblyGenerator(
@@ -202,7 +219,7 @@ val selector = new FeatureAssemblyGenerator(
 // NOTE: Always use "features" column
 val estimator = Preset.linearReg(Feature("features"), "i", "z")
 val combinations = selector.genCombinations(estimator, df)
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=estimator)
@@ -227,7 +244,7 @@ val cv = SplitValidation(
 )
 
 val feature = AssemblyFeature("v"::Nil, "features")
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))
@@ -243,7 +260,7 @@ val cv = CrossValidation(
 )
 
 val feature = AssemblyFeature("v"::Nil, "features")
-val design = FeatureModelDesign(
+val design = SupervisedModelDesign(
   outputCol="z",
   labelCol="i",
   estimator=Preset.linearReg(features=feature, labelCol="i", outputCol="z"))

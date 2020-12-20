@@ -52,10 +52,9 @@ extends ModelDesign {
     DummySpecimen(feature, labelCol, feature.colName)
 }
 
-/**
- * Model prototype of any kind
- */
-case class FeatureModelDesign(
+// TAOTODO should separate supervised [v] unsupervised models
+
+case class SupervisedModelDesign(
   override val outputCol: String, 
   override val labelCol: String,
   estimator: Pipeline,
@@ -64,11 +63,28 @@ extends ModelDesign {
 
   override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
     var pipe = feature % (estimator, featurePipe)
-    Log.info(s"Fitting FeatureModel: labelCol=${labelCol}, outputCol=${outputCol}")
+    Log.info(s"Fitting Supervised Model: labelCol=${labelCol}, outputCol=${outputCol}")
     val fitted = pipe.fit(df)
+    val modelClass = Debugger.modelToString(fitted)
+    Log.info(s"Fitted Supervised Model: ${modelClass}")
+    SupervisedSpecimen(fitted, feature, outputCol, labelCol)
+  }
+}
 
-    // Debugger.printModel(fitted)
+case class UnsupervisedModelDesign(
+  override val outputCol: String,
+  estimator: Pipeline,
+  featurePipe: Option[PipelineStage] = None)
+extends ModelDesign {
 
-    TrainedSpecimen(fitted, feature, outputCol, labelCol)
+  override val labelCol = ""
+
+  override def toSpecimen(feature: FeatureColumn, df: DataFrame) = {
+    var pipe = feature % (estimator, featurePipe)
+    Log.info(s"Fitting Unsupervised Model: outputCol=${outputCol}")
+    val fitted = pipe.fit(df)
+    val modelClass = Debugger.modelToString(fitted)
+    Log.info(s"Fitted Unsupervised Model: ${modelClass}")
+    UnsupervisedSpecimen(fitted, feature, outputCol)
   }
 }
