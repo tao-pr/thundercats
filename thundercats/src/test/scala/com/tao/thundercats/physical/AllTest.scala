@@ -1003,7 +1003,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       Train(i=5, d=5.1, v=160113, w=110, s="", s2=""),
     ).toDS.toDF
 
-    it("evaluate different clustering models"){
+    it("evaluate different clustering models (SSE)"){
       val measure = SSE
       val feat = AssemblyFeature(Seq("i","d","v","w"), "features")
 
