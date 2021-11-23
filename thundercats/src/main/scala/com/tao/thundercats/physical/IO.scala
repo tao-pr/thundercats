@@ -162,8 +162,6 @@ object Read {
       }
     }
   }
-
-  def rabbit: MayFail[DataFrame] = ???
   
   def mongo(serverAddr: String, db: String, collection: String)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
@@ -221,7 +219,7 @@ object Write {
     df
   }
 
-  def kafkaStream(
+  def kafkaStream( // TAOTODO: add offset
     df: DataFrame, 
     topic: String, 
     serverAddr: String, 

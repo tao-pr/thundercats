@@ -155,6 +155,10 @@ object F {
 }
 
 object Optimise {
+  /**
+   * Lineage optimisers
+   */ 
+
   def snapshot(df: DataFrame, tempDir: String)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     val tempFile = s"$tempDir/${java.util.UUID.randomUUID}.parquet"
