@@ -425,7 +425,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("Add column"){
       val dfOpt = for {
-        a <- F.addColumn(dfK1, "b", when('v1==="222", lit(null)).otherwise(sequence(lit(0), lit(5), lit(1))))
+        a <- F.addCol(dfK1, "b", when('v1==="222", lit(null)).otherwise(sequence(lit(0), lit(5), lit(1))))
       } yield a
 
       dfOpt.get.columns shouldBe (Seq("key", "v1", "b"))

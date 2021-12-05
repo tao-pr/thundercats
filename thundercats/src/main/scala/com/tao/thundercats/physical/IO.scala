@@ -169,6 +169,10 @@ object Read {
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .load()
   }
+
+  def dynamo(serverAddr: String, tb: String): MayFail[DataFrame] = MayFail {
+    ??? // TAOTODO:
+  }
 }
 
 object Write {
@@ -322,6 +326,10 @@ object Write {
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .save()
     df
+  }
+
+  def dynamo(df: DataFrame, serverAddr: String, tb: String): MayFail[DataFrame] = MayFail {
+    ??? // TAOTODO:
   }
 }
 
