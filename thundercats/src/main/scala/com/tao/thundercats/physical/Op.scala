@@ -147,7 +147,7 @@ object Order {
 }
 
 object F {
-  def addColumn(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
+  def addCol(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
     df.withColumn(colName, c)
   }
 
@@ -174,9 +174,13 @@ object Optimise {
     df
   }
 
-  def repartition(df: DataFrame, num: Int) = MayFail {
+  def repar(df: DataFrame, num: Int) = MayFail {
     if (num<=1) df.coalesce(1)
     else df.repartition(num)
+  }
+
+  def repar(df: DataFrame, cols: Seq[Column]) = MayFail {
+    df.repartition(cols:_*)
   }
 }
 

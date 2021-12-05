@@ -74,6 +74,13 @@ Following dependencies are required to run the test suite.
 
 - Hadoop
 - Kafka (local instance)
+- Docker
+
+Start instances of required databases by
+
+```
+docker-compose -f thundercats/src/test/resources/docker-compose.yml up
+```
 
 Execute the test suite via sbt like so.
 
