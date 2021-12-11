@@ -76,24 +76,15 @@ Following dependencies are required to run the test suite.
 - Kafka (local instance)
 - Docker
 
-Start instances of required databases by
+Run a full unittest
 
 ```
-docker-compose -f thundercats/src/test/resources/docker-compose.yml up
+./run-test.sh
 ```
 
-Execute the test suite via sbt like so.
-
-```bash
-$ sbt test
-```
-
-Or test only specific suite by entering sbt console.
-
-```bash
-$ sbt
-sbt> testOnly *Data*
-```
+The script starts instances of required components, e.g. DynamoDB, with Docker compose 
+and start a unittest normally with `sbt test`. After all tests are done, the script 
+also stops the docker instances for you.
 
 ---
 
