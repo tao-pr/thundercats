@@ -22,14 +22,8 @@ libraryDependencies ++= List(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
-// Following dependency is for typesafe Avro schema generator
-// Unfortunately it's Jackson4s is not compatible with Spark 2.4
-// ------------------------------
-// val miscDependencies = List(
-//   "com.sksamuel.avro4s" %% "avro4s-core" % avro4sVersion excludeAll(
-//     ExclusionRule("org.scala-lang.modules",s"scala-xml_${scalaVersion.toString.dropRight(2)}"),
-//     ExclusionRule("org.apache.avro", "avro"))
-// )
+// Amazon DynamoDB
+libraryDependencies += "com.amazon.emr" % "emr-dynamodb-connector" % "4.2.0" pomOnly()
 
 // Logging
 libraryDependencies ++= List(
