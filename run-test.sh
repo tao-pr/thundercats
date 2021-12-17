@@ -64,4 +64,8 @@ echo "All tests executed"
 echo "Tearing down ..."
 
 docker container stop $CID_DYDB
+docker container stop $CID_KFK
+docker container stop $CID_ZKP
+
+echo "[DONE]"
 
