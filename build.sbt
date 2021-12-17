@@ -10,6 +10,7 @@ val logbackVersion    = "1.1.2"
 val circeVersion      = "0.11.1"
 val kafkaVersion      = "2.1.0"
 val avro4sVersion     = "3.0.4"
+val emrVersion        = "4.16.0"
 scalaVersion         := "2.12.0"
 
 // Compatibility NOTE: 
@@ -23,7 +24,13 @@ libraryDependencies ++= List(
 ).map(_ % circeVersion)
 
 // Amazon DynamoDB
-libraryDependencies += "com.amazon.emr" % "emr-dynamodb-connector" % "4.2.0" pomOnly()
+val dynamoDependencies = List(
+  "com.amazon.emr" % "emr-dynamodb-hive",
+  "com.amazon.emr" % "emr-dynamodb-connector",
+  "com.amazon.emr" % "emr-dynamodb-hadoop",
+).map(_ % emrVersion)
+
+resolvers += Resolver.mavenLocal
 
 // Logging
 libraryDependencies ++= List(
@@ -47,7 +54,7 @@ val sparkDependencies = List(
 
 lazy val thundercats = project
   .settings(name := "thundercats")
-  .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
+  .settings(libraryDependencies ++= sparkDependencies ++ dynamoDependencies ++ devDependencies)
 
 lazy val samples = project
   .settings(name := "samples")
