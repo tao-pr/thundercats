@@ -1,15 +1,22 @@
 #!/bin/bash
 
 # Run full testsuite
-
-echo "Initialising DynamoDB data storage ..."
+echo "Initialising :"
+echo " - DynamoDB data storage ..."
+echo " - Kafka ..."
 
 echo "... Starting Docker"
 docker-compose -f thundercats/src/test/resources/docker-compose.yml up -d
-CID_DYDB=$(docker container ls | grep dynamodb | awk '{print $1}')
-echo "... Running DynamoDB with container ID : ${CID_DYDB}"
 
-echo "... Creating a table"
+CID_DYDB=$(docker container ls | grep "amazon/dynamodb-local" | awk '{print $1}')
+CID_KFK=$(docker container ls | grep "confluentinc/cp-kafka" | awk '{print $1}')
+CID_ZKP=$(docker container ls | grep "confluentinc/cp-zookeeper" | awk '{print $1}')
+
+echo "... Running DynamoDB with container ID  : ${CID_DYDB}"
+echo "... Running Zookeeper with container ID : ${CID_ZKP}"
+echo "... Running Kafka with container ID     : ${CID_KFK}"
+echo
+echo "... Creating a DynamoDB table"
 
 aws dynamodb create-table \
     --table-name Entry \
@@ -22,7 +29,7 @@ aws dynamodb create-table \
     --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 \
     --endpoint-url http://localhost:8000 > /dev/null
 
-echo "... Injecting sample records"
+echo "... Injecting sample DynamoDB records"
 aws dynamodb put-item \
     --table-name Entry \
     --item '{"Item": {"S": "First Entry"}, "Value": {"N": "0"}, "Note": {"S": "Unknown"}}' \

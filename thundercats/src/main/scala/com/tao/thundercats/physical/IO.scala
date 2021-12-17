@@ -170,9 +170,9 @@ object Read {
       .load()
   }
 
-  def dynamo(region: String, serverAddr: String, tb: String, query: Option[String]=None)
+  def dynamo(region: String, serverAddr: String, tb: String)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
-    Amazon.Dynamo.read(region, serverAddr, tb, query)
+    Amazon.Dynamo.read(region, serverAddr, tb)
   }
 }
 
