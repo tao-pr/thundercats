@@ -73,10 +73,11 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
     lazy val tempParquet = File.createTempFile("tc-test-", ".parquet").getAbsolutePath
 
-    val topic = "tc-test"
-    val topic2 = "tck-test"
-    val topic3 = "tckk-test"
+    val topic = "topic-1"
+    val topic2 = "topic-2"
+    val topic3 = "topic-3"
     val serverAddr = "localhost"
+    val serverPort = 29092
 
     lazy val df = List(
       A(1, None),
@@ -100,10 +101,22 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("PRE: flush Kafka"){
       Seq(topic, topic2, topic3).foreach{ top => 
-        val cmd = s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete"
+        val cmd = s"kafka-topics --bootstrap-server ${serverAddr}:${serverPort} --topic ${top} --delete"
         Console.println(Console.YELLOW + s"Executing ${cmd}" + Console.RESET)
         cmd !
       }
+    }
+
+    it("PRE: Create steaming topic (2)"){
+      val cmd = s"kafka-topics --create --partitions 1 --replication-factor 1 --topic ${topic2} --bootstrap-server ${serverAddr}:${serverPort}"
+      Console.println(Console.YELLOW + s"Creating streaming topic : ${topic2}" + Console.RESET)
+      cmd !
+    }
+
+    it("PRE: Create steaming topic (3)"){
+      val cmd = s"kafka-topics --create --partitions 1 --replication-factor 1 --topic ${topic3} --bootstrap-server ${serverAddr}:${serverPort}"
+      Console.println(Console.YELLOW + s"Creating streaming topic : ${topic3}" + Console.RESET)
+      cmd !
     }
 
     it("write and read csv"){
@@ -123,7 +136,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         c <- Read.csv("./not-found.csv")
       } yield c
 
-      dfReadOpt.getError.map(_.contains("Path does not exist: file:/Users/pataoengineer/code/thundercats/not-found.csv;")).getOrElse("") shouldBe true
+      dfReadOpt.getError.map(_.contains("Path does not exist:")).getOrElse("") shouldBe true
       dfReadOpt.isFailing shouldBe true
     }
 
@@ -154,8 +167,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("write and read Kafka (batch)"){
       val dfReadOpt = for { 
-        b <- Write.kafka(dfK, topic, serverAddr)
-        c <- Read.kafka(topic, serverAddr)
+        b <- Write.kafka(dfK, topic, serverAddr, serverPort)
+        c <- Read.kafka(topic, serverAddr, serverPort)
       } yield c
 
       val dfRead = dfReadOpt.get
@@ -165,36 +178,43 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
 
     it("write and read Kafka (stream)"){
-      // Fill kafka topic and read by stream
-      for {
-        _ <- Write.kafka(dfK, topic2, serverAddr)
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Screen.showDFStream(b, Some("Initial stream messages"))
-      } yield b
-
-      // Read from one topic and write to another
       val dff = for {
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Write.kafkaStream(b, topic3, serverAddr, timeout=Some(1000), checkpointLocation="./chk3")
+        // Write stream and read back as stream
+        _ <- Write.kafka(dfK, topic2, serverAddr, serverPort)
+        b <- Read.kafkaStream(topic2, serverAddr, serverPort, waitTimeout=Some(1000))
+
+        _ <- Screen.showDF(b, title=Some("Streaming this DF to Kafka"))
+
+        // Write stream again, read back as batch
+        _ <- Write.kafkaStream(b, topic3, serverAddr, waitTimeout=Some(10), terminationTimeout=Some(3000), checkpointLocation="./chk3")
         c <- Read.kafka(topic3, serverAddr)
+        _ <- Screen.showDF(c, title=Some("Read from stream"))
       } yield c
 
-      dff.get.count shouldBe (dfK.count)
-      dff.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
+      dff match {
+        case Fail(err) => 
+          Console.err.println("write and read Kafka (stream) FAILS")
+          Console.err.println(Console.RED + err + Console.RESET)
+          False shouldBe True
+
+        case Ok(d) =>
+          d.count shouldBe (dfK.count)
+          d.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))          
+      }
     }
 
-    it("write stream to parquet and csv"){
-      // Read from Kafka stream and stream to parquet file
-      val dfOpt = for {
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Write.streamToFile(b, "parquet", "./out_parquet", checkpointLocation="./chk_parq", timeout=Some(1000))
-        _ <- Screen.showDFStream(b, Some("Streaming this into parquet"))
-        c <- Read.parquet("./out_parquet")
-      } yield c
+    // it("write stream to parquet and csv"){
+    //   // Read from Kafka stream and stream to parquet file
+    //   val dfOpt = for {
+    //     b <- Read.kafkaStream(topic, serverAddr, serverPort, offset=Some(0))
+    //     _ <- Write.streamToFile(b, "parquet", "./out_parquet", checkpointLocation="./chk_parq", timeout=Some(1000))
+    //     _ <- Screen.showDFStream(b, Some("Streaming this into parquet"))
+    //     c <- Read.parquet("./out_parquet")
+    //   } yield c
 
-      dfOpt.get.count shouldBe (dfK.count)
-      dfOpt.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
-    }
+    //   dfOpt.get.count shouldBe (dfK.count)
+    //   dfOpt.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
+    // }
 
     it("POST: cleanup tempfiles"){
       IO.deleteFiles(tempCSV :: tempParquet :: Nil)
@@ -202,7 +222,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("POST: flush Kafka"){
       Seq(topic, topic2, topic3).foreach{ top => 
-        s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete" !
+        s"kafka-topics --bootstrap-server ${serverAddr}:${serverPort} --topic ${top} --delete" !
       }
     }
 

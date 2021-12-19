@@ -30,6 +30,7 @@ val q = for {
 - [x] Physical file types: CSV, Parquet
 - [x] Streaming sources: Kafka
 - [x] MongoDB
+- [x] Amazon DynamoDB
 
 ## Prerequisites
 
@@ -73,7 +74,6 @@ $ ll /Library/Java/JavaVirtualMachines
 Following dependencies are required to run the test suite.
 
 - Hadoop
-- Kafka (local instance)
 - Docker
 
 Run a full unittest
