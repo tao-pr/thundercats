@@ -195,7 +195,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         case Fail(err) => 
           Console.err.println("write and read Kafka (stream) FAILS")
           Console.err.println(Console.RED + err + Console.RESET)
-          False shouldBe True
+          false shouldBe true
 
         case Ok(d) =>
           d.count shouldBe (dfK.count)
