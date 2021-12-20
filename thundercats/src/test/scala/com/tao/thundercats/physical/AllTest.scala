@@ -177,6 +177,20 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
+    it("read from dynamoDB"){
+      val dfReadOpt = for {
+        a <- Read.dynamo("eu-central-1", "0.0.0.0:8000", "Entry")
+      } yield a
+
+      dfReadOpt match {
+        case Ok(df) => df.show() // TAOTODO update case
+        case Fail(e) =>
+          Console.err.println(Console.RED + "read from dynamoDB")
+          Console.err.println(e + Console.RESET)
+          true shouldBe false
+      }
+    }
+
     it("POST: cleanup tempfiles"){
       IO.deleteFiles(tempCSV :: tempParquet :: Nil)
     }

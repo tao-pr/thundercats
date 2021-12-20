@@ -30,6 +30,7 @@ object Amazon {
 
       // Map RDD[(K,V)] => DataFrame
       val df = spark.createDataFrame(rddKV)
+      df.show() // TAODEBUG
       df
     } 
   }
