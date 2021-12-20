@@ -3,6 +3,7 @@ package com.tao.thundercats.base
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{SparkSession, SQLContext, SQLImplicits}
 import org.apache.spark.util.Utils
+import org.apache.spark.streaming._
 
 import org.scalatest._
 
