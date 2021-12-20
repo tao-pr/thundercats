@@ -10,6 +10,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 import scala.util.{Try, Success, Failure}
+import java.lang.Throwable
 
 /**
  * Alternative to [[Option]]
@@ -30,22 +31,26 @@ trait MayFail[A] {
 object MayFail {
   def apply[R](a: => R): MayFail[R] = Try { a } match {
     case Success(b) => Ok(b)
-    case Failure(e) => Fail(e.getMessage.toString)
+    case Failure(e) => Fail(e)
   }
+}
+
+private [functional] object StackTrace {
+  def <<(e: Throwable) = e.getStackTrace.map(_.toString).mkString("\n")
 }
 
 // REVIEW: add logger compliance to following Monads
 
-case class Fail[A](errorMessage: String) extends MayFail[A] {
+case class Fail[A](errorMessage: Throwable) extends MayFail[A] {
   override def map[B](f: A => B): MayFail[B] = Fail[B](errorMessage)
   override def flatMap[B](g: A => MayFail[B]): MayFail[B] = Fail[B](errorMessage)
   override def mapOpt[B](g: A => B): Option[B] = None
   override def get: A = throw new java.util.NoSuchElementException("No value resolved")
   override def getOrElse(a: A): A = a
   override def isFailing = true
-  override def getError: Option[String] = Some(errorMessage)
+  override def getError: Option[String] = Some(StackTrace << errorMessage)
 }
-case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
+case class IgnorableFail[A](errorMessage: Throwable, data: A) extends MayFail[A] {
   override def map[B](f: A => B): MayFail[B] = IgnorableFail(errorMessage, f(data))
   override def flatMap[B](g: A => MayFail[B]): MayFail[B] = g(data) match {
     case Fail(e)            => Fail(e)
@@ -56,7 +61,7 @@ case class IgnorableFail[A](errorMessage: String, data: A) extends MayFail[A] {
   override def get: A = data
   override def getOrElse(a: A): A = a
   override def isFailing = true
-  override def getError: Option[String] = Some(errorMessage)
+  override def getError: Option[String] = Some(StackTrace << errorMessage)
 }
 case class Ok[A](data: A) extends MayFail[A] {
   override def map[B](f: A => B): MayFail[B] = Ok(f(data))

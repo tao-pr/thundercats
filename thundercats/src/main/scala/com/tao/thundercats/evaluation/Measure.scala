@@ -1,5 +1,8 @@
 package com.tao.thundercats.evaluation
 
+import java.util.MissingResourceException
+import java.lang.UnsupportedOperationException
+
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Column,Row}
@@ -52,7 +55,10 @@ trait ClassificationMeasure extends Measure {
    */
   def pred(df: DataFrame, specimen: Specimen): MayFail[RDD[(Double,Double)]] = 
     if (!df.columns.contains(specimen.labelCol)){
-      Fail(s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})")
+      Fail(new MissingResourceException(
+        s"Unable to run RegressionMeasure, missing label column (${specimen.labelCol})",
+        "ClassificationMeasure",
+        specimen.labelCol))
     }
     else MayFail {
       // Generate a sequence of (pred, label)
@@ -164,7 +170,8 @@ case object Precision extends ClassificationMeasure {
   }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
-    Fail("Precision only returns a map of threshold -> score. Checkout %% method")
+    Fail(new UnsupportedOperationException(
+      "Precision only returns a map of threshold -> score. Checkout %% method"))
 }
 
 case object Recall extends ClassificationMeasure {
@@ -177,7 +184,8 @@ case object Recall extends ClassificationMeasure {
     }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
-    Fail("Recall only returns a map of threshold -> score. Checkout %% method")
+    Fail(new UnsupportedOperationException(
+      "Recall only returns a map of threshold -> score. Checkout %% method"))
 }
 
 case object FMeasure extends ClassificationMeasure {
@@ -190,7 +198,8 @@ case object FMeasure extends ClassificationMeasure {
     }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
-    Fail("F-Measure only returns a map of threshold -> score. Checkout %% method")
+    Fail(new UnsupportedOperationException(
+      "F-Measure only returns a map of threshold -> score. Checkout %% method"))
 }
 
 /**
