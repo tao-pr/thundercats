@@ -177,45 +177,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
-    it("write and read Kafka (stream)"){
-      val dff = for {
-        // Write stream and read back as stream
-        _ <- Write.kafka(dfK, topic2, serverAddr, serverPort)
-        b <- Read.kafkaStream(topic2, serverAddr, serverPort, waitTimeout=Some(1000))
-
-        _ <- Screen.showDF(b, title=Some("Streaming this DF to Kafka"))
-
-        // Write stream again, read back as batch
-        _ <- Write.kafkaStream(b, topic3, serverAddr, waitTimeout=Some(10), terminationTimeout=Some(3000), checkpointLocation="./chk3")
-        c <- Read.kafka(topic3, serverAddr)
-        _ <- Screen.showDF(c, title=Some("Read from stream"))
-      } yield c
-
-      dff match {
-        case Fail(err) => 
-          Console.err.println("write and read Kafka (stream) FAILS")
-          Console.err.println(Console.RED + err + Console.RESET)
-          false shouldBe true
-
-        case Ok(d) =>
-          d.count shouldBe (dfK.count)
-          d.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))          
-      }
-    }
-
-    // it("write stream to parquet and csv"){
-    //   // Read from Kafka stream and stream to parquet file
-    //   val dfOpt = for {
-    //     b <- Read.kafkaStream(topic, serverAddr, serverPort, offset=Some(0))
-    //     _ <- Write.streamToFile(b, "parquet", "./out_parquet", checkpointLocation="./chk_parq", timeout=Some(1000))
-    //     _ <- Screen.showDFStream(b, Some("Streaming this into parquet"))
-    //     c <- Read.parquet("./out_parquet")
-    //   } yield c
-
-    //   dfOpt.get.count shouldBe (dfK.count)
-    //   dfOpt.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
-    // }
-
     it("POST: cleanup tempfiles"){
       IO.deleteFiles(tempCSV :: tempParquet :: Nil)
     }

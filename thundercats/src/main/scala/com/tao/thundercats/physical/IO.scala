@@ -117,7 +117,7 @@ object Read {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092, 
-    offset: Option[Int] = None, // TAOTODO: Offset should be in format : {topicA: -1}
+    offset: Option[String] = None, // Offset should be in format : {topicA: -1}
     waitTimeout: Option[Int] = None, // in MS
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
@@ -129,7 +129,7 @@ object Read {
         .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
         .option("kafka.requests.timeout.ms", waitTimeout.getOrElse(30).toString)
         .option("subscribe", topic)
-        .option("startingOffsets", offset.map(_.toString).getOrElse("earliest"))
+        .option("startingOffsets", offset.getOrElse("earliest"))
         .load()
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
