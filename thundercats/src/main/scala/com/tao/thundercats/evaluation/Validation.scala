@@ -1,5 +1,7 @@
 package com.tao.thundercats.evaluation
 
+import java.lang.AssertionError
+
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Column,Row}
@@ -59,7 +61,8 @@ extends Validation[M] {
   override def run(df: DataFrame, design: ModelDesign, feature: FeatureColumn): MayFail[Double] = {
     Log.info(s"SplitValidation : ratio of ${trainRatio}, with measure = ${measure.getClass.getName}")
     if (trainRatio <= 0.0 || trainRatio >= 1.0){
-      Fail(s"SplitValidation fails with out-of-range training ratio : ${trainRatio}")
+      Fail(new AssertionError(
+        s"SplitValidation fails with out-of-range training ratio : ${trainRatio}"))
     }
     else MayFail {
       val Array(dfTrain, dfTest) = df.randomSplit(Array(trainRatio, 1-trainRatio))

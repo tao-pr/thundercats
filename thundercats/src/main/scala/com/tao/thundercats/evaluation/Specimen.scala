@@ -1,5 +1,7 @@
 package com.tao.thundercats.evaluation
 
+import java.lang.UnsupportedOperationException
+
 import org.apache.spark.sql.{Dataset, DataFrame}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.{Column,Row}
@@ -130,8 +132,8 @@ case class SupervisedSpecimen(
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
       case _:ClassificationMeasure => super.score(ensure(df), measure)
-      case _                   => Fail(
-        s"Unsupported measure type for Supervised specimen: ${measure.className}")
+      case _ => Fail(new UnsupportedOperationException(
+        s"Unsupported measure type for Supervised specimen: ${measure.className}"))
     }
   }
 }
@@ -145,7 +147,8 @@ case class UnsupervisedSpecimen(
   override def score(df: DataFrame, measure: Measure) = {
     measure match {
       case _: ClusterMeasure => super.score(ensure(df), measure)
-      case _ => Fail(s"Unsupported measure type for Unsupervised specimen : ${measure.className}")
+      case _ => Fail(new UnsupportedOperationException(
+        s"Unsupported measure type for Unsupervised specimen : ${measure.className}"))
     }
   }
 }
