@@ -12,6 +12,13 @@ import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.io.LongWritable
 
 object Amazon {
+
+  /**
+   * IMPORTANT NOTE:
+   * DynamoDB code will fail with file not found issue (known on Github)
+   * See: https://github.com/awslabs/emr-dynamodb-connector/issues/110
+   */
+
   object Dynamo {
     def read(region: String, serverAddr: String, tb: String)
     (implicit spark: SparkSession): DataFrame = {
@@ -29,9 +36,7 @@ object Amazon {
         classOf[DynamoDBItemWritable]) // Value format class
 
       // Map RDD[(K,V)] => DataFrame
-      val df = spark.createDataFrame(rddKV)
-      df.show() // TAODEBUG
-      df
+      spark.createDataFrame(rddKV)
     } 
   }
 }

@@ -25,7 +25,7 @@ libraryDependencies ++= List(
 
 // Amazon DynamoDB
 val dynamoDependencies = List(
-  "com.amazon.emr" % "emr-dynamodb-hive",
+  // "com.amazon.emr" % "emr-dynamodb-hive",
   "com.amazon.emr" % "emr-dynamodb-connector",
   "com.amazon.emr" % "emr-dynamodb-hadoop",
 ).map(_ % emrVersion)
