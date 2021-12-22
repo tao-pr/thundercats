@@ -3,15 +3,15 @@
 
 version: '3.8'
 services:
-  dynamodb-local:
-    command: "-jar DynamoDBLocal.jar -inMemory"
-    image: "amazon/dynamodb-local:latest"
-    container_name: dynamodb-local
-    ports:
-      - "8000:8000"
-    volumes:
-      - "./docker/dynamodb:/home/dynamodblocal/data"
-    working_dir: /home/dynamodblocal
+  # dynamodb-local:
+  #   command: "-jar DynamoDBLocal.jar -inMemory"
+  #   image: "amazon/dynamodb-local:latest"
+  #   container_name: dynamodb-local
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - "./docker/dynamodb:/home/dynamodblocal/data"
+  #   working_dir: /home/dynamodblocal
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
