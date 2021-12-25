@@ -527,6 +527,15 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       val maxOpt = Agg.on(df, "b", (a:Int, b:Int) => scala.math.max(a,b) )
       maxOpt.get shouldBe raw.map(_.b).max
     }
+
+    it("should aggregate by key"){
+      val agg = (a: Int, b: Int) => a+b
+      val sumOpt = Agg.byKeyAsRDD[String, Int](df, "key", "b", agg)
+      sumOpt.map(_.sortBy{ case(k,v) => k }.collect).get shouldBe List(
+        ("key1", raw.filter(_.key=="key1").map(_.b).sum),
+        ("key2", raw.filter(_.key=="key2").map(_.b).sum)
+      )
+    }
   }
 
   describe("Optimisation test"){
