@@ -499,6 +499,36 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
     }
   }
 
+  describe("Agg test"){
+
+    import spark.implicits._
+    import Implicits._
+
+    // Kx(key: String, value: String, b: Int)
+    lazy val raw = List(
+      Kx("key1", "a", 3),
+      Kx("key1", "a", 0),
+      Kx("key1", "b", 5),
+      Kx("key1", "b", 2),
+      Kx("key1", "b", 1),
+      Kx("key2", "a", 3),
+      Kx("key2", "a", 0),
+      Kx("key2", "a", 10),
+      Kx("key2", "a", 20),
+      Kx("key2", "a", 9),
+      Kx("key2", "b", 30)
+    )
+    lazy val df = raw.toDS.toDF
+
+    it("should aggregate column"){
+      val sumOpt = Agg.on(df, "b", (a:Int, b:Int) => a+b )
+      sumOpt.get shouldBe raw.map(_.b).sum
+
+      val maxOpt = Agg.on(df, "b", (a:Int, b:Int) => scala.math.max(a,b) )
+      maxOpt.get shouldBe raw.map(_.b).max
+    }
+  }
+
   describe("Optimisation test"){
 
     import spark.implicits._

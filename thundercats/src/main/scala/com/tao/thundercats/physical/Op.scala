@@ -165,7 +165,7 @@ object Agg {
     df.rdd.map(_.getAs[T](c)).reduce(f)
   }
 
-  def byKey[K: ClassTag, T: ClassTag](df: DataFrame, key: String, c: String, f: (T, T) => T): MayFail[RDD[(K,T)]] = MayFail {
+  def byKeyAsRDD[K: ClassTag, T: ClassTag](df: DataFrame, key: String, c: String, f: (T, T) => T): MayFail[RDD[(K,T)]] = MayFail {
     df.rdd
       .map( a => (a.getAs[K](key), a.getAs[T](c)) )
       .reduceByKey(f)
