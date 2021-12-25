@@ -8,11 +8,13 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
 
 import java.io.File
 import sys.process._
 import scala.reflect.io.Directory
 import scala.util.Try
+import scala.reflect.ClassTag
 
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
@@ -152,6 +154,22 @@ object F {
   }
 
   def lift(df: DataFrame): MayFail[DataFrame] = MayFail { df }
+}
+
+object Agg {
+  /**
+   * Shuffle-less aggregators, RDD-based
+   */
+
+  def on[T: ClassTag](df: DataFrame, c: String, f: (T, T) => T): MayFail[T] = MayFail {
+    df.rdd.map(_.getAs[T](c)).reduce(f)
+  }
+
+  def byKey[K: ClassTag, T: ClassTag](df: DataFrame, key: String, c: String, f: (T, T) => T): MayFail[RDD[(K,T)]] = MayFail {
+    df.rdd
+      .map( a => (a.getAs[K](key), a.getAs[T](c)) )
+      .reduceByKey(f)
+  }
 }
 
 object Optimise {

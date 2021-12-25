@@ -24,8 +24,6 @@ trait MayFail[A] {
   def getOrElse(a: A): A
   def getError: Option[String]
   def isFailing: Boolean
-
-  // TAOTODO: should be chainable
 }
 
 object MayFail {
