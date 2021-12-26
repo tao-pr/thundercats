@@ -3,3 +3,4 @@ target/
 */target/
 *.log
 metastore_db/
+TODO.md
