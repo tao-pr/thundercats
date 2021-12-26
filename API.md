@@ -83,9 +83,10 @@ for {
 
   d <- Join.inner(a, b, Join.With('index))
   e <- Join.broadcast(d, e, on=Seq("date"), rightColumns=Seq("person","dept"))
+  g <- Agg.on[String, Int](e, "dept", "num", (a: Int, b: Int) => a+b)
 
-  _ <- Write.kafka(e, "topic", "server:9092")
-  _ <- Write.kafka(e, "topic2", "server:9092")
+  _ <- Write.kafka(g, "topic", "server:9092")
+  _ <- Write.kafka(g, "topic2", "server:9092")
 }
 yield ()
 
