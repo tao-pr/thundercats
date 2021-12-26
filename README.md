@@ -30,6 +30,7 @@ val q = for {
 - [x] Physical file types: CSV, Parquet
 - [x] Streaming sources: Kafka
 - [x] MongoDB
+- [x] Amazon DynamoDB
 
 ## Prerequisites
 
@@ -73,20 +74,17 @@ $ ll /Library/Java/JavaVirtualMachines
 Following dependencies are required to run the test suite.
 
 - Hadoop
-- Kafka (local instance)
+- Docker
 
-Execute the test suite via sbt like so.
+Run a full unittest
 
-```bash
-$ sbt test
+```
+./run-test.sh
 ```
 
-Or test only specific suite by entering sbt console.
-
-```bash
-$ sbt
-sbt> testOnly *Data*
-```
+The script starts instances of required components, e.g. DynamoDB, with Docker compose 
+and start a unittest normally with `sbt test`. After all tests are done, the script 
+also stops the docker instances for you.
 
 ---
 

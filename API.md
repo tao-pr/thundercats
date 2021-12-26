@@ -12,8 +12,8 @@ Thundercat shapes the API structure as following.
 
 Most functions inside the packages return `MayFail[_]` monad which may resolve into:
 
-- Fail(message)
-- IgnoreableFail(message, data)
+- Fail(throwable)
+- IgnoreableFail(throwable, data)
 - Ok(data)
 
 ### 1.1 IO Module
@@ -66,7 +66,10 @@ Join.inner(...)
 Join.broadcast(...)
 Group.agg(...)
 Optimise.snapshot(...)
-Filter.where(...)
+Filter.where(df, ...)
+Filter.byRange(df, column, (from, to))
+Agg.on[String, Double](df, column, (a: Int, b: Int) => a*b )
+Agg.byKeyAsRDD[String, Int](df, key, column, (a: Int, b: Int) => scala.math.min(a,b))
 ```
 
 So you can chain these operations, monad-like.
@@ -80,9 +83,10 @@ for {
 
   d <- Join.inner(a, b, Join.With('index))
   e <- Join.broadcast(d, e, on=Seq("date"), rightColumns=Seq("person","dept"))
+  g <- Agg.on[String, Int](e, "dept", "num", (a: Int, b: Int) => a+b)
 
-  _ <- Write.kafka(e, "topic", "server:9092")
-  _ <- Write.kafka(e, "topic2", "server:9092")
+  _ <- Write.kafka(g, "topic", "server:9092")
+  _ <- Write.kafka(g, "topic2", "server:9092")
 }
 yield ()
 
@@ -91,6 +95,9 @@ if (result.isFailing){ ... }
 
 From above, an operation stops and captures error message as soon as 
 a failure occurs. 
+
+
+
 
 ### 1.3 Model Module
 

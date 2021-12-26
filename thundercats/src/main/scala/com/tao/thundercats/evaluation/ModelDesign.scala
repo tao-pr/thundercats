@@ -52,8 +52,6 @@ extends ModelDesign {
     DummySpecimen(feature, labelCol, feature.colName)
 }
 
-// TAOTODO should separate supervised [v] unsupervised models
-
 case class SupervisedModelDesign(
   override val outputCol: String, 
   override val labelCol: String,

@@ -101,6 +101,4 @@ object Preset {
       .setMaxIter(maxIters)
     new Pipeline().setStages(Array(g))
   }
-
-  // TAOTODO: Wrap LDA for dataframe
 }

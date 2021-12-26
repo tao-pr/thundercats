@@ -8,11 +8,13 @@ import org.apache.spark.sql.{Encoders, Encoder}
 import org.apache.spark.sql.avro._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.rdd.RDD
 
 import java.io.File
 import sys.process._
 import scala.reflect.io.Directory
 import scala.util.Try
+import scala.reflect.ClassTag
 
 import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
@@ -147,14 +149,34 @@ object Order {
 }
 
 object F {
-  def addColumn(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
+  def addCol(df: DataFrame, colName: String, c: Column): MayFail[DataFrame] = MayFail {
     df.withColumn(colName, c)
   }
 
   def lift(df: DataFrame): MayFail[DataFrame] = MayFail { df }
 }
 
+object Agg {
+  /**
+   * Shuffle-less aggregators, RDD-based
+   */
+
+  def on[T: ClassTag](df: DataFrame, c: String, f: (T, T) => T): MayFail[T] = MayFail {
+    df.rdd.map(_.getAs[T](c)).reduce(f)
+  }
+
+  def byKeyAsRDD[K: ClassTag, T: ClassTag](df: DataFrame, key: String, c: String, f: (T, T) => T): MayFail[RDD[(K,T)]] = MayFail {
+    df.rdd
+      .map( a => (a.getAs[K](key), a.getAs[T](c)) )
+      .reduceByKey(f)
+  }
+}
+
 object Optimise {
+  /**
+   * Lineage optimisers
+   */ 
+
   def snapshot(df: DataFrame, tempDir: String)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     val tempFile = s"$tempDir/${java.util.UUID.randomUUID}.parquet"
@@ -170,9 +192,13 @@ object Optimise {
     df
   }
 
-  def repartition(df: DataFrame, num: Int) = MayFail {
+  def repar(df: DataFrame, num: Int) = MayFail {
     if (num<=1) df.coalesce(1)
     else df.repartition(num)
+  }
+
+  def repar(df: DataFrame, cols: Seq[Column]) = MayFail {
+    df.repartition(cols:_*)
   }
 }
 

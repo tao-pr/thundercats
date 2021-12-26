@@ -68,16 +68,16 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   import spark.implicits._
 
-  //describe("Basic IO"){
-  ignore("Basic IO"){
+  describe("Basic IO"){
 
     lazy val tempCSV = File.createTempFile("tc-test-", ".csv").getAbsolutePath
     lazy val tempParquet = File.createTempFile("tc-test-", ".parquet").getAbsolutePath
 
-    val topic = "tc-test"
-    val topic2 = "tck-test"
-    val topic3 = "tckk-test"
+    val topic = "topic-1"
+    val topic2 = "topic-2"
+    val topic3 = "topic-3"
     val serverAddr = "localhost"
+    val serverPort = 29092
 
     lazy val df = List(
       A(1, None),
@@ -101,10 +101,22 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("PRE: flush Kafka"){
       Seq(topic, topic2, topic3).foreach{ top => 
-        val cmd = s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete"
+        val cmd = s"kafka-topics --bootstrap-server ${serverAddr}:${serverPort} --topic ${top} --delete"
         Console.println(Console.YELLOW + s"Executing ${cmd}" + Console.RESET)
         cmd !
       }
+    }
+
+    it("PRE: Create steaming topic (2)"){
+      val cmd = s"kafka-topics --create --partitions 1 --replication-factor 1 --topic ${topic2} --bootstrap-server ${serverAddr}:${serverPort}"
+      Console.println(Console.YELLOW + s"Creating streaming topic : ${topic2}" + Console.RESET)
+      cmd !
+    }
+
+    it("PRE: Create steaming topic (3)"){
+      val cmd = s"kafka-topics --create --partitions 1 --replication-factor 1 --topic ${topic3} --bootstrap-server ${serverAddr}:${serverPort}"
+      Console.println(Console.YELLOW + s"Creating streaming topic : ${topic3}" + Console.RESET)
+      cmd !
     }
 
     it("write and read csv"){
@@ -124,7 +136,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
         c <- Read.csv("./not-found.csv")
       } yield c
 
-      dfReadOpt.getError.map(_.contains("Path does not exist: file:/Users/pataoengineer/code/thundercats/not-found.csv;")).getOrElse("") shouldBe true
+      dfReadOpt.getError.map(_.contains("checkAndGlobPathIfNecessary") shouldBe true)
       dfReadOpt.isFailing shouldBe true
     }
 
@@ -155,8 +167,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("write and read Kafka (batch)"){
       val dfReadOpt = for { 
-        b <- Write.kafka(dfK, topic, serverAddr)
-        c <- Read.kafka(topic, serverAddr)
+        b <- Write.kafka(dfK, topic, serverAddr, serverPort)
+        c <- Read.kafka(topic, serverAddr, serverPort)
       } yield c
 
       val dfRead = dfReadOpt.get
@@ -165,36 +177,17 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       dfRead.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
     }
 
-    it("write and read Kafka (stream)"){
-      // Fill kafka topic and read by stream
-      for {
-        _ <- Write.kafka(dfK, topic2, serverAddr)
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Screen.showDFStream(b, Some("Initial stream messages"))
-      } yield b
+    ignore("read from dynamoDB"){
+      val dfReadOpt = for {
+        a <- Read.dynamo("eu-central-1", "0.0.0.0:8000", "Entry")
+      } yield a
 
-      // Read from one topic and write to another
-      val dff = for {
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Write.kafkaStream(b, topic3, serverAddr, timeout=Some(1000), checkpointLocation="./chk3")
-        c <- Read.kafka(topic3, serverAddr)
-      } yield c
-
-      dff.get.count shouldBe (dfK.count)
-      dff.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
-    }
-
-    it("write stream to parquet and csv"){
-      // Read from Kafka stream and stream to parquet file
-      val dfOpt = for {
-        b <- Read.kafkaStream(topic2, serverAddr)
-        _ <- Write.streamToFile(b, "parquet", "./out_parquet", checkpointLocation="./chk_parq", timeout=Some(1000))
-        _ <- Screen.showDFStream(b, Some("Streaming this into parquet"))
-        c <- Read.parquet("./out_parquet")
-      } yield c
-
-      dfOpt.get.count shouldBe (dfK.count)
-      dfOpt.get.map(_.getAs[String]("key")).collect shouldBe (Seq("foo1", "foo2", "foo3"))
+      dfReadOpt match {
+        case Ok(df) => 
+          df.show()
+        case Fail(e) =>
+          e.toString shouldBe "" // Just always fails and shows full stacktrace
+      }
     }
 
     it("POST: cleanup tempfiles"){
@@ -203,7 +196,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("POST: flush Kafka"){
       Seq(topic, topic2, topic3).foreach{ top => 
-        s"kafka-topics --bootstrap-server ${serverAddr}:9092 --topic ${top} --delete" !
+        s"kafka-topics --bootstrap-server ${serverAddr}:${serverPort} --topic ${top} --delete" !
       }
     }
 
@@ -425,7 +418,7 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
     it("Add column"){
       val dfOpt = for {
-        a <- F.addColumn(dfK1, "b", when('v1==="222", lit(null)).otherwise(sequence(lit(0), lit(5), lit(1))))
+        a <- F.addCol(dfK1, "b", when('v1==="222", lit(null)).otherwise(sequence(lit(0), lit(5), lit(1))))
       } yield a
 
       dfOpt.get.columns shouldBe (Seq("key", "v1", "b"))
@@ -503,6 +496,45 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
       } yield a
 
       dfOpt.get.map{_.getAs[Int]("i")}.collect shouldBe List(3,4,5)
+    }
+  }
+
+  describe("Agg test"){
+
+    import spark.implicits._
+    import Implicits._
+
+    // Kx(key: String, value: String, b: Int)
+    lazy val raw = List(
+      Kx("key1", "a", 3),
+      Kx("key1", "a", 0),
+      Kx("key1", "b", 5),
+      Kx("key1", "b", 2),
+      Kx("key1", "b", 1),
+      Kx("key2", "a", 3),
+      Kx("key2", "a", 0),
+      Kx("key2", "a", 10),
+      Kx("key2", "a", 20),
+      Kx("key2", "a", 9),
+      Kx("key2", "b", 30)
+    )
+    lazy val df = raw.toDS.toDF
+
+    it("should aggregate column"){
+      val sumOpt = Agg.on(df, "b", (a:Int, b:Int) => a+b )
+      sumOpt.get shouldBe raw.map(_.b).sum
+
+      val maxOpt = Agg.on(df, "b", (a:Int, b:Int) => scala.math.max(a,b) )
+      maxOpt.get shouldBe raw.map(_.b).max
+    }
+
+    it("should aggregate by key"){
+      val agg = (a: Int, b: Int) => a+b
+      val sumOpt = Agg.byKeyAsRDD[String, Int](df, "key", "b", agg)
+      sumOpt.map(_.sortBy{ case(k,v) => k }.collect).get shouldBe List(
+        ("key1", raw.filter(_.key=="key1").map(_.b).sum),
+        ("key2", raw.filter(_.key=="key2").map(_.b).sum)
+      )
     }
   }
 

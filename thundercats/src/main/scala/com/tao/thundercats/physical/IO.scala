@@ -67,8 +67,8 @@ object Screen {
   }
 
   def showDFStream(df: DataFrame, title: Option[String]=None): MayFail[DataFrame] = MayFail {
-    title.map(t => Console.println(Console.CYAN + t + Console.RESET))
-    Console.println(Console.CYAN)
+    title.map(t => Console.println(Console.MAGENTA + t + Console.RESET))
+    Console.println()
     val q = df.writeStream
       .outputMode("append")
       .format("console")
@@ -117,7 +117,8 @@ object Read {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092, 
-    offset: Option[Int] = None,
+    offset: Option[String] = None, // Offset should be in format : {topicA: -1}
+    waitTimeout: Option[Int] = None, // in MS
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None)
   (implicit spark: SparkSession): MayFail[DataFrame] = {
     Log.info(s"[IO] Read kafka stream : ${serverAddr}:${port} => topic = ${topic}")
@@ -126,8 +127,9 @@ object Read {
       val df = spark.readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
+        .option("kafka.requests.timeout.ms", waitTimeout.getOrElse(30).toString)
         .option("subscribe", topic)
-        .option("startingOffsets", offset.map(_.toString).getOrElse("earliest"))
+        .option("startingOffsets", offset.getOrElse("earliest"))
         .load()
         .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
@@ -162,14 +164,17 @@ object Read {
       }
     }
   }
-
-  def rabbit: MayFail[DataFrame] = ???
   
   def mongo(serverAddr: String, db: String, collection: String)
   (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
     spark.read.format("mongo")
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .load()
+  }
+
+  def dynamo(region: String, serverAddr: String, tb: String)
+  (implicit spark: SparkSession): MayFail[DataFrame] = MayFail {
+    Amazon.Dynamo.read(region, serverAddr, tb)
   }
 }
 
@@ -226,10 +231,11 @@ object Write {
     topic: String, 
     serverAddr: String, 
     port: Int = 9092,
+    waitTimeout: Option[Int] = None, // in MS
     colEncoder: ColumnEncoder.Encoder = ColumnEncoder.None,
     checkpointLocation: String = "./chk",
-    timeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
-    Log.info(s"[IO] Write kafka stream : ${serverAddr}:${port} => topic = ${topic}")
+    terminationTimeout: Option[Int] = None): MayFail[DataFrame] = MayFail {
+    Log.info(s"[IO] Write kafka stream : ${serverAddr}:${port} => topic = ${topic}, checkpointLocation = ${checkpointLocation}")
     import df.sqlContext.implicits._
     val dfEncoded = colEncoder match {
       case ColumnEncoder.None => df
@@ -242,12 +248,13 @@ object Write {
     val q = dfEncoded.writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", s"${serverAddr}:${port}")
+      .option("kafka.fetch.max.wait.ms", waitTimeout.getOrElse(30).toString)
       .option("topic", topic)
       .option("outputMode", "append")
       .option("checkpointLocation", checkpointLocation)
       .start()
 
-    timeout match {
+    terminationTimeout match {
       case None => q.awaitTermination()
       case Some(t) => q.awaitTermination(t)
     }
@@ -324,6 +331,10 @@ object Write {
       .option("uri", s"mongodb://${serverAddr}/${db}.${collection}")
       .save()
     df
+  }
+
+  def dynamo(df: DataFrame, serverAddr: String, tb: String): MayFail[DataFrame] = MayFail {
+    ???
   }
 }
 

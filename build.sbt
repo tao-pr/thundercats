@@ -10,6 +10,7 @@ val logbackVersion    = "1.1.2"
 val circeVersion      = "0.11.1"
 val kafkaVersion      = "2.1.0"
 val avro4sVersion     = "3.0.4"
+val emrVersion        = "4.16.0"
 scalaVersion         := "2.12.0"
 
 // Compatibility NOTE: 
@@ -22,14 +23,14 @@ libraryDependencies ++= List(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
-// Following dependency is for typesafe Avro schema generator
-// Unfortunately it's Jackson4s is not compatible with Spark 2.4
-// ------------------------------
-// val miscDependencies = List(
-//   "com.sksamuel.avro4s" %% "avro4s-core" % avro4sVersion excludeAll(
-//     ExclusionRule("org.scala-lang.modules",s"scala-xml_${scalaVersion.toString.dropRight(2)}"),
-//     ExclusionRule("org.apache.avro", "avro"))
-// )
+// Amazon DynamoDB
+val dynamoDependencies = List(
+  // "com.amazon.emr" % "emr-dynamodb-hive",
+  "com.amazon.emr" % "emr-dynamodb-connector",
+  "com.amazon.emr" % "emr-dynamodb-hadoop",
+).map(_ % emrVersion)
+
+resolvers += Resolver.mavenLocal
 
 // Logging
 libraryDependencies ++= List(
@@ -53,9 +54,32 @@ val sparkDependencies = List(
 
 lazy val thundercats = project
   .settings(name := "thundercats")
-  .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
+  .settings(libraryDependencies ++= sparkDependencies ++ dynamoDependencies ++ devDependencies)
 
 lazy val samples = project
   .settings(name := "samples")
   .settings(libraryDependencies ++= sparkDependencies ++ devDependencies)
   .dependsOn(thundercats)
+
+  import ReleaseTransformations._
+
+releaseVersionBump := sbtrelease.Version.Bump.Next
+releaseVersionFile := baseDirectory.value / "version.sbt"
+
+publishConfiguration := publishConfiguration.value.withOverwrite(true)
+releaseIgnoreUntrackedFiles := true
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,              // : ReleaseStep
+  inquireVersions,                        // : ReleaseStep
+  // runClean,                               // : ReleaseStep
+  // runTest,                                // : ReleaseStep
+  setReleaseVersion,                      // : ReleaseStep
+  commitReleaseVersion,                   // : ReleaseStep, performs the initial git checks
+  tagRelease,                             // : ReleaseStep
+  // publishArtifacts,                       // : ReleaseStep, checks whether `publishTo` is properly set up
+  // releaseStepTask(publish in Docker),     // : ReleaseStep, publish the docker image in your specified repository(e.i. Nexus)
+  setNextVersion,                         // : ReleaseStep
+  commitNextVersion,                      // : ReleaseStep
+  pushChanges                             // : ReleaseStep, also checks that an upstream branch is properly configured
+)
