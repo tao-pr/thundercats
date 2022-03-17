@@ -1,9 +1,10 @@
+package com.tao.thundercats.physical
+
 import com.tao.thundercats.base.SparkStreamTestInstance
 import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.model._
-import com.tao.thundercats.physical._
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature._
