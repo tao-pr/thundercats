@@ -1,12 +1,7 @@
 package com.tao.thundercats.evaluation
 
-import org.apache.spark.sql.{Dataset, DataFrame}
-
 import com.tao.thundercats.physical._
-import com.tao.thundercats.functional._
-import com.tao.thundercats.physical.Implicits._
-import com.tao.thundercats.estimator._
-import com.tao.thundercats.evaluation._
+import org.apache.spark.sql.DataFrame
 
 trait FeatureSelector {
   def selectSubset(df: DataFrame, model: ModelDesign, features: Iterable[FeatureColumn]): Iterable[(Double, FeatureColumn)]

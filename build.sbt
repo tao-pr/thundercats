@@ -2,7 +2,7 @@ name := "thundercats"
 organization := "tao"
 licenses := Seq("Apache 2.0 License" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-val sparkVersion      = "2.4.4"
+val sparkVersion      = "3.2.1"
 val scalatest         = "3.0.3"
 val framelessVersion  = "0.8.0" // for Spark 2.4.0
 val scalaLogVersion   = "3.9.2"
@@ -11,23 +11,18 @@ val circeVersion      = "0.11.1"
 val kafkaVersion      = "2.1.0"
 val avro4sVersion     = "3.0.4"
 val emrVersion        = "4.16.0"
-scalaVersion         := "2.12.0"
+scalaVersion         := "2.13.1"
+
+javacOptions in Compile ++= Seq("-source", "1.17", "-target", "1.17", "-Xlint:unchecked", "-Xlint:deprecation")
 
 // Compatibility NOTE: 
 // https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-12-compatibility-notes
-
-// Circe
-libraryDependencies ++= List(
-  "io.circe" %% "circe-core",
-  "io.circe" %% "circe-generic",
-  "io.circe" %% "circe-parser"
-).map(_ % circeVersion)
 
 // Amazon DynamoDB
 val dynamoDependencies = List(
   // "com.amazon.emr" % "emr-dynamodb-hive",
   "com.amazon.emr" % "emr-dynamodb-connector",
-  "com.amazon.emr" % "emr-dynamodb-hadoop",
+  "com.amazon.emr" % "emr-dynamodb-hadoop"
 ).map(_ % emrVersion)
 
 resolvers += Resolver.mavenLocal
@@ -40,7 +35,7 @@ libraryDependencies ++= List(
 
 // Test
 val devDependencies = List(
-  "org.scalatest" %% "scalatest" % "3.0.8" % "test"
+  "org.scalatest" %% "scalatest" % "3.2.11" % "test"
 )
 
 // Spark

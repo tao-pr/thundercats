@@ -1,13 +1,10 @@
 package com.tao.thundercats.base
 
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.{SparkSession, SQLContext, SQLImplicits}
-import org.apache.spark.util.Utils
-import org.apache.spark.streaming._
-
+import org.apache.spark.sql.SparkSession
 import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
 
-trait SparkTestInstance extends FunSpec with BeforeAndAfterAll {
+trait SparkTestInstance extends AnyFunSpec with BeforeAndAfterAll {
   def name: String = "test"
   private def getSparkInstance = {
     val instance = SparkSession.builder

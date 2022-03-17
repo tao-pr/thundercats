@@ -1,17 +1,11 @@
 package com.tao.thundercats.evaluation
 
-import scala.math.abs
-
-import org.apache.spark.sql.{Dataset, DataFrame}
-import org.apache.spark.ml.regression.LinearRegressionModel
-
-import breeze.linalg.DenseVector
-
-import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
-import com.tao.thundercats.physical.Implicits._
-import com.tao.thundercats.estimator._
 import com.tao.thundercats.model.Pipe
+import com.tao.thundercats.physical.Implicits._
+import com.tao.thundercats.physical._
+import org.apache.spark.ml.regression.LinearRegressionModel
+import org.apache.spark.sql.DataFrame
 
 
 /**
@@ -38,7 +32,7 @@ case object ZScore extends RegressionMeasureVector {
     // Since the fitted model can be Array(VectorAssembler, PipelineModel)
     // we need to extract the very last transformer as a LinearRegressionModel
     Pipe.fittedEstimator(specimen.model).map{ estimator => 
-      import specimen._
+
 
       /***
         zj            = ßj/sigma.sqrt(vj), 

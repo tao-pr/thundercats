@@ -1,34 +1,24 @@
-import org.apache.spark.sql.{Dataset, DataFrame}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.{Column,Row}
-import org.apache.spark.sql.catalyst.encoders._
-import org.apache.spark.sql.{Encoders, Encoder}
-import org.apache.spark.sql.avro._
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-import org.apache.spark.ml.regression._
-import org.apache.spark.ml.feature._
-import org.apache.spark.ml.{Transformer, PipelineModel}
-import org.apache.spark.ml.{Pipeline, Estimator}
-import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.ml.linalg.VectorUDT
-import org.apache.spark.ml.linalg.DenseVector
-
-import java.io.File
-import sys.process._
-import scala.reflect.io.Directory
-
-import com.tao.thundercats.base.{SparkTestInstance, SparkStreamTestInstance}
-import com.tao.thundercats.physical._
-import com.tao.thundercats.functional._
-import com.tao.thundercats.model._
+import com.tao.thundercats.base.SparkStreamTestInstance
 import com.tao.thundercats.estimator._
 import com.tao.thundercats.evaluation._
+import com.tao.thundercats.functional._
+import com.tao.thundercats.model._
+import com.tao.thundercats.physical._
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.feature._
+import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.scalatest.Inspectors._
+import org.scalatest.{Filter => _}
+
+import java.io.File
+import scala.sys.process._
 
 import org.scalatest.{Filter => _, _}
-import org.scalatest.Inspectors._
-import Matchers._
+import matchers.should._
 
 object IO {
   def getFile(path: String): Option[File] = {
@@ -440,8 +430,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Util test"){
 
-    import spark.implicits._
     import Implicits._
+    import spark.implicits._
 
     lazy val dfA = List(
       A(1, Some("aa")),
@@ -502,7 +492,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
   describe("Agg test"){
 
     import spark.implicits._
-    import Implicits._
 
     // Kx(key: String, value: String, b: Int)
     lazy val raw = List(
@@ -541,7 +530,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
   describe("Optimisation test"){
 
     import spark.implicits._
-    import Implicits._
 
     lazy val df = List(
       A(1, Some("aa")),
@@ -578,9 +566,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Pipe test"){
 
-    import spark.implicits._
-    import Implicits._
-
     lazy val pipeComplete = new Pipeline().setStages(Array(
       new HashingTF().setInputCol("aa"),
       new VectorAssembler().setInputCols(Array("aa","bb","cc")).setOutputCol("vv"),
@@ -612,8 +597,8 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Feature engineering test"){
 
-    import spark.implicits._
     import Implicits._
+    import spark.implicits._
 
     lazy val dfTrain = List(
       Train(1, 0.0, 1.0, -1.0, "foo bar", ""),
@@ -763,7 +748,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
   describe("Regression Modeling test"){
 
     import spark.implicits._
-    import Implicits._
 
     lazy val df = List(
       // i, d, label
@@ -840,7 +824,6 @@ class DataSuite extends SparkStreamTestInstance with Matchers {
 
   describe("Classification modeling test"){
     import spark.implicits._
-    import Implicits._
 
     lazy val df = List(
       // i, d, label

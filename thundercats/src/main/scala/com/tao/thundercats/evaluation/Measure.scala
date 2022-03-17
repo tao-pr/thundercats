@@ -1,40 +1,17 @@
 package com.tao.thundercats.evaluation
 
-import java.util.MissingResourceException
-import java.lang.UnsupportedOperationException
-
-import org.apache.spark.sql.{Dataset, DataFrame}
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.{Column,Row}
-import org.apache.spark.sql.catalyst.encoders._
-import org.apache.spark.sql.{Encoders, Encoder}
-import org.apache.spark.sql.avro._
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import org.apache.spark.rdd.RDD
-import org.apache.spark.rdd.DoubleRDDFunctions
-
-import org.apache.spark.ml.feature.{HashingTF, Tokenizer, VectorAssembler}
-import org.apache.spark.ml.{Transformer, PipelineModel}
-import org.apache.spark.ml.{Pipeline, Estimator, PipelineStage}
-import org.apache.spark.ml.{Predictor}
-import org.apache.spark.ml.tuning.CrossValidatorModel
-import org.apache.spark.ml.param._
-import org.apache.spark.ml.regression._
-import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
-
-import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
-import org.apache.spark.mllib.linalg.{Vector => MLLibVector}
-import org.apache.spark.mllib.linalg.{SparseVector => MLLibSparseV}
-import org.apache.spark.mllib.linalg.{DenseVector => MLLibDenseV}
-
-import breeze.linalg.DenseVector
-
-import com.tao.thundercats.physical._
 import com.tao.thundercats.functional._
 import com.tao.thundercats.physical.Implicits._
-import com.tao.thundercats.estimator._
+import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.linalg.{DenseVector => MLLibDenseV, SparseVector => MLLibSparseV, Vector => MLLibVector}
+import org.apache.spark.mllib.stat.correlation.ExposedPearsonCorrelation
+import org.apache.spark.rdd.{DoubleRDDFunctions, RDD}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+
+import java.util.MissingResourceException
 
 // Measure for the whole model
 trait Measure extends BaseMeasure[Double]{
