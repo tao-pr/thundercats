@@ -12,6 +12,7 @@ val kafkaVersion      = "2.1.0"
 val avro4sVersion     = "3.0.4"
 val emrVersion        = "4.16.0"
 scalaVersion         := "2.13.1"
+sbtVersion           := "1.3.3"
 
 javacOptions in Compile ++= Seq("-source", "1.17", "-target", "1.17", "-Xlint:unchecked", "-Xlint:deprecation")
 

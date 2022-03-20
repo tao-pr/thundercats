@@ -136,8 +136,7 @@ case object PearsonCorr extends RegressionMeasure {
 }
 
 case object Precision extends ClassificationMeasure {
-  override def %% (df: DataFrame, specimen: Specimen) = {
-    val threshold = specimen
+  override def %% (df: DataFrame, specimen: Specimen): MayFail[Map[Double, Double]] = {
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
         .precisionByThreshold
@@ -152,12 +151,11 @@ case object Precision extends ClassificationMeasure {
 }
 
 case object Recall extends ClassificationMeasure {
-  override def %% (df: DataFrame, specimen: Specimen) = 
-    pred(df, specimen).map{ rdd =>
-      new BinaryClassificationMetrics(rdd)
-        .recallByThreshold
-        .collectAsMap
-        .toMap
+  override def %% (df: DataFrame, specimen: Specimen): MayFail[Map[Double, Double]] =
+    pred(df, specimen).map{ new BinaryClassificationMetrics(_)
+      .recallByThreshold
+      .collectAsMap
+      .toMap
     }
 
   override def % (df: DataFrame, specimen: Specimen): MayFail[Double] = 
@@ -166,7 +164,7 @@ case object Recall extends ClassificationMeasure {
 }
 
 case object FMeasure extends ClassificationMeasure {
-  override def %% (df: DataFrame, specimen: Specimen) = 
+  override def %% (df: DataFrame, specimen: Specimen): MayFail[Map[Double, Double]] =
     pred(df, specimen).map{ rdd =>
       new BinaryClassificationMetrics(rdd)
         .fMeasureByThreshold

@@ -8,7 +8,7 @@ trait SparkTestInstance extends AnyFunSpec with BeforeAndAfterAll {
   def name: String = "test"
   private def getSparkInstance = {
     val instance = SparkSession.builder
-      .master("local")
+      .master("local[*]")
       .appName(name)
       .config("spark.driver.bindAddress", "127.0.0.1")
       .config("spark.executor.instances", "1")

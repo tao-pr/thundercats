@@ -97,7 +97,7 @@ case class SupervisedSpecimen(
   override val outputCol: String,
   override val labelCol: String
 ) extends Specimen {
-  override def score(df: DataFrame, measure: Measure) = {
+  override def score(df: DataFrame, measure: Measure): MayFail[Double] = {
     measure match {
       case _:RegressionMeasure => super.score(ensure(df), measure)
       case _:ClassificationMeasure => super.score(ensure(df), measure)
@@ -113,7 +113,7 @@ case class UnsupervisedSpecimen(
   override val outputCol: String
 ) extends Specimen {
   override val labelCol = ""
-  override def score(df: DataFrame, measure: Measure) = {
+  override def score(df: DataFrame, measure: Measure): MayFail[Double] = {
     measure match {
       case _: ClusterMeasure => super.score(ensure(df), measure)
       case _ => Fail(new UnsupportedOperationException(

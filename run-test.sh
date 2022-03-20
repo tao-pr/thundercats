@@ -15,7 +15,7 @@ docker-compose -f thundercats/src/test/resources/docker-compose.yml up -d
 
 CID_DYDB=$(docker container ls | grep "amazon/dynamodb-local" | awk '{print $1}')
 CID_KFK=$(docker container ls | grep "confluentinc/cp-kafka" | awk '{print $1}')
-CID_ZKP=$(docker container ls | grep "confluentinc/cp-zookeeper" | awk '{print $1}')
+CID_ZKP=$(docker container ls | grep "confluentinc/cp-zookeeper" | awk '{print $1}')./run
 
 if [ $enable_dynamo_db -eq 1 ]
 then
